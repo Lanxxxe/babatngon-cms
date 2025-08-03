@@ -1,0 +1,77 @@
+{% extends 'base_resident.html' %}
+{% block title %}File Complaint{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-lg p-4" style="width: 100%; max-width: 500px;">
+        <h3 class="mb-4 text-center text-primary">File a Complaint</h3>
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="title" class="form-label">Title<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road">
+                <div class="invalid-feedback">Please enter a title.</div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
+                <div class="invalid-feedback">Please enter a description.</div>
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Category<span class="text-danger">*</span></label>
+                <select class="form-select" id="category" name="category" required>
+                    <option value="">Select category</option>
+                    <option value="Sanitation">Sanitation</option>
+                    <option value="Safety/Security">Safety/Security</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Noise">Noise</option>
+                    <option value="Environment">Environment</option>
+                    <option value="Disaster/Emergency">Disaster/Emergency</option>
+                    <option value="Health">Health</option>
+                    <option value="Traffic/Transport">Traffic/Transport</option>
+                    <option value="Corruption/Abuse">Corruption/Abuse</option>
+                    <option value="Discrimination">Discrimination</option>
+                    <option value="Service Delivery">Service Delivery</option>
+                    <option value="Other">Other</option>
+                </select>
+                <div class="invalid-feedback">Please select a category.</div>
+            </div>
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall">
+            </div>
+            <div class="mb-3">
+                <label for="attachments" class="form-label">Attachments (optional)</label>
+                <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit Complaint</button>
+        </form>
+    </div>
+</div>
+<script>
+    // Bootstrap validation
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+{% endblock %}

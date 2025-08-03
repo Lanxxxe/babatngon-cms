@@ -11,7 +11,7 @@
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">{{ total_complaints|default:247 }}</div>
+                    <div class="stat-number">{{ total_complaints|default:0 }}</div>
                     <div class="stat-label">Total Complaints</div>
                     <div class="stat-change">
                         <i class="bi bi-arrow-up me-1"></i>+12% from last month
@@ -26,7 +26,7 @@
         <div class="stat-card warning">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">{{ pending_complaints|default:23 }}</div>
+                    <div class="stat-number">{{ pending_complaints|default:0 }}</div>
                     <div class="stat-label">Pending Review</div>
                     <div class="stat-change">Requires attention</div>
                 </div>
@@ -39,7 +39,7 @@
         <div class="stat-card info">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">{{ in_progress_complaints|default:45 }}</div>
+                    <div class="stat-number">{{ in_progress_complaints|default:0 }}</div>
                     <div class="stat-label">In Progress</div>
                     <div class="stat-change">Being resolved</div>
                 </div>
@@ -72,14 +72,14 @@
                 <div>
                     <i class="bi bi-list-ul me-2"></i>Recent Complaints
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center">
                     <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
                         <option value="resolved">Resolved</option>
                     </select>
-                    <a href="{% url 'admin_complaints' %}" class="btn btn-admin-outline btn-sm">
+                    <a href="{% url 'admin_complaints' %}" role="button" class="btn btn-primary btn-sm pb-0">
                         View All
                     </a>
                 </div>
@@ -100,102 +100,60 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><span class="fw-semibold text-primary">#001</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                            JD
+                            {% for complaint in recent_complaints %}
+                                <tr>
+                                    <td><span class="fw-semibold text-primary">#{{ complaint.id }}</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                                {{ complaint.user.first_name|first }}{{ complaint.user.last_name|first }}
+                                            </div>
+                                            <span class="fw-medium">{{ complaint.user.first_name }} {{ complaint.user.last_name }}</span>
                                         </div>
-                                        <span class="fw-medium">Juan Dela Cruz</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="text-truncate" style="max-width: 200px;">
-                                        Broken streetlight on Main St
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-secondary">Infrastructure</span></td>
-                                <td><span class="badge bg-danger">High</span></td>
-                                <td><span class="badge bg-warning">Pending</span></td>
-                                <td>
-                                    <div class="text-muted small">Dec 15, 2024</div>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-admin-primary btn-sm">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-admin-secondary btn-sm">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span class="fw-semibold text-primary">#002</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                            MS
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;">
+                                            {{ complaint.title }}
                                         </div>
-                                        <span class="fw-medium">Maria Santos</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="text-truncate" style="max-width: 200px;">
-                                        Noise complaint from neighbor
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-secondary">Public Safety</span></td>
-                                <td><span class="badge bg-warning">Medium</span></td>
-                                <td><span class="badge bg-info">In Progress</span></td>
-                                <td>
-                                    <div class="text-muted small">Dec 14, 2024</div>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-admin-primary btn-sm">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-admin-secondary btn-sm">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span class="fw-semibold text-primary">#003</span></td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                            PG
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ complaint.category }}</span></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if complaint.priority == 'urgent' %}bg-danger
+                                            {% elif complaint.priority == 'high' %}bg-danger
+                                            {% elif complaint.priority == 'medium' %}bg-warning
+                                            {% else %}bg-success{% endif %}">
+                                            {{ complaint.priority|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if complaint.status == 'pending' %}bg-warning
+                                            {% elif complaint.status == 'in_progress' %}bg-info
+                                            {% elif complaint.status == 'resolved' %}bg-success
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ complaint.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="text-muted small">{{ complaint.created_at|date:"M d, Y" }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-admin-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-admin-secondary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
                                         </div>
-                                        <span class="fw-medium">Pedro Garcia</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="text-truncate" style="max-width: 200px;">
-                                        Garbage collection missed
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-secondary">Environment</span></td>
-                                <td><span class="badge bg-success">Low</span></td>
-                                <td><span class="badge bg-success">Resolved</span></td>
-                                <td>
-                                    <div class="text-muted small">Dec 13, 2024</div>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-admin-primary btn-sm">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-admin-secondary btn-sm">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No complaints found.</td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>

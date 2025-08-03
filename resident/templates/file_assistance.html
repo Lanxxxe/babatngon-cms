@@ -1,0 +1,74 @@
+{% extends 'base_resident.html' %}
+{% block title %}Request Assistance{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-lg p-4" style="width: 100%; max-width: 500px;">
+        <h3 class="mb-4 text-center text-success">Request Assistance</h3>
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="title" class="form-label">Title<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Request for Medical Aid">
+                <div class="invalid-feedback">Please enter a title.</div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your assistance request in detail..."></textarea>
+                <div class="invalid-feedback">Please enter a description.</div>
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type of Assistance<span class="text-danger">*</span></label>
+                <select class="form-select" id="type" name="type" required>
+                    <option value="">Select type</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Financial">Financial</option>
+                    <option value="Food/Supplies">Food/Supplies</option>
+                    <option value="Evacuation/Shelter">Evacuation/Shelter</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Livelihood">Livelihood</option>
+                    <option value="Education">Education</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Disaster/Emergency">Disaster/Emergency</option>
+                    <option value="Other">Other</option>
+                </select>
+                <div class="invalid-feedback">Please select a type of assistance.</div>
+            </div>
+            <div class="mb-3">
+                <label for="urgency" class="form-label">Urgency</label>
+                <select class="form-select" id="urgency" name="urgency">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 1, near Barangay Hall">
+            </div>
+            <div class="mb-3">
+                <label for="attachments" class="form-label">Supporting Files (optional)</label>
+                <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Submit Request</button>
+        </form>
+    </div>
+</div>
+<script>
+    // Bootstrap validation
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+{% endblock %}

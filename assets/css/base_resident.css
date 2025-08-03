@@ -72,7 +72,7 @@ body {
 .sidebar-logo {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-color);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -142,7 +142,7 @@ body {
 }
 
 .nav-link-modern.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-color);
     color: white;
     box-shadow: var(--shadow-md);
 }
@@ -223,9 +223,6 @@ body {
     font-size: 0.9rem;
 }
 
-.breadcrumb-modern .breadcrumb-item {
-    color: var(--text-muted);
-}
 
 .breadcrumb-modern .breadcrumb-item.active {
     color: var(--text-primary);
@@ -235,6 +232,7 @@ body {
 .topbar-right {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
 }
 
@@ -282,7 +280,7 @@ body {
 .user-avatar {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -381,7 +379,7 @@ body {
     right: 2rem;
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-color);
     border: none;
     border-radius: 50%;
     color: white;

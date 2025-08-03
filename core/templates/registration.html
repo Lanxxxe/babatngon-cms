@@ -35,12 +35,16 @@
                             </h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="first_name" class="form-label fw-medium">First Name</label>
+                                    <label for="first_name" class="form-label fw-medium">First Name<span class="text-danger">*</span> </label>
                                     <input type="text" class="form-control" id="first_name" name="first_name" required>
                                     <div class="invalid-feedback">Please enter your first name.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="last_name" class="form-label fw-medium">Last Name</label>
+                                    <label for="middle_name" class="form-label fw-medium">Middle Name</label>
+                                    <input type="text" class="form-control" id="middle_name" name="middle_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name" class="form-label fw-medium">Last Name<span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="last_name" name="last_name" required>
                                     <div class="invalid-feedback">Please enter your last name.</div>
                                 </div>
@@ -54,7 +58,7 @@
                             </h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="username" class="form-label fw-medium">Username</label>
+                                    <label for="username" class="form-label fw-medium">Username<span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text">@</span>
                                         <input type="text" class="form-control" id="username" name="username" required>
@@ -63,7 +67,7 @@
                                     <div class="form-text">Choose a unique username (3-20 characters)</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="email" class="form-label fw-medium">Email Address</label>
+                                    <label for="email" class="form-label fw-medium">Email Address<span class="text-danger">*</span></label>
                                     <input type="email" class="form-control" id="email" name="email" required>
                                     <div class="invalid-feedback">Please enter a valid email address.</div>
                                 </div>
@@ -77,25 +81,46 @@
                             </h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="phone" class="form-label fw-medium">Phone Number</label>
+                                    <label for="phone" class="form-label fw-medium">Phone Number<span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="phone" name="phone" 
                                            placeholder="+63 XXX XXX XXXX" required>
                                     <div class="invalid-feedback">Please enter your phone number.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="barangay" class="form-label fw-medium">Barangay</label>
+                                    <label for="barangay" class="form-label fw-medium">Barangay<span class="text-danger">*</span></label>
                                     <select class="form-select" id="barangay" name="barangay" required>
                                         <option value="">Select your barangay</option>
-                                        <option value="barangay1">Barangay 1</option>
-                                        <option value="barangay2">Barangay 2</option>
-                                        <option value="barangay3">Barangay 3</option>
-                                        <option value="barangay4">Barangay 4</option>
+                                        <option value="Bacong">Bacong</option>
+                                        <option value="Bagong Silang">Bagong Silang</option>
+                                        <option value="Biasong">Biasong</option>
+                                        <option value="Gov. E. Jaro">Gov. E. Jaro</option>
+                                        <option value="Guintigui-an">Guintigui-an</option>
+                                        <option value="Lukay">Lukay</option>
+                                        <option value="Magcasuang">Magcasuang</option>
+                                        <option value="Malibago">Malibago</option>
+                                        <option value="Naga-asan">Naga-asan</option>
+                                        <option value="Pagsulhugon">Pagsulhugon</option>
+                                        <option value="Planza">Planza</option>
+                                        <option value="Poblacion District I">Poblacion District I</option>
+                                        <option value="Poblacion District II">Poblacion District II</option>
+                                        <option value="Poblacion District III">Poblacion District III</option>
+                                        <option value="Poblacion District IV">Poblacion District IV</option>
+                                        <option value="Rizal I">Rizal I</option>
+                                        <option value="Rizal II">Rizal II</option>
+                                        <option value="San Agustin">San Agustin</option>
+                                        <option value="San Isidro">San Isidro</option>
+                                        <option value="San Ricardo">San Ricardo</option>
+                                        <option value="Sangputan">Sangputan</option>
+                                        <option value="Taguite">Taguite</option>
+                                        <option value="Uban">Uban</option>
+                                        <option value="Victory">Victory</option>
+                                        <option value="Villa Magsaysay">Villa Magsaysay</option>
                                     </select>
                                     <div class="invalid-feedback">Please select your barangay.</div>
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <label for="address" class="form-label fw-medium">Complete Address</label>
+                                <label for="address" class="form-label fw-medium">Complete Address<span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="address" name="address" rows="2" 
                                           placeholder="House number, street, subdivision..." required></textarea>
                                 <div class="invalid-feedback">Please enter your complete address.</div>

@@ -79,3 +79,15 @@ class AssistanceRequest(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class ComplaintAttachment(models.Model):
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='uploads/complaint_attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class AssistanceAttachment(models.Model):
+    assistance = models.ForeignKey(AssistanceRequest, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='uploads/assistance_attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)

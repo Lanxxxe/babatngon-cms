@@ -111,206 +111,92 @@
                         <th>Category</th>
                         <th>Priority</th>
                         <th>Status</th>
-                        <th>Assigned To</th>
+                        <!-- <th>Assigned To</th> -->
                         <th>Date Filed</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
-                        <td><span class="fw-semibold text-primary">#001</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                    JD
+                    {% for complaint in complaints %}
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td><span class="fw-semibold text-primary">#{{ complaint.id }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                        {{ complaint.user.first_name|first }}{{ complaint.user.last_name|first }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium small">{{ complaint.user.first_name }} {{ complaint.user.last_name }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{ complaint.user.email }}</div>
+                                    </div>
                                 </div>
+                            </td>
+                            <td>
                                 <div>
-                                    <div class="fw-medium small">Juan Dela Cruz</div>
-                                    <div class="text-muted" style="font-size: 11px;">juan@email.com</div>
+                                    <div class="fw-medium small text-truncate" style="max-width: 180px;">
+                                        {{ complaint.title }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ complaint.description|truncatechars:40 }}</div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
-                                    Broken streetlight on Main Street
-                                </div>
-                                <div class="text-muted" style="font-size: 11px;">The streetlight has been flickering...</div>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-secondary">Infrastructure</span></td>
-                        <td><span class="badge bg-danger">High</span></td>
-                        <td><span class="badge bg-warning">Pending</span></td>
-                        <td>
-                            <select class="form-select form-select-sm" style="width: 100px; font-size: 11px;">
-                                <option value="">Unassigned</option>
-                                <option value="admin1">Admin 1</option>
-                                <option value="admin2">Admin 2</option>
-                            </select>
-                        </td>
-                        <td>
-                            <div class="small">Dec 15, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">2 days ago</div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(1)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(1)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ complaint.category }}</span></td>
+                            <td>
+                                <span class="badge 
+                                    {% if complaint.priority == 'urgent' %}bg-danger
+                                    {% elif complaint.priority == 'high' %}bg-danger
+                                    {% elif complaint.priority == 'medium' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ complaint.priority|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if complaint.status == 'pending' %}bg-warning
+                                    {% elif complaint.status == 'in_progress' %}bg-info
+                                    {% elif complaint.status == 'resolved' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ complaint.status|title }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="small">{{ complaint.created_at|date:"M d, Y" }}</div>
+                                <div class="text-muted" style="font-size: 11px;">{{ complaint.created_at|timesince }} ago</div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint({{ complaint.id }})">
+                                        <i class="bi bi-eye"></i>
                                     </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(1, 'in_progress')">
-                                            <i class="bi bi-play me-2"></i>Mark In Progress
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(1, 'resolved')">
-                                            <i class="bi bi-check me-2"></i>Mark Resolved
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(1)">
-                                            <i class="bi bi-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
-                        <td><span class="fw-semibold text-primary">#002</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                    MS
-                                </div>
-                                <div>
-                                    <div class="fw-medium small">Maria Santos</div>
-                                    <div class="text-muted" style="font-size: 11px;">maria@email.com</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
-                                    Noise complaint from neighbor
-                                </div>
-                                <div class="text-muted" style="font-size: 11px;">Loud music playing late at night...</div>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-secondary">Public Safety</span></td>
-                        <td><span class="badge bg-warning">Medium</span></td>
-                        <td><span class="badge bg-info">In Progress</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-1" style="width: 20px; height: 20px; font-size: 9px;">
-                                    A1
-                                </div>
-                                <small>Admin 1</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small">Dec 14, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">3 days ago</div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(2)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(2)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
+                                    <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint({{ complaint.id }})">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(2, 'resolved')">
-                                            <i class="bi bi-check me-2"></i>Mark Resolved
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(2, 'pending')">
-                                            <i class="bi bi-pause me-2"></i>Mark Pending
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(2)">
-                                            <i class="bi bi-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
+                                    <div class="dropdown">
+                                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ complaint.id }}, 'in_progress')">
+                                                <i class="bi bi-play me-2"></i>Mark In Progress
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ complaint.id }}, 'resolved')">
+                                                <i class="bi bi-check me-2"></i>Mark Resolved
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint({{ complaint.id }})">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
-                        <td><span class="fw-semibold text-primary">#003</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                    PG
-                                </div>
-                                <div>
-                                    <div class="fw-medium small">Pedro Garcia</div>
-                                    <div class="text-muted" style="font-size: 11px;">pedro@email.com</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
-                                    Garbage collection missed
-                                </div>
-                                <div class="text-muted" style="font-size: 11px;">Garbage truck didn't come this week...</div>
-                            </div>
-                        </td>
-                        <td><span class="badge bg-secondary">Environment</span></td>
-                        <td><span class="badge bg-success">Low</span></td>
-                        <td><span class="badge bg-success">Resolved</span></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-1" style="width: 20px; height: 20px; font-size: 9px;">
-                                    A2
-                                </div>
-                                <small>Admin 2</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small">Dec 13, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">4 days ago</div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(3)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(3)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="reopenComplaint(3)">
-                                            <i class="bi bi-arrow-clockwise me-2"></i>Reopen
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="archiveComplaint(3)">
-                                            <i class="bi bi-archive me-2"></i>Archive
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(3)">
-                                            <i class="bi bi-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">No complaints found.</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
