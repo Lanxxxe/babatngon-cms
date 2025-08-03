@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}About - Barangay CMS{% endblock %}
+{% block content %}
+<section class="py-5 bg-white" id="about">
+    <div class="container animate-fade-in-up">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+            <p class="lead text-muted">Simple steps to make your voice heard and create positive change</p>
+        </div>
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <span class="fw-bold text-primary fs-4">1</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h5 class="fw-bold">Create Your Account</h5>
+                                <p class="text-muted mb-0">Sign up in seconds with your basic information. Verify your identity to ensure authentic community participation.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <span class="fw-bold text-primary fs-4">2</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h5 class="fw-bold">Report Issues</h5>
+                                <p class="text-muted mb-0">Use our intuitive form to describe problems, upload photos, and pinpoint exact locations with our mapping feature.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <span class="fw-bold text-primary fs-4">3</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h5 class="fw-bold">Track Progress</h5>
+                                <p class="text-muted mb-0">Monitor your complaint's journey from submission to resolution with real-time updates and transparent communication.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <span class="fw-bold text-primary fs-4">4</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h5 class="fw-bold">See Results</h5>
+                                <p class="text-muted mb-0">Receive notifications when issues are resolved and provide feedback to help improve community services.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="{% static './images/babatngon-logo.png' %}" alt="How It Works" class="img-fluid" style="border-radius: 24px; box-shadow: var(--shadow-lg);">
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

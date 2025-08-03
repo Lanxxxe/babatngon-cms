@@ -1,0 +1,390 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Admin Dashboard - Barangay CMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of system performance and key metrics{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ total_complaints|default:247 }}</div>
+                    <div class="stat-label">Total Complaints</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+12% from last month
+                    </div>
+                </div>
+                <i class="bi bi-clipboard-data text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ pending_complaints|default:23 }}</div>
+                    <div class="stat-label">Pending Review</div>
+                    <div class="stat-change">Requires attention</div>
+                </div>
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ in_progress_complaints|default:45 }}</div>
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-change">Being resolved</div>
+                </div>
+                <i class="bi bi-gear text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">94%</div>
+                    <div class="stat-label">Resolution Rate</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+3% this month
+                    </div>
+                </div>
+                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Complaints -->
+    <div class="col-lg-8">
+        <div class="card-admin">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-list-ul me-2"></i>Recent Complaints
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <a href="{% url 'admin_complaints' %}" class="btn btn-admin-outline btn-sm">
+                        View All
+                    </a>
+                </div>
+            </div>
+            <div class="card-body-admin p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Resident</th>
+                                <th>Subject</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="fw-semibold text-primary">#001</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            JD
+                                        </div>
+                                        <span class="fw-medium">Juan Dela Cruz</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        Broken streetlight on Main St
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Infrastructure</span></td>
+                                <td><span class="badge bg-danger">High</span></td>
+                                <td><span class="badge bg-warning">Pending</span></td>
+                                <td>
+                                    <div class="text-muted small">Dec 15, 2024</div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-admin-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-admin-secondary btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="fw-semibold text-primary">#002</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            MS
+                                        </div>
+                                        <span class="fw-medium">Maria Santos</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        Noise complaint from neighbor
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Public Safety</span></td>
+                                <td><span class="badge bg-warning">Medium</span></td>
+                                <td><span class="badge bg-info">In Progress</span></td>
+                                <td>
+                                    <div class="text-muted small">Dec 14, 2024</div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-admin-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-admin-secondary btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="fw-semibold text-primary">#003</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            PG
+                                        </div>
+                                        <span class="fw-medium">Pedro Garcia</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        Garbage collection missed
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">Environment</span></td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td><span class="badge bg-success">Resolved</span></td>
+                                <td>
+                                    <div class="text-muted small">Dec 13, 2024</div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-admin-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-admin-secondary btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-3">
+            <h6 class="mb-3 fw-semibold">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </h6>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-people text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Bulk Assign</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-download text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Export Data</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-bell text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Send Alert</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-gear text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Settings</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Complaints -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <i class="bi bi-exclamation-triangle me-2"></i>High Priority
+            </div>
+            <div class="card-body-admin">
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <div>
+                        <div class="fw-semibold small">#001</div>
+                        <div class="text-muted small">Broken streetlight</div>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm">View</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                    <div>
+                        <div class="fw-semibold small">#005</div>
+                        <div class="text-muted small">Water leak emergency</div>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm">View</button>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'admin_complaints' %}?priority=high" class="btn btn-admin-outline btn-sm">
+                        View All High Priority
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-activity me-2"></i>System Status
+            </div>
+            <div class="card-body-admin">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Server Status</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Database</span>
+                    <span class="badge bg-success">Connected</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Email Service</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small">SMS Service</span>
+                    <span class="badge bg-warning">Limited</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mt-2">
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-bar-chart me-2"></i>Complaints by Category
+            </div>
+            <div class="card-body-admin">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-graph-up me-2"></i>Resolution Trend
+            </div>
+            <div class="card-body-admin">
+                <canvas id="trendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Infrastructure', 'Public Safety', 'Environment', 'Health', 'Others'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // Trend Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Resolved',
+                    data: [12, 19, 15, 25, 22, 30],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }, {
+                    label: 'New',
+                    data: [15, 23, 18, 28, 25, 32],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

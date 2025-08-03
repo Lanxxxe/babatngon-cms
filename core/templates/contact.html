@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Contact - Barangay CMS{% endblock %}
+{% block content %}
+<section class="py-5 bg-white" id="contact">
+    <div class="container animate-fade-in-up">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Get in Touch</h2>
+            <p class="lead text-muted">Have questions? We're here to help you get started</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="contact-card text-center p-4">
+                    <div class="feature-icon mb-3" style="width: 60px; height: 60px; margin: 0 auto;">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Visit Us</h5>
+                    <p class="text-muted">Barangay Hall<br>Main Street, City<br>Philippines</p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="contact-card text-center p-4">
+                    <div class="feature-icon mb-3" style="width: 60px; height: 60px; margin: 0 auto;">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Call Us</h5>
+                    <p class="text-muted">+63 XXX XXX XXXX<br>Mon - Fri: 8AM - 5PM<br>Emergency: 24/7</p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="contact-card text-center p-4">
+                    <div class="feature-icon mb-3" style="width: 60px; height: 60px; margin: 0 auto;">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Email Us</h5>
+                    <p class="text-muted">info@barangaycms.gov.ph<br>support@barangaycms.gov.ph<br>We reply within 24 hours</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

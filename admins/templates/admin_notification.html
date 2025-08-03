@@ -1,0 +1,591 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Notifications - Admin Portal{% endblock %}
+{% block page_title %}Notification Center{% endblock %}
+{% block page_subtitle %}Manage system notifications and communication{% endblock %}
+
+{% block content %}
+<!-- Notification Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">1,247</div>
+                    <div class="stat-label">Total Notifications</div>
+                    <div class="stat-change">This month</div>
+                </div>
+                <i class="bi bi-bell text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">23</div>
+                    <div class="stat-label">Unread</div>
+                    <div class="stat-change">Requires attention</div>
+                </div>
+                <i class="bi bi-bell-fill text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">892</div>
+                    <div class="stat-label">Delivered</div>
+                    <div class="stat-change">98.5% success rate</div>
+                </div>
+                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">Scheduled</div>
+                    <div class="stat-change">Upcoming</div>
+                </div>
+                <i class="bi bi-clock text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="card-admin mb-3">
+    <div class="card-body-admin py-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="mb-0 fw-semibold">Notification Management</h6>
+                <small class="text-muted">Send, schedule, and manage system notifications</small>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                    <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#composeModal">
+                        <i class="bi bi-plus-circle me-1"></i>Compose Notification
+                    </button>
+                    <button class="btn btn-admin-secondary btn-sm" onclick="markAllAsRead()">
+                        <i class="bi bi-check-all me-1"></i>Mark All Read
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportNotifications()">
+                                <i class="bi bi-download me-2"></i>Export Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="notificationSettings()">
+                                <i class="bi bi-gear me-2"></i>Settings
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="notificationTemplates()">
+                                <i class="bi bi-file-text me-2"></i>Templates
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Notifications List -->
+    <div class="col-lg-8">
+        <div class="card-admin">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-semibold">All Notifications</span>
+                    <small class="text-muted ms-2">Recent system and user notifications</small>
+                </div>
+                <div class="d-flex gap-1">
+                    <select class="form-select form-select-sm" id="typeFilter" style="width: auto;">
+                        <option value="">All Types</option>
+                        <option value="system">System</option>
+                        <option value="complaint">Complaint</option>
+                        <option value="user">User</option>
+                        <option value="announcement">Announcement</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
+                        <option value="">All Status</option>
+                        <option value="unread">Unread</option>
+                        <option value="read">Read</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body-admin p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-danger">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="bg-danger bg-opacity-10 rounded-circle p-2">
+                                    <i class="bi bi-exclamation-triangle text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="mb-0 me-2 small fw-semibold">High Priority Complaint Filed</h6>
+                                    <span class="badge bg-danger">Urgent</span>
+                                    <span class="badge bg-secondary ms-1">System</span>
+                                </div>
+                                <p class="mb-1 text-muted small">Complaint #001 - Broken streetlight reported by Juan Dela Cruz requires immediate attention.</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>2 hours ago
+                                    <i class="bi bi-person ms-3 me-1"></i>Juan Dela Cruz
+                                </small>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="markAsRead(1)">
+                                    <i class="bi bi-check me-2"></i>Mark as Read
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="viewDetails(1)">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="archiveNotification(1)">
+                                    <i class="bi bi-archive me-2"></i>Archive
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-success">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="bg-success bg-opacity-10 rounded-circle p-2">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="mb-0 me-2 small fw-semibold">Complaint Resolved</h6>
+                                    <span class="badge bg-success">Resolved</span>
+                                    <span class="badge bg-secondary ms-1">Complaint</span>
+                                </div>
+                                <p class="mb-1 text-muted small">Complaint #045 has been successfully resolved. Resident has been notified.</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>4 hours ago
+                                    <i class="bi bi-person ms-3 me-1"></i>Admin Team
+                                </small>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="markAsRead(2)">
+                                    <i class="bi bi-check me-2"></i>Mark as Read
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="viewDetails(2)">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="archiveNotification(2)">
+                                    <i class="bi bi-archive me-2"></i>Archive
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-info">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="bg-info bg-opacity-10 rounded-circle p-2">
+                                    <i class="bi bi-person-plus text-info"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="mb-0 me-2 small fw-semibold">New Resident Registration</h6>
+                                    <span class="badge bg-info">New User</span>
+                                    <span class="badge bg-secondary ms-1">User</span>
+                                </div>
+                                <p class="mb-1 text-muted small">Maria Santos has registered and is pending account verification.</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>6 hours ago
+                                    <i class="bi bi-person ms-3 me-1"></i>Maria Santos
+                                </small>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="approveUser(3)">
+                                    <i class="bi bi-check me-2"></i>Approve User
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="viewDetails(3)">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="markAsRead(3)">
+                                    <i class="bi bi-check me-2"></i>Mark as Read
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-warning">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="bg-warning bg-opacity-10 rounded-circle p-2">
+                                    <i class="bi bi-megaphone text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="mb-0 me-2 small fw-semibold">System Maintenance Scheduled</h6>
+                                    <span class="badge bg-warning">Scheduled</span>
+                                    <span class="badge bg-secondary ms-1">Announcement</span>
+                                </div>
+                                <p class="mb-1 text-muted small">System maintenance scheduled for Sunday, 2:00 AM - 4:00 AM. Users have been notified.</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>1 day ago
+                                    <i class="bi bi-person ms-3 me-1"></i>System Admin
+                                </small>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="editAnnouncement(4)">
+                                    <i class="bi bi-pencil me-2"></i>Edit
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="viewDetails(4)">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="markAsRead(4)">
+                                    <i class="bi bi-check me-2"></i>Mark as Read
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">Showing 1-4 of 23 notifications</small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link">1</span>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">2</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-3">
+            <h6 class="mb-3 fw-semibold">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </h6>
+            <div class="row g-2">
+                <div class="col-12">
+                    <a href="#" class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#composeModal">
+                        <i class="bi bi-plus-circle text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Send Notification</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn" onclick="broadcastMessage()">
+                        <i class="bi bi-broadcast text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Broadcast</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn" onclick="scheduleNotification()">
+                        <i class="bi bi-calendar-plus text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Schedule</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Types -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <i class="bi bi-pie-chart me-2"></i>Notification Types
+            </div>
+            <div class="card-body-admin">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-danger rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                        <span class="small">System Alerts</span>
+                    </div>
+                    <span class="fw-semibold small">45</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                        <span class="small">Complaint Updates</span>
+                    </div>
+                    <span class="fw-semibold small">123</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                        <span class="small">User Activities</span>
+                    </div>
+                    <span class="fw-semibold small">67</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                        <span class="small">Announcements</span>
+                    </div>
+                    <span class="fw-semibold small">12</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-activity me-2"></i>Recent Activity
+            </div>
+            <div class="card-body-admin">
+                <div class="timeline">
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 28px; height: 28px;">
+                                <i class="bi bi-bell text-primary" style="font-size: 12px;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1 small fw-semibold">Notification sent</h6>
+                            <p class="text-muted mb-1 small">Maintenance alert sent to all users</p>
+                            <small class="text-muted">5 minutes ago</small>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 28px; height: 28px;">
+                                <i class="bi bi-check text-success" style="font-size: 12px;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1 small fw-semibold">Bulk notification completed</h6>
+                            <p class="text-muted mb-1 small">247 notifications delivered successfully</p>
+                            <small class="text-muted">1 hour ago</small>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 28px; height: 28px;">
+                                <i class="bi bi-clock text-warning" style="font-size: 12px;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1 small fw-semibold">Scheduled notification</h6>
+                            <p class="text-muted mb-1 small">Community meeting reminder scheduled</p>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compose Notification Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Compose Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="composeForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="notificationType" class="form-label">Type</label>
+                            <select class="form-select" id="notificationType" required>
+                                <option value="">Select Type</option>
+                                <option value="system">System Alert</option>
+                                <option value="complaint">Complaint Update</option>
+                                <option value="announcement">Announcement</option>
+                                <option value="reminder">Reminder</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" required>
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="recipients" class="form-label">Recipients</label>
+                            <select class="form-select" id="recipients" required>
+                                <option value="">Select Recipients</option>
+                                <option value="all">All Users</option>
+                                <option value="residents">All Residents</option>
+                                <option value="admins">All Admins</option>
+                                <option value="barangay1">Barangay 1 Residents</option>
+                                <option value="barangay2">Barangay 2 Residents</option>
+                                <option value="custom">Custom Selection</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="subject" required 
+                                   placeholder="Enter notification subject">
+                        </div>
+                        <div class="col-12">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" rows="4" required
+                                      placeholder="Enter your message here..."></textarea>
+                            <div class="form-text">You can use basic HTML formatting</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="deliveryMethod" class="form-label">Delivery Method</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="emailDelivery" checked>
+                                <label class="form-check-label" for="emailDelivery">Email</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="smsDelivery">
+                                <label class="form-check-label" for="smsDelivery">SMS</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="pushDelivery" checked>
+                                <label class="form-check-label" for="pushDelivery">Push Notification</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="scheduleOption" class="form-label">Schedule</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="schedule" id="sendNow" checked>
+                                <label class="form-check-label" for="sendNow">Send Now</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="schedule" id="scheduleLater">
+                                <label class="form-check-label" for="scheduleLater">Schedule for Later</label>
+                            </div>
+                            <div class="mt-2" id="scheduleDateTime" style="display: none;">
+                                <input type="datetime-local" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-admin-secondary" onclick="saveDraft()">Save Draft</button>
+                <button type="button" class="btn btn-admin-primary" onclick="sendNotification()">Send Notification</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Schedule option toggle
+    document.getElementById('scheduleLater').addEventListener('change', function() {
+        document.getElementById('scheduleDateTime').style.display = this.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('sendNow').addEventListener('change', function() {
+        document.getElementById('scheduleDateTime').style.display = 'none';
+    });
+
+    // Notification actions
+    function markAsRead(id) {
+        console.log(`Marking notification ${id} as read`);
+    }
+
+    function markAllAsRead() {
+        if (confirm('Mark all notifications as read?')) {
+            console.log('Marking all notifications as read');
+        }
+    }
+
+    function viewDetails(id) {
+        console.log(`Viewing details for notification ${id}`);
+    }
+
+    function archiveNotification(id) {
+        console.log(`Archiving notification ${id}`);
+    }
+
+    function approveUser(id) {
+        console.log(`Approving user from notification ${id}`);
+    }
+
+    function editAnnouncement(id) {
+        console.log(`Editing announcement ${id}`);
+    }
+
+    function sendNotification() {
+        const form = document.getElementById('composeForm');
+        if (form.checkValidity()) {
+            console.log('Sending notification');
+            bootstrap.Modal.getInstance(document.getElementById('composeModal')).hide();
+        } else {
+            form.reportValidity();
+        }
+    }
+
+    function saveDraft() {
+        console.log('Saving notification draft');
+    }
+
+    function broadcastMessage() {
+        console.log('Opening broadcast modal');
+    }
+
+    function scheduleNotification() {
+        console.log('Opening schedule modal');
+    }
+
+    function exportNotifications() {
+        window.open('/admin/notifications/export/', '_blank');
+    }
+
+    function notificationSettings() {
+        console.log('Opening notification settings');
+    }
+
+    function notificationTemplates() {
+        console.log('Opening notification templates');
+    }
+</script>
+{% endblock %}

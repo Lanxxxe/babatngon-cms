@@ -1,0 +1,452 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Manage Complaints - Admin Portal{% endblock %}
+{% block page_title %}Complaint Management{% endblock %}
+{% block page_subtitle %}Review, assign, and track all community complaints{% endblock %}
+
+{% block content %}
+<!-- Filters and Actions -->
+<div class="card-admin mb-3">
+    <div class="card-body-admin py-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="searchComplaints" class="form-label">Search</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchComplaints" 
+                           placeholder="Search by ID, resident, or subject...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select class="form-select form-select-sm" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="categoryFilter" class="form-label">Category</label>
+                <select class="form-select form-select-sm" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="public_safety">Public Safety</option>
+                    <option value="environment">Environment</option>
+                    <option value="health">Health</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="priorityFilter" class="form-label">Priority</label>
+                <select class="form-select form-select-sm" id="priorityFilter">
+                    <option value="">All Priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-admin-primary btn-sm">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <button class="btn btn-admin-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="bulkAssign()">
+                                <i class="bi bi-people me-2"></i>Bulk Assign
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportData()">
+                                <i class="bi bi-download me-2"></i>Export Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="printReport()">
+                                <i class="bi bi-printer me-2"></i>Print Report
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complaints Table -->
+<div class="card-admin">
+    <div class="card-header-admin d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-semibold">All Complaints</span>
+            <small class="text-muted ms-2">Showing 1-10 of 247 complaints</small>
+        </div>
+        <div class="d-flex gap-1">
+            <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Card View
+            </button>
+            <button class="btn btn-admin-primary btn-sm">
+                <i class="bi bi-list-ul me-1"></i>Table View
+            </button>
+        </div>
+    </div>
+    <div class="card-body-admin p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
+                        </th>
+                        <th>ID</th>
+                        <th>Resident</th>
+                        <th>Subject</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Date Filed</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td><span class="fw-semibold text-primary">#001</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                    JD
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Juan Dela Cruz</div>
+                                    <div class="text-muted" style="font-size: 11px;">juan@email.com</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
+                                    Broken streetlight on Main Street
+                                </div>
+                                <div class="text-muted" style="font-size: 11px;">The streetlight has been flickering...</div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">Infrastructure</span></td>
+                        <td><span class="badge bg-danger">High</span></td>
+                        <td><span class="badge bg-warning">Pending</span></td>
+                        <td>
+                            <select class="form-select form-select-sm" style="width: 100px; font-size: 11px;">
+                                <option value="">Unassigned</option>
+                                <option value="admin1">Admin 1</option>
+                                <option value="admin2">Admin 2</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="small">Dec 15, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">2 days ago</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(1)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(1)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(1, 'in_progress')">
+                                            <i class="bi bi-play me-2"></i>Mark In Progress
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(1, 'resolved')">
+                                            <i class="bi bi-check me-2"></i>Mark Resolved
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(1)">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td><span class="fw-semibold text-primary">#002</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                    MS
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Maria Santos</div>
+                                    <div class="text-muted" style="font-size: 11px;">maria@email.com</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
+                                    Noise complaint from neighbor
+                                </div>
+                                <div class="text-muted" style="font-size: 11px;">Loud music playing late at night...</div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">Public Safety</span></td>
+                        <td><span class="badge bg-warning">Medium</span></td>
+                        <td><span class="badge bg-info">In Progress</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-1" style="width: 20px; height: 20px; font-size: 9px;">
+                                    A1
+                                </div>
+                                <small>Admin 1</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">Dec 14, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">3 days ago</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(2)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(2)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(2, 'resolved')">
+                                            <i class="bi bi-check me-2"></i>Mark Resolved
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus(2, 'pending')">
+                                            <i class="bi bi-pause me-2"></i>Mark Pending
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(2)">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td><span class="fw-semibold text-primary">#003</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                    PG
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Pedro Garcia</div>
+                                    <div class="text-muted" style="font-size: 11px;">pedro@email.com</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small text-truncate" style="max-width: 180px;">
+                                    Garbage collection missed
+                                </div>
+                                <div class="text-muted" style="font-size: 11px;">Garbage truck didn't come this week...</div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">Environment</span></td>
+                        <td><span class="badge bg-success">Low</span></td>
+                        <td><span class="badge bg-success">Resolved</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-1" style="width: 20px; height: 20px; font-size: 9px;">
+                                    A2
+                                </div>
+                                <small>Admin 2</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">Dec 13, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">4 days ago</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewComplaint(3)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editComplaint(3)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="reopenComplaint(3)">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>Reopen
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="archiveComplaint(3)">
+                                            <i class="bi bi-archive me-2"></i>Archive
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComplaint(3)">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <select class="form-select form-select-sm" style="width: auto;">
+                    <option value="10">10 per page</option>
+                    <option value="25">25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Complaint Detail Modal -->
+<div class="modal fade" id="complaintModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complaint Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="complaintModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-admin-primary">Update Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Complaint actions
+    function viewComplaint(id) {
+        // Load complaint details in modal
+        document.getElementById('complaintModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Complaint #${id}</h6>
+                    <p><strong>Subject:</strong> Broken streetlight on Main Street</p>
+                    <p><strong>Category:</strong> Infrastructure</p>
+                    <p><strong>Priority:</strong> High</p>
+                    <p><strong>Status:</strong> Pending</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Resident:</strong> Juan Dela Cruz</p>
+                    <p><strong>Email:</strong> juan@email.com</p>
+                    <p><strong>Phone:</strong> +63 XXX XXX XXXX</p>
+                    <p><strong>Date Filed:</strong> Dec 15, 2024</p>
+                </div>
+                <div class="col-12">
+                    <h6>Description</h6>
+                    <p>The streetlight on Main Street has been flickering for several days and now it's completely out. This creates a safety hazard for pedestrians and drivers, especially during nighttime.</p>
+                    
+                    <h6>Location</h6>
+                    <p>Main Street, corner of 1st Avenue, Barangay Centro</p>
+                    
+                    <h6>Attachments</h6>
+                    <div class="d-flex gap-2">
+                        <img src="/placeholder.svg?height=100&width=100" class="img-thumbnail" alt="Evidence">
+                        <img src="/placeholder.svg?height=100&width=100" class="img-thumbnail" alt="Evidence">
+                    </div>
+                </div>
+            </div>
+        `;
+        new bootstrap.Modal(document.getElementById('complaintModal')).show();
+    }
+
+    function editComplaint(id) {
+        window.location.href = `/admin/complaints/${id}/edit/`;
+    }
+
+    function updateStatus(id, status) {
+        if (confirm(`Are you sure you want to update the status to ${status}?`)) {
+            console.log(`Updating complaint ${id} to ${status}`);
+        }
+    }
+
+    function deleteComplaint(id) {
+        if (confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
+            console.log(`Deleting complaint ${id}`);
+        }
+    }
+
+    function bulkAssign() {
+        const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+        if (selected.length === 0) {
+            alert('Please select complaints to assign.');
+            return;
+        }
+        console.log('Bulk assign modal');
+    }
+
+    function exportData() {
+        window.open('/admin/complaints/export/', '_blank');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    function toggleView() {
+        console.log('Toggle view');
+    }
+</script>
+{% endblock %}

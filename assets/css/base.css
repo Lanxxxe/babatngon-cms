@@ -1,0 +1,347 @@
+
+:root {
+    --primary-blue: #2563eb;
+    --primary-blue-dark: #1e40af;
+    --primary-blue-light: #3b82f6;
+    --accent-blue: #60a5fa;
+    --success-green: #22c55e;
+    --dark-bg: #1e40af;
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Modern Navigation */
+.navbar-modern {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.navbar-modern.scrolled {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: var(--shadow-md);
+}
+
+.navbar-brand-modern {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-blue);
+}
+
+.navbar-brand-modern:hover{
+    color: var(--primary-blue-dark);
+}
+
+.nav-link-modern {
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link-modern:hover {
+    color: var(--primary-blue-dark);
+}
+
+.nav-link-modern::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -5px;
+    left: 50%;
+    background: var(--primary-blue);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link-modern:hover::after {
+    width: 100%;
+}
+
+/* Modern Buttons */
+.btn-modern {
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid var(--primary-blue-dark);
+}
+
+.btn-modern:hover {
+    color: var(--primary-blue-dark);
+    box-shadow: var(--shadow-xl);
+    border: 2px solid var(--primary-blue-light);
+
+}
+
+.btn-modern-primary {
+    background: var(--primary-blue);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-modern-primary:hover {
+    box-shadow: var(--shadow-lg);
+    color: white;
+    background: var(--primary-blue-dark);
+}
+
+/* .btn-modern-outline {
+    background: transparent;
+    position: relative;
+}
+
+.btn-modern-outline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--primary-blue);
+    border-radius: 12px;
+    padding: 2px;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+} */
+
+/* Modern Cards */
+.card-modern {
+    background: var(--dark-bg);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card-modern:hover {
+    box-shadow: var(--shadow-xl);
+}
+
+.card-modern-glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Hero Section */
+.hero-modern {
+    background: var(--dark-bg);
+    color: white;
+    padding: 120px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23667eea" stop-opacity="0.3"/><stop offset="100%" stop-color="%23764ba2" stop-opacity="0.1"/></radialGradient></defs><circle cx="200" cy="200" r="300" fill="url(%23a)"/><circle cx="800" cy="800" r="400" fill="url(%23a)"/></svg>');
+    opacity: 0.5;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+/* Feature Cards */
+.feature-card-modern {
+    color: var(--primary-blue-light);
+    border-radius: 24px;
+    padding: 2rem;
+    text-align: center;
+    border: none;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-blue-light);
+    color: white;
+    border-color: var(--primary-blue-dark);
+}
+
+
+.feature-card-modern:hover {
+    box-shadow: var(--shadow-xl);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: var(--primary-blue-light);
+    font-size: 2rem;
+}
+
+/* Stats Section */
+.stats-modern {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    box-shadow: var(--shadow-lg);
+    margin: -60px auto 0;
+    position: relative;
+    z-index: 10;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-blue-dark);
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: var(--primary-blue-dark);
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-weight: 500;
+}
+
+/* Loging Page */
+.login-modern, .registration-modern, .contact-card {
+    border: 2px solid var(--border-color);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Remove input border/focus/hover/active effects */
+.form-control,
+.form-control:focus,
+.form-control:active,
+.form-control:visited,
+.input-group-text,
+.input-group-text:focus,
+.input-group-text:active {
+    border-color: #e2e8f0 !important; /* or your default border color */
+    box-shadow: none !important;
+    outline: none !important;
+    background-color: #fff !important;
+    transition: none !important;
+}
+
+/* Remove button focus/active effects in input group */
+.input-group .btn:focus,
+.input-group .btn:active {
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Remove hover effect on form-control */
+.form-control:hover {
+    border-color: #e2e8f0 !important;
+}
+
+/* Optional: Remove autofill background in Chrome */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+    box-shadow: 0 0 0 1000px #fff inset !important;
+    -webkit-text-fill-color: #1e293b !important;
+}
+/* Footer */
+.footer-modern {
+    background: var(--dark-bg);
+    color: white;
+    padding: 4rem 0 2rem;
+    margin-top: 6rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .stats-modern {
+        margin-top: -40px;
+        padding: 2rem 1rem;
+    }
+    
+    .feature-card-modern {
+        padding: 1.5rem;
+    }
+}

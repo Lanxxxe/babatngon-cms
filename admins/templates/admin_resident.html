@@ -1,0 +1,624 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Residents Management - Admin Portal{% endblock %}
+{% block page_title %}Residents Management{% endblock %}
+{% block page_subtitle %}Manage resident accounts and community members{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">1,247</div>
+                    <div class="stat-label">Total Residents</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+23 this month
+                    </div>
+                </div>
+                <i class="bi bi-people text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">892</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-change">Last 30 days</div>
+                </div>
+                <i class="bi bi-person-check text-success" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">45</div>
+                    <div class="stat-label">Pending Verification</div>
+                    <div class="stat-change">Requires review</div>
+                </div>
+                <i class="bi bi-person-exclamation text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">New This Month</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+18% growth
+                    </div>
+                </div>
+                <i class="bi bi-person-plus text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="card-admin mb-3">
+    <div class="card-body-admin py-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="searchResidents" class="form-label">Search Residents</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchResidents" 
+                           placeholder="Search by name, email, or phone...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="barangayFilter" class="form-label">Barangay</label>
+                <select class="form-select form-select-sm" id="barangayFilter">
+                    <option value="">All Barangays</option>
+                    <option value="barangay1">Barangay 1</option>
+                    <option value="barangay2">Barangay 2</option>
+                    <option value="barangay3">Barangay 3</option>
+                    <option value="barangay4">Barangay 4</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select class="form-select form-select-sm" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-admin-primary btn-sm">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <button class="btn btn-admin-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                    </button>
+                    <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addResidentModal">
+                        <i class="bi bi-person-plus me-1"></i>Add Resident
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportResidents()">
+                                <i class="bi bi-download me-2"></i>Export Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="importResidents()">
+                                <i class="bi bi-upload me-2"></i>Import Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="sendBulkNotification()">
+                                <i class="bi bi-bell me-2"></i>Send Notification
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Residents Table -->
+<div class="card-admin">
+    <div class="card-header-admin d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-semibold">All Residents</span>
+            <small class="text-muted ms-2">Showing 1-10 of 1,247 residents</small>
+        </div>
+        <div class="d-flex gap-1">
+            <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Card View
+            </button>
+            <button class="btn btn-admin-primary btn-sm">
+                <i class="bi bi-list-ul me-1"></i>Table View
+            </button>
+        </div>
+    </div>
+    <div class="card-body-admin p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
+                        </th>
+                        <th>Resident</th>
+                        <th>Contact Info</th>
+                        <th>Barangay</th>
+                        <th>Complaints</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Last Active</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
+                                    JD
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Juan Dela Cruz</div>
+                                    <div class="text-muted" style="font-size: 11px;">@juandc</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small">juan@email.com</div>
+                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">Barangay 1</span>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <div class="fw-bold text-primary">12</div>
+                                <div class="text-muted" style="font-size: 10px;">complaints</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td>
+                            <div class="small">Jan 15, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">11 months ago</div>
+                        </td>
+                        <td>
+                            <div class="small">2 hours ago</div>
+                            <div class="text-success" style="font-size: 11px;">Online</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(1)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(1)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(1)">
+                                            <i class="bi bi-chat me-2"></i>Send Message
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(1)">
+                                            <i class="bi bi-clipboard me-2"></i>View Complaints
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="suspendResident(1)">
+                                            <i class="bi bi-pause me-2"></i>Suspend Account
+                                        </a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident(1)">
+                                            <i class="bi bi-trash me-2"></i>Delete Account
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
+                                    MS
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Maria Santos</div>
+                                    <div class="text-muted" style="font-size: 11px;">@mariasantos</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small">maria@email.com</div>
+                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">Barangay 2</span>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <div class="fw-bold text-primary">8</div>
+                                <div class="text-muted" style="font-size: 10px;">complaints</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">Pending</span>
+                        </td>
+                        <td>
+                            <div class="small">Dec 10, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">1 week ago</div>
+                        </td>
+                        <td>
+                            <div class="small">1 day ago</div>
+                            <div class="text-muted" style="font-size: 11px;">Offline</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(2)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(2)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="approveResident(2)">
+                                            <i class="bi bi-check me-2"></i>Approve Account
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(2)">
+                                            <i class="bi bi-chat me-2"></i>Send Message
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(2)">
+                                            <i class="bi bi-clipboard me-2"></i>View Complaints
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="rejectResident(2)">
+                                            <i class="bi bi-x me-2"></i>Reject Account
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
+                                    PG
+                                </div>
+                                <div>
+                                    <div class="fw-medium small">Pedro Garcia</div>
+                                    <div class="text-muted" style="font-size: 11px;">@pedrogarcia</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-medium small">pedro@email.com</div>
+                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">Barangay 3</span>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <div class="fw-bold text-primary">3</div>
+                                <div class="text-muted" style="font-size: 10px;">complaints</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td>
+                            <div class="small">Mar 22, 2024</div>
+                            <div class="text-muted" style="font-size: 11px;">9 months ago</div>
+                        </td>
+                        <td>
+                            <div class="small">5 minutes ago</div>
+                            <div class="text-success" style="font-size: 11px;">Online</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(3)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(3)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(3)">
+                                            <i class="bi bi-chat me-2"></i>Send Message
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(3)">
+                                            <i class="bi bi-clipboard me-2"></i>View Complaints
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="suspendResident(3)">
+                                            <i class="bi bi-pause me-2"></i>Suspend Account
+                                        </a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident(3)">
+                                            <i class="bi bi-trash me-2"></i>Delete Account
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <select class="form-select form-select-sm" style="width: auto;">
+                    <option value="10">10 per page</option>
+                    <option value="25">25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Add Resident Modal -->
+<div class="modal fade" id="addResidentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Resident</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addResidentForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="barangay" class="form-label">Barangay</label>
+                            <select class="form-select" id="barangay" required>
+                                <option value="">Select Barangay</option>
+                                <option value="barangay1">Barangay 1</option>
+                                <option value="barangay2">Barangay 2</option>
+                                <option value="barangay3">Barangay 3</option>
+                                <option value="barangay4">Barangay 4</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="address" class="form-label">Complete Address</label>
+                            <textarea class="form-control" id="address" rows="2" required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Temporary Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">Account Status</label>
+                            <select class="form-select" id="status">
+                                <option value="active">Active</option>
+                                <option value="pending">Pending Verification</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-admin-primary" onclick="saveResident()">Add Resident</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resident Detail Modal -->
+<div class="modal fade" id="residentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Resident Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="residentModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-admin-primary">Edit Resident</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Resident actions
+    function viewResident(id) {
+        document.getElementById('residentModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <div class="user-avatar-admin mb-3" style="width: 80px; height: 80px; font-size: 1.5rem; margin: 0 auto;">
+                        JD
+                    </div>
+                    <h5>Juan Dela Cruz</h5>
+                    <p class="text-muted">@juandc</p>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="col-md-8">
+                    <h6>Contact Information</h6>
+                    <p><strong>Email:</strong> juan@email.com</p>
+                    <p><strong>Phone:</strong> +63 XXX XXX XXXX</p>
+                    <p><strong>Address:</strong> 123 Main Street, Barangay 1</p>
+                    
+                    <h6>Account Details</h6>
+                    <p><strong>Member Since:</strong> January 15, 2024</p>
+                    <p><strong>Last Active:</strong> 2 hours ago</p>
+                    <p><strong>Total Complaints:</strong> 12</p>
+                    <p><strong>Resolved Complaints:</strong> 10</p>
+                    
+                    <h6>Recent Activity</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-clipboard text-primary me-2"></i>
+                            Filed complaint #001 - 2 days ago
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Complaint #045 resolved - 1 week ago
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-person text-info me-2"></i>
+                            Updated profile information - 2 weeks ago
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        new bootstrap.Modal(document.getElementById('residentModal')).show();
+    }
+
+    function editResident(id) {
+        window.location.href = `/admin/residents/${id}/edit/`;
+    }
+
+    function suspendResident(id) {
+        if (confirm('Are you sure you want to suspend this resident account?')) {
+            console.log(`Suspending resident ${id}`);
+        }
+    }
+
+    function deleteResident(id) {
+        if (confirm('Are you sure you want to delete this resident account? This action cannot be undone.')) {
+            console.log(`Deleting resident ${id}`);
+        }
+    }
+
+    function approveResident(id) {
+        if (confirm('Approve this resident account?')) {
+            console.log(`Approving resident ${id}`);
+        }
+    }
+
+    function rejectResident(id) {
+        if (confirm('Reject this resident account?')) {
+            console.log(`Rejecting resident ${id}`);
+        }
+    }
+
+    function sendMessage(id) {
+        console.log(`Send message to resident ${id}`);
+    }
+
+    function viewComplaints(id) {
+        window.location.href = `/admin/complaints/?resident=${id}`;
+    }
+
+    function saveResident() {
+        const form = document.getElementById('addResidentForm');
+        if (form.checkValidity()) {
+            console.log('Saving new resident');
+            bootstrap.Modal.getInstance(document.getElementById('addResidentModal')).hide();
+        } else {
+            form.reportValidity();
+        }
+    }
+
+    function exportResidents() {
+        window.open('/admin/residents/export/', '_blank');
+    }
+
+    function importResidents() {
+        console.log('Import residents');
+    }
+
+    function sendBulkNotification() {
+        const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+        if (selected.length === 0) {
+            alert('Please select residents to notify.');
+            return;
+        }
+        console.log('Send bulk notification');
+    }
+
+    function toggleView() {
+        console.log('Toggle view');
+    }
+</script>
+{% endblock %}
