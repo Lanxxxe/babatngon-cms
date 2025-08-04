@@ -48,15 +48,22 @@
                     <li class="nav-item">
                         <a class="nav-link nav-link-modern" href="{% url 'contact' %}">Contact</a>
                     </li>
+
                 </ul>
                 
                 <div class="d-flex gap-2 ms-3">
-                    <a href="{% url 'login' %}" class="btn btn-md btn-modern btn-modern-outline">
-                        Sign In
+                    {% if user.role == 'resident' %}
+                        <a href="{% url 'resident_dashboard' %}" class="btn btn-md btn-modern btn-modern-outline">
+                        Dashboard
                     </a>
-                    <a href="{% url 'registration' %}" class="btn btn-md btn-modern btn-modern-primary">
-                        Get Started
-                    </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-md btn-modern btn-modern-outline">
+                            Sign In
+                        </a>
+                        <a href="{% url 'registration' %}" class="btn btn-md btn-modern btn-modern-primary">
+                            Get Started
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

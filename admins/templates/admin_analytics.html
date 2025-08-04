@@ -93,128 +93,28 @@
     </div>
 </div>
 
-<!-- Charts Row 1 -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card-admin">
-            <div class="card-header-admin d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="bi bi-graph-up me-2"></i>Complaints Trend
-                </div>
-                <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="trendType" id="daily" checked>
-                    <label class="btn btn-outline-primary" for="daily">Daily</label>
-                    
-                    <input type="radio" class="btn-check" name="trendType" id="weekly">
-                    <label class="btn btn-outline-primary" for="weekly">Weekly</label>
-                    
-                    <input type="radio" class="btn-check" name="trendType" id="monthly">
-                    <label class="btn btn-outline-primary" for="monthly">Monthly</label>
-                </div>
-            </div>
-            <div class="card-body-admin">
-                <canvas id="trendChart" height="250"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4">
-        <div class="card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-pie-chart me-2"></i>Status Distribution
-            </div>
-            <div class="card-body-admin">
-                <canvas id="statusChart" height="200"></canvas>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="d-flex align-items-center small">
-                            <span class="badge bg-warning me-2" style="width: 12px; height: 12px;"></span>Pending
-                        </span>
-                        <span class="fw-semibold small">23 (9.3%)</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="d-flex align-items-center small">
-                            <span class="badge bg-info me-2" style="width: 12px; height: 12px;"></span>In Progress
-                        </span>
-                        <span class="fw-semibold small">45 (18.2%)</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="d-flex align-items-center small">
-                            <span class="badge bg-success me-2" style="width: 12px; height: 12px;"></span>Resolved
-                        </span>
-                        <span class="fw-semibold small">179 (72.5%)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Row 2 -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-6">
-        <div class="card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-bar-chart me-2"></i>Complaints by Category
-            </div>
-            <div class="card-body-admin">
-                <canvas id="categoryChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-6">
-        <div class="card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-speedometer2 me-2"></i>Priority Distribution
-            </div>
-            <div class="card-body-admin">
-                <canvas id="priorityChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Geographic and Performance Analysis -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card-admin">
-            <div class="card-header-admin d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="bi bi-geo-alt me-2"></i>Geographic Distribution
+<div class="row g-3 mb-3">
+    <div class="row col-lg-8 g-2">
+       <div class="col-lg-12">
+            <div class="card-admin">
+                <div class="card-header-admin">
+                    <i class="bi bi-bar-chart me-2"></i>Complaints by Category
                 </div>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary active">Map View</button>
-                    <button class="btn btn-outline-primary">List View</button>
+                <div class="card-body-admin">
+                    <canvas id="categoryChart" height="200"></canvas>
                 </div>
             </div>
-            <div class="card-body-admin">
-                <div id="map" style="height: 300px; background: var(--bg-gray-100); border-radius: var(--radius-md); position: relative;">
-                    <div class="d-flex align-items-center justify-content-center h-100">
-                        <div class="text-center">
-                            <i class="bi bi-map text-muted" style="font-size: 3rem;"></i>
-                            <h6 class="text-muted mt-3">Interactive Complaint Map</h6>
-                            <p class="text-muted small">Visual representation of complaint locations across barangays</p>
-                            <div class="row mt-3">
-                                <div class="col-3 text-center">
-                                    <div class="bg-danger rounded-circle d-inline-block" style="width: 10px; height: 10px;"></div>
-                                    <small class="d-block mt-1" style="font-size: 10px;">High Priority</small>
-                                </div>
-                                <div class="col-3 text-center">
-                                    <div class="bg-warning rounded-circle d-inline-block" style="width: 10px; height: 10px;"></div>
-                                    <small class="d-block mt-1" style="font-size: 10px;">Medium Priority</small>
-                                </div>
-                                <div class="col-3 text-center">
-                                    <div class="bg-success rounded-circle d-inline-block" style="width: 10px; height: 10px;"></div>
-                                    <small class="d-block mt-1" style="font-size: 10px;">Low Priority</small>
-                                </div>
-                                <div class="col-3 text-center">
-                                    <div class="bg-secondary rounded-circle d-inline-block" style="width: 10px; height: 10px;"></div>
-                                    <small class="d-block mt-1" style="font-size: 10px;">Resolved</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        </div>
+        
+        <div class="col-lg-12">
+            <div class="card-admin">
+                <div class="card-header-admin">
+                    <i class="bi bi-speedometer2 me-2"></i>Priority Distribution
+                </div>
+                <div class="card-body-admin">
+                    <canvas id="priorityChart" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -496,70 +396,25 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Trend Chart
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const trendChart = new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'New Complaints',
-                    data: [65, 59, 80, 81, 56, 55, 40, 65, 75, 85, 70, 90],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 2
-                }, {
-                    label: 'Resolved',
-                    data: [45, 49, 60, 71, 46, 45, 30, 55, 65, 75, 60, 80],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { 
-                        position: 'top',
-                        labels: { font: { size: 12 } }
-                    }
-                },
-                scales: { 
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { font: { size: 11 } }
-                    },
-                    x: {
-                        ticks: { font: { size: 11 } }
-                    }
-                }
-            }
-        });
-
         // Status Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Pending', 'In Progress', 'Resolved', 'Rejected'],
-                datasets: [{
-                    data: [23, 45, 179, 0],
-                    backgroundColor: ['#f59e0b', '#06b6d4', '#10b981', '#ef4444']
-                }]
+            labels: ['Pending', 'In Progress', 'Resolved', 'Rejected'],
+            datasets: [{
+                data: [23, 45, 179, 0],
+                backgroundColor: ['#f59e0b', '#06b6d4', '#10b981', '#ef4444']
+            }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { 
-                        display: false 
-                    }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { 
+                display: false 
                 }
+            }
             }
         });
 

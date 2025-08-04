@@ -47,7 +47,7 @@
                     </a>
                 </div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'admin_analytics' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+                    <a href="{% url 'admin_analytics' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-graph-up"></i>
                         </div>
@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            <div class="nav-section-admin">
+            <!-- <div class="nav-section-admin">
                 <div class="nav-section-title-admin">Communication</div>
                 <div class="nav-item-admin">
                     <a href="{% url 'admin_notifications' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
@@ -120,11 +120,19 @@
                         <span class="nav-text-admin">Announcements</span>
                     </a>
                 </div>
-            </div>
+            </div> -->
 
             <div class="nav-section-admin">
                 <div class="nav-section-title-admin">System</div>
                 <div class="nav-item-admin">
+                    <a href="{% url 'accounts' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'accounts' %}active{% endif %}">
+                        <div class="nav-icon-admin">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <span class="nav-text-admin">Accounts</span>
+                    </a>
+                </div>
+                <!-- <div class="nav-item-admin">
                     <a href="#" class="nav-link-admin">
                         <div class="nav-icon-admin">
                             <i class="bi bi-file-earmark-text"></i>
@@ -139,9 +147,9 @@
                         </div>
                         <span class="nav-text-admin">Security</span>
                     </a>
-                </div>
+                </div> -->
                 <div class="nav-item-admin">
-                    <a href="" class="nav-link-admin">
+                    <a href="{% url 'admin_logout' %}" class="nav-link-admin">
                         <div class="nav-icon-admin">
                             <i class="bi bi-box-arrow-right"></i>
                         </div>

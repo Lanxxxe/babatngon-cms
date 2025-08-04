@@ -59,7 +59,7 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="" class="nav-link-modern {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+                    <a href="{% url 'my_complaints' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-clipboard-data"></i>
                         </div>
@@ -67,7 +67,7 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="" class="nav-link-modern {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+                    <a href="{% url 'my_assistance' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_assistance' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-clipboard-pulse"></i>
                         </div>
@@ -79,7 +79,7 @@
             <div class="nav-section">
                 <div class="nav-section-title">Account</div>
                 <div class="nav-item-modern">
-                    <a href="" class="nav-link-modern {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <a href="{% url 'profile' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-person"></i>
                         </div>

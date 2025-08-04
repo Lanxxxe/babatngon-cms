@@ -11,7 +11,7 @@
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">1,247</div>
+                    <div class="stat-number">{{ total_residents }}</div>
                     <div class="stat-label">Total Residents</div>
                     <div class="stat-change">
                         <i class="bi bi-arrow-up me-1"></i>+23 this month
@@ -26,7 +26,7 @@
         <div class="stat-card success">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">892</div>
+                    <div class="stat-number">{{ active_users }}</div>
                     <div class="stat-label">Active Users</div>
                     <div class="stat-change">Last 30 days</div>
                 </div>
@@ -39,7 +39,7 @@
         <div class="stat-card warning">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">45</div>
+                    <div class="stat-number">{{ pending_verification }}</div>
                     <div class="stat-label">Pending Verification</div>
                     <div class="stat-change">Requires review</div>
                 </div>
@@ -52,7 +52,7 @@
         <div class="stat-card info">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">156</div>
+                    <div class="stat-number">{{ new_this_month }}</div>
                     <div class="stat-label">New This Month</div>
                     <div class="stat-change">
                         <i class="bi bi-arrow-up me-1"></i>+18% growth
@@ -74,7 +74,7 @@
                     <span class="input-group-text">
                         <i class="bi bi-search"></i>
                     </span>
-                    <input type="text" class="form-control" id="searchResidents" 
+                    <input type="text" class="form-control pt-1 pb-2" id="searchResidents" 
                            placeholder="Search by name, email, or phone...">
                 </div>
             </div>
@@ -100,16 +100,16 @@
             </div>
             <div class="col-md-4">
                 <div class="d-flex gap-1">
-                    <button class="btn btn-admin-primary btn-sm">
+                    <button class="btn btn-admin-primary btn-sm p-2">
                         <i class="bi bi-funnel me-1"></i>Filter
                     </button>
                     <button class="btn btn-admin-secondary btn-sm">
                         <i class="bi bi-arrow-clockwise me-1"></i>Reset
                     </button>
-                    <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addResidentModal">
+                    <!-- <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addResidentModal">
                         <i class="bi bi-person-plus me-1"></i>Add Resident
-                    </button>
-                    <div class="dropdown">
+                    </button> -->
+                    <!-- <div class="dropdown">
                         <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bi bi-three-dots"></i>
                         </button>
@@ -124,7 +124,7 @@
                                 <i class="bi bi-bell me-2"></i>Send Notification
                             </a></li>
                         </ul>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -139,9 +139,9 @@
             <small class="text-muted ms-2">Showing 1-10 of 1,247 residents</small>
         </div>
         <div class="d-flex gap-1">
-            <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
+            <!-- <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
                 <i class="bi bi-grid-3x3-gap me-1"></i>Card View
-            </button>
+            </button> -->
             <button class="btn btn-admin-primary btn-sm">
                 <i class="bi bi-list-ul me-1"></i>Table View
             </button>
@@ -161,221 +161,100 @@
                         <th>Complaints</th>
                         <th>Status</th>
                         <th>Joined</th>
-                        <th>Last Active</th>
+                        <!-- <th>Last Active</th> -->
                         <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for resident in residents %}
                     <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
+                        <td><input type="checkbox" class="form-check-input" value="{{ resident.id }}"></td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
-                                    JD
+                                    {% if resident.profile_picture %}
+                                        <img src="{{ resident.profile_picture.url }}" alt="Avatar" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                    {% else %}
+                                        {{ resident.first_name|slice:":1" }}{{ resident.last_name|slice:":1" }}
+                                    {% endif %}
                                 </div>
                                 <div>
-                                    <div class="fw-medium small">Juan Dela Cruz</div>
-                                    <div class="text-muted" style="font-size: 11px;">@juandc</div>
+                                    <div class="fw-medium small">{{ resident.first_name }} {{ resident.middle_name }} {{ resident.last_name }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ resident.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
                             <div>
-                                <div class="fw-medium small">juan@email.com</div>
-                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
+                                <div class="fw-medium small">{{ resident.email }}</div>
+                                <div class="text-muted" style="font-size: 11px;">{{ resident.phone|default:"N/A" }}</div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-secondary">Barangay 1</span>
+                            <span class="badge bg-secondary">{{ resident.address|default:"N/A" }}</span>
                         </td>
                         <td>
                             <div class="text-center">
-                                <div class="fw-bold text-primary">12</div>
+                                <div class="fw-bold text-primary">
+                                    {{ resident.complaint_set.count }}
+                                </div>
                                 <div class="text-muted" style="font-size: 10px;">complaints</div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-success">Active</span>
+                            {% if resident.is_verified %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
                         </td>
                         <td>
-                            <div class="small">Jan 15, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">11 months ago</div>
+                            <div class="small">{{ resident.created_at|date:"M d, Y" }}</div>
+                            <div class="text-muted" style="font-size: 11px;">{{ resident.created_at|timesince }} ago</div>
                         </td>
-                        <td>
-                            <div class="small">2 hours ago</div>
-                            <div class="text-success" style="font-size: 11px;">Online</div>
-                        </td>
+                        <!-- <td>
+                            <div class="small"></div>
+                            <div class="text-muted" style="font-size: 11px;">N/A</div>
+                        </td> -->
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(1)">
+                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident({{ resident.id }})">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(1)">
+                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident({{ resident.id }})">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <div class="dropdown">
+                                <button class="btn btn-danger btn-sm" onclick="editResident({{ resident.id }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                <!-- <div class="dropdown">
                                     <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                                         <i class="bi bi-three-dots"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(1)">
+                                        <li><a class="dropdown-item" href="#" onclick="sendMessage({{ resident.id }})">
                                             <i class="bi bi-chat me-2"></i>Send Message
                                         </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(1)">
+                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints({{ resident.id }})">
                                             <i class="bi bi-clipboard me-2"></i>View Complaints
                                         </a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="suspendResident(1)">
+                                        <li><a class="dropdown-item" href="#" onclick="suspendResident({{ resident.id }})">
                                             <i class="bi bi-pause me-2"></i>Suspend Account
                                         </a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident(1)">
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident({{ resident.id }})">
                                             <i class="bi bi-trash me-2"></i>Delete Account
                                         </a></li>
                                     </ul>
-                                </div>
+                                </div> -->
                             </div>
                         </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
-                                    MS
-                                </div>
-                                <div>
-                                    <div class="fw-medium small">Maria Santos</div>
-                                    <div class="text-muted" style="font-size: 11px;">@mariasantos</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-medium small">maria@email.com</div>
-                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">Barangay 2</span>
-                        </td>
-                        <td>
-                            <div class="text-center">
-                                <div class="fw-bold text-primary">8</div>
-                                <div class="text-muted" style="font-size: 10px;">complaints</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-warning">Pending</span>
-                        </td>
-                        <td>
-                            <div class="small">Dec 10, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">1 week ago</div>
-                        </td>
-                        <td>
-                            <div class="small">1 day ago</div>
-                            <div class="text-muted" style="font-size: 11px;">Offline</div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(2)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(2)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="approveResident(2)">
-                                            <i class="bi bi-check me-2"></i>Approve Account
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(2)">
-                                            <i class="bi bi-chat me-2"></i>Send Message
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(2)">
-                                            <i class="bi bi-clipboard me-2"></i>View Complaints
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="rejectResident(2)">
-                                            <i class="bi bi-x me-2"></i>Reject Account
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </td>
+                        <td colspan="9" class="text-center text-muted">No residents found.</td>
                     </tr>
-                    <tr>
-                        <td><input type="checkbox" class="form-check-input"></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
-                                    PG
-                                </div>
-                                <div>
-                                    <div class="fw-medium small">Pedro Garcia</div>
-                                    <div class="text-muted" style="font-size: 11px;">@pedrogarcia</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="fw-medium small">pedro@email.com</div>
-                                <div class="text-muted" style="font-size: 11px;">+63 XXX XXX XXXX</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">Barangay 3</span>
-                        </td>
-                        <td>
-                            <div class="text-center">
-                                <div class="fw-bold text-primary">3</div>
-                                <div class="text-muted" style="font-size: 10px;">complaints</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-success">Active</span>
-                        </td>
-                        <td>
-                            <div class="small">Mar 22, 2024</div>
-                            <div class="text-muted" style="font-size: 11px;">9 months ago</div>
-                        </td>
-                        <td>
-                            <div class="small">5 minutes ago</div>
-                            <div class="text-success" style="font-size: 11px;">Online</div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident(3)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident(3)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="sendMessage(3)">
-                                            <i class="bi bi-chat me-2"></i>Send Message
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints(3)">
-                                            <i class="bi bi-clipboard me-2"></i>View Complaints
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="suspendResident(3)">
-                                            <i class="bi bi-pause me-2"></i>Suspend Account
-                                        </a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident(3)">
-                                            <i class="bi bi-trash me-2"></i>Delete Account
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

@@ -1,0 +1,168 @@
+{% extends 'base_resident.html' %}
+{% block title %}My Complaints{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">My Complaints</h3>
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Filed On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for complaint in complaints %}
+            <tr>
+              <td>{{ complaint.title }}</td>
+              <td>{{ complaint.description }}</td>
+              <td>
+                  <span class="badge 
+                      {% if complaint.status == 'pending' %}bg-warning
+                      {% elif complaint.status == 'in_progress' %}bg-info
+                      {% elif complaint.status == 'resolved' %}bg-success
+                      {% else %}bg-danger{% endif %}">
+                      {{ complaint.status|title }}
+                  </span>
+              </td>
+              <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+              <td>
+                  <button class="btn btn-sm btn-info" onclick="viewComplaint({{ complaint.id }})">View</button>
+                  <button class="btn btn-sm btn-primary" onclick="editComplaint({{ complaint.id }})">Update</button>
+                  <a href="{% url 'delete_complaint' complaint.id %}" class="btn btn-sm btn-danger"
+                    onclick="return confirm('Are you sure you want to delete this complaint?');">Delete</a>
+              </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No complaints found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewComplaintModal" tabindex="-1" aria-labelledby="viewComplaintModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="viewComplaintModalLabel">
+          <i class="bi bi-eye me-2"></i>Complaint Details
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 py-3">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-end text-primary">Subject:</dt>
+          <dd class="col-sm-8" id="view-title"></dd>
+          <dt class="col-sm-4 text-end text-primary">Description:</dt>
+          <dd class="col-sm-8" id="view-description"></dd>
+          <dt class="col-sm-4 text-end text-primary">Category:</dt>
+          <dd class="col-sm-8" id="view-category"></dd>
+          <dt class="col-sm-4 text-end text-primary">Priority:</dt>
+          <dd class="col-sm-8" id="view-priority"></dd>
+          <dt class="col-sm-4 text-end text-primary">Location:</dt>
+          <dd class="col-sm-8" id="view-location"></dd>
+          <dt class="col-sm-4 text-end text-primary">Status:</dt>
+          <dd class="col-sm-8" id="view-status"></dd>
+          <dt class="col-sm-4 text-end text-primary">Filed On:</dt>
+          <dd class="col-sm-8" id="view-created"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="editComplaintModal" tabindex="-1" aria-labelledby="editComplaintModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="editComplaintForm">
+      {% csrf_token %}
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="editComplaintModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Update Complaint
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <input type="hidden" name="complaint_id" id="edit-id">
+          <div class="mb-3">
+            <label for="edit-title" class="form-label text-success">Title</label>
+            <input type="text" class="form-control" name="title" id="edit-title" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit-description" class="form-label text-success">Description</label>
+            <textarea class="form-control" name="description" id="edit-description" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="edit-category" class="form-label text-success">Category</label>
+            <input type="text" class="form-control" name="category" id="edit-category" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit-priority" class="form-label text-success">Priority</label>
+            <select class="form-select" name="priority" id="edit-priority">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="edit-location" class="form-label text-success">Location</label>
+            <input type="text" class="form-control" name="location" id="edit-location">
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-save me-1"></i>Save Changes
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function viewComplaint(id) {
+    fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('view-title').textContent = data.title;
+        document.getElementById('view-description').textContent = data.description;
+        document.getElementById('view-category').textContent = data.category;
+        document.getElementById('view-priority').textContent = data.priority;
+        document.getElementById('view-location').textContent = data.location;
+        document.getElementById('view-status').textContent = data.status;
+        document.getElementById('view-created').textContent = data.created_at;
+        var modal = new bootstrap.Modal(document.getElementById('viewComplaintModal'));
+        modal.show();
+    });
+}
+
+function editComplaint(id) {
+    fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('edit-id').value = data.id;
+        document.getElementById('edit-title').value = data.title;
+        document.getElementById('edit-description').value = data.description;
+        document.getElementById('edit-category').value = data.category;
+        document.getElementById('edit-priority').value = data.priority;
+        document.getElementById('edit-location').value = data.location;
+        document.getElementById('editComplaintForm').action = "{% url 'update_complaint' 0 %}".replace('0', id);
+        var modal = new bootstrap.Modal(document.getElementById('editComplaintModal'));
+        modal.show();
+    });
+}
+</script>
+{% endblock %}

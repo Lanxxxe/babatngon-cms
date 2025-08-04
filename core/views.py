@@ -71,6 +71,7 @@ def login(request):
         if user and check_password(password, user.password):
             # Set session securely
             request.session['id'] = user.id
+            request.session['role'] = 'resident'
             request.session['first_name'] = user.first_name
             request.session['middle_name'] = user.middle_name
             request.session['last_name'] = user.last_name
@@ -78,7 +79,7 @@ def login(request):
             request.session['address'] = user.address
             request.session['phone'] = user.phone
             request.session['email'] = user.email
-            sweetify.success(request, f'Welcome, {user.first_name}!', timer=3000)
+            sweetify.toast(request, f'Welcome, {user.first_name}!', timer=3000)
 
             return redirect('resident_dashboard')
         else:

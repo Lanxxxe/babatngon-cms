@@ -1,0 +1,171 @@
+{% extends 'base_resident.html' %}
+{% block title %}My Assistance Requests{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">My Assistance Requests</h3>
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Assistance Type</th>
+                <th>Status</th>
+                <th>Filed On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for assistance in assistance_list %}
+            <tr>
+                <td>{{ assistance.title }}</td>
+                <td>{{ assistance.type }}</td>
+                <td>
+                    <span class="badge 
+                        {% if assistance.status == 'pending' %}bg-warning
+                        {% elif assistance.status == 'in_progress' %}bg-info
+                        {% elif assistance.status == 'completed' %}bg-success
+                        {% else %}bg-danger{% endif %}">
+                        {{ assistance.status|title }}
+                    </span>
+                </td>
+                <td>{{ assistance.created_at|date:"M d, Y" }}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewAssistance({{ assistance.id }})">View</button>
+                    <button class="btn btn-sm btn-primary" onclick="editAssistance({{ assistance.id }})">Update</button>
+                    <a href="{% url 'delete_assistance' assistance.id %}" class="btn btn-sm btn-danger"
+                       onclick="return confirm('Are you sure you want to delete this request?');">Delete</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No assistance requests found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewAssistanceModal" tabindex="-1" aria-labelledby="viewAssistanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="viewAssistanceModalLabel">
+          <i class="bi bi-eye me-2"></i>Assistance Details
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 py-3">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-end text-primary">Subject:</dt>
+          <dd class="col-sm-8" id="view-title"></dd>
+          <dt class="col-sm-4 text-end text-primary">Description:</dt>
+          <dd class="col-sm-8" id="view-description"></dd>
+          <dt class="col-sm-4 text-end text-primary">Assistance:</dt>
+          <dd class="col-sm-8" id="view-type"></dd>
+          <dt class="col-sm-4 text-end text-primary">Urgency:</dt>
+          <dd class="col-sm-8" id="view-priority"></dd>
+          <dt class="col-sm-4 text-end text-primary">Status:</dt>
+          <dd class="col-sm-8" id="view-status"></dd>
+          <dt class="col-sm-4 text-end text-primary">Filed On:</dt>
+          <dd class="col-sm-8" id="view-created"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="editAssistanceModal" tabindex="-1" aria-labelledby="editAssistanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" id="editAssistanceForm">
+      {% csrf_token %}
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="editAssistanceModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Update Assistance Request
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <input type="hidden" name="assistance_id" id="edit-id">
+          <div class="mb-3">
+            <label for="edit-title" class="form-label text-success">Title</label>
+            <input type="text" class="form-control" name="title" id="edit-title" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit-description" class="form-label text-success">Description</label>
+            <textarea class="form-control" name="description" id="edit-description" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="edit-type" class="form-label text-success">Type of Assistance</label>
+            <select class="form-select" name="type" id="edit-type" required>
+              <option value="Medical">Medical</option>
+              <option value="Financial">Financial</option>
+              <option value="Food/Supplies">Food/Supplies</option>
+              <option value="Evacuation/Shelter">Evacuation/Shelter</option>
+              <option value="Legal">Legal</option>
+              <option value="Livelihood">Livelihood</option>
+              <option value="Education">Education</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Disaster/Emergency">Disaster/Emergency</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="edit-urgency" class="form-label text-success">Urgency</label>
+            <select class="form-select" name="urgency" id="edit-urgency">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-save me-1"></i>Save Changes
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function viewAssistance(id) {
+    fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('view-title').textContent = data.title;
+        document.getElementById('view-description').textContent = data.description;
+        document.getElementById('view-type').textContent = data.type;
+        document.getElementById('view-priority').textContent = data.urgency;
+        document.getElementById('view-status').textContent = data.status;
+        document.getElementById('view-created').textContent = data.created_at;
+        var modal = new bootstrap.Modal(document.getElementById('viewAssistanceModal'));
+        modal.show();
+    });
+}
+
+function editAssistance(id) {
+    fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('edit-id').value = data.id;
+        document.getElementById('edit-title').value = data.title;
+        document.getElementById('edit-description').value = data.description;
+        document.getElementById('edit-type').value = data.type;
+        document.getElementById('edit-urgency').value = data.urgency;
+        document.getElementById('editAssistanceForm').action = "{% url 'update_assistance' 0 %}".replace('0', id);
+        var modal = new bootstrap.Modal(document.getElementById('editAssistanceModal'));
+        modal.show();
+    });
+}
+</script>
+{% endblock %}

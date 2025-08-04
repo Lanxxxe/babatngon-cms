@@ -35,36 +35,18 @@
 
 <!-- Stats Cards -->
 <div class="row g-4 mb-4">
-    <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--primary-color);">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-clipboard-data text-primary fs-4"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ total_complaints|default:0 }}</h3>
-                    <p class="text-muted mb-0">Total Complaints</p>
-                    <small class="text-success">
-                        <i class="bi bi-arrow-up me-1"></i>+2 this month
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <div class="col-lg-3 col-md-6">
         <div class="card-modern p-3" style="border-left: 4px solid var(--warning-color);">
             <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-clock text-warning fs-4"></i>
+                        <i class="bi bi-envelope-exclamation text-warning fs-4"></i>
                     </div>
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h3 class="fw-bold mb-1">{{ pending_complaints|default:0 }}</h3>
-                    <p class="text-muted mb-0">Pending</p>
+                    <p class="text-muted mb-0">Pending Complaints</p>
                     <small class="text-muted">Awaiting review</small>
                 </div>
             </div>
@@ -76,7 +58,7 @@
             <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <div class="bg-info bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-gear text-info fs-4"></i>
+                        <i class="bi bi-tools text-info fs-4"></i>
                     </div>
                 </div>
                 <div class="flex-grow-1 ms-3">
@@ -87,28 +69,44 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--success-color);">
+        <div class="card-modern p-3" style="border-left: 4px solid var(--danger-color);">
             <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
-                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-check-circle text-success fs-4"></i>
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-person-plus text-warning fs-4"></i>
                     </div>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ resolved_complaints|default:0 }}</h3>
-                    <p class="text-muted mb-0">Resolved</p>
-                    <small class="text-success">
-                        <i class="bi bi-check me-1"></i>Great job!
-                    </small>
+                    <h3 class="fw-bold mb-1">{{ pending_assistance|default:0 }}</h3>
+                    <p class="text-muted mb-0">Pending Assistance</p>
+                    <small class="text-muted">Awaiting review</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="col-lg-3 col-md-6">
+        <div class="card-modern p-3" style="border-left: 4px solid var(--primary-color);">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                        <i class="bi bi-people-fill text-info fs-4"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h3 class="fw-bold mb-1">{{ in_progress_assistance|default:0 }}</h3>
+                    <p class="text-muted mb-0">In Progress</p>
+                    <small class="text-muted">Being processed</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
+<!-- Assistance Cards -->
+<!-- <div class="row g-4 mb-4">
     <div class="col-lg-3 col-md-6">
         <div class="card-modern p-3" style="border-left: 4px solid var(--primary-color);">
             <div class="d-flex align-items-center">
@@ -177,7 +175,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <div class="row g-4">
     <!-- Recent Complaints -->
@@ -320,7 +318,7 @@
             </div>
             <div class="card-body-modern">
                 <div class="d-grid gap-2">
-                    <a href="" class="btn btn-modern-primary">
+                    <a href="{% url 'file_complaint' %}" class="btn btn-modern-primary">
                         <i class="bi bi-plus-circle me-2"></i>File New Complaint
                     </a>
                     <a href="" class="btn btn-modern-secondary">
