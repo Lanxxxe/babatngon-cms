@@ -33,7 +33,11 @@ class Complaint(models.Model):
     category = models.CharField(max_length=50)
     priority = models.CharField(max_length=20, default='low')
     status = models.CharField(max_length=20, default='pending')
+    location_description = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=11, decimal_places=8, blank=True, null=True)
     assigned_to = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL)
     admin_remarks = models.TextField(blank=True, null=True)
     resolution_notes = models.TextField(blank=True, null=True)
@@ -83,11 +87,11 @@ class AssistanceRequest(models.Model):
 
 class ComplaintAttachment(models.Model):
     complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='uploads/complaint_attachments/')
+    file = models.FileField(upload_to='complaint_attachments/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
 class AssistanceAttachment(models.Model):
     assistance = models.ForeignKey(AssistanceRequest, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='uploads/assistance_attachments/')
+    file = models.FileField(upload_to='assistance_attachments/')
     uploaded_at = models.DateTimeField(auto_now_add=True)

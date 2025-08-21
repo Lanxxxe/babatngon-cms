@@ -1,5 +1,10 @@
 {% extends 'base_resident.html' %}
 {% block title %}Request Assistance{% endblock %}
+
+{% block breadcrumb %}
+Request Assistance
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="card shadow-lg p-4" style="width: 100%; max-width: 500px;">
@@ -7,9 +12,9 @@
         <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
             {% csrf_token %}
             <div class="mb-3">
-                <label for="title" class="form-label">Title<span class="text-danger">*</span></label>
+                <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Request for Medical Aid">
-                <div class="invalid-feedback">Please enter a title.</div>
+                <div class="invalid-feedback">Please enter a subject.</div>
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Description<span class="text-danger">*</span></label>

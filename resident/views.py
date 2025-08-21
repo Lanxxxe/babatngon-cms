@@ -5,12 +5,12 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 from core.models import User
 from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
-import sweetify
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-import os
+import os, uuid, time
+import sweetify
 
 
 # Utility function for handling profile picture upload
@@ -42,6 +42,9 @@ def handle_profile_picture_upload(user, uploaded_file):
 
 # Create your views here.
 def resident_dashboard(request):
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to access the dashboard.', timer=3000)
+        return redirect('homepage')
     user_id = request.session.get('id')
     user = User.objects.filter(id=user_id).first()
 
@@ -76,39 +79,64 @@ def resident_dashboard(request):
 def file_complaint(request):
     if not request.session.get('id'):
         sweetify.error(request, 'You must be logged in to file a complaint.', timer=3000)
-        return redirect('login')
+        return redirect('homepage')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
         category = request.POST.get('category', '').strip()
+        other_category = request.POST.get('other_category', '').strip()
         priority = request.POST.get('priority', 'low')
-        location = request.POST.get('location', '').strip()
+        location_description = request.POST.get('location', '').strip()
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
         user_id = request.session.get('id')
         user = User.objects.filter(id=user_id).first()
+        
+        # Validate required fields
         if not all([title, description, category]):
             sweetify.error(request, 'Please fill in all required fields.', timer=3000)
             return render(request, 'file_complaint.html')
+        
+        # If "Others" is selected, validate that other_category is provided
+        if category == 'Others' and not other_category:
+            sweetify.error(request, 'Please specify the other category.', timer=3000)
+            return render(request, 'file_complaint.html')
+        
+        # Use the specified other category if "Others" is selected
+        final_category = other_category if category == 'Others' else category
+        
+        # Convert coordinates to float if provided, otherwise set to None
+        try:
+            lat_float = float(latitude) if latitude else None
+            lng_float = float(longitude) if longitude else None
+        except (ValueError, TypeError):
+            lat_float = None
+            lng_float = None
         
         complaint = Complaint.objects.create(
             user=user,
             title=title,
             description=description,
-            category=category,
+            category=final_category,
             priority=priority,
-            location=location
+            location_description=location_description,
+            address=address,
+            latitude=lat_float,
+            longitude=lng_float
         )
-        # Handle multiple file uploads
+        # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             ComplaintAttachment.objects.create(complaint=complaint, file=f)
 
         sweetify.success(request, 'Complaint filed successfully!', timer=3000)
-        return redirect('resident_dashboard')
+        return redirect('file_complaint')
     return render(request, 'file_complaint.html')
 
 def file_assistance(request):
     if not request.session.get('id'):
         sweetify.error(request, 'You must be logged in to request assistance.', timer=3000)
-        return redirect('login')
+        return redirect('homepage')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
@@ -118,6 +146,7 @@ def file_assistance(request):
         user = User.objects.filter(id=user_id).first()
         if not all([title, description, type_]):
             sweetify.error(request, 'Please fill in all required fields.', timer=3000)
+
             return render(request, 'file_assistance.html')
         assistance = AssistanceRequest.objects.create(
             user=user,
@@ -126,7 +155,7 @@ def file_assistance(request):
             type=type_,
             urgency=urgency
         )
-        # Handle multiple file uploads
+        # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
         sweetify.success(request, 'Assistance request submitted!', timer=3000)
@@ -134,6 +163,10 @@ def file_assistance(request):
     return render(request, 'file_assistance.html')
 
 def my_complaints(request):
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to view your complaints.', timer=3000)
+        return redirect('homepage')
+    
     user_id = request.session.get('id')
     user = User.objects.filter(id=user_id).first()
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
@@ -154,30 +187,84 @@ def update_complaint(request, pk):
         complaint.description = request.POST.get('description', complaint.description)
         complaint.category = request.POST.get('category', complaint.category)
         complaint.priority = request.POST.get('priority', complaint.priority)
-        complaint.location = request.POST.get('location', complaint.location)
+        complaint.location_description = request.POST.get('location', complaint.location_description)
+        complaint.address = request.POST.get('address', complaint.address)
+        
+        # Handle coordinate updates
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        
+        try:
+            complaint.latitude = float(latitude) if latitude else complaint.latitude
+            complaint.longitude = float(longitude) if longitude else complaint.longitude
+        except (ValueError, TypeError):
+            # Keep existing coordinates if invalid input
+            pass
+        
+        # Handle attachment deletions
+        attachments_to_delete = request.POST.getlist('delete_attachments')
+        if attachments_to_delete:
+            for attachment_id in attachments_to_delete:
+                try:
+                    attachment = ComplaintAttachment.objects.get(id=attachment_id, complaint=complaint)
+                    # Delete the file from storage
+                    if attachment.file and os.path.exists(attachment.file.path):
+                        os.remove(attachment.file.path)
+                    attachment.delete()
+                except ComplaintAttachment.DoesNotExist:
+                    pass
+        
+        # Handle new file uploads
+        new_files = request.FILES.getlist('new_attachments')
+        for file in new_files:
+            ComplaintAttachment.objects.create(complaint=complaint, file=file)
+        
         complaint.save()
-        sweetify.success(request, 'Complaint updated.', timer=2000)
+        sweetify.success(request, 'Complaint updated successfully.', timer=2000)
         return redirect('my_complaints')
+    
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Get attachments for the complaint
+        attachments = []
+        for attachment in complaint.attachments.all():
+            attachments.append({
+                'id': attachment.id,
+                'file_name': attachment.file.name.split('/')[-1],  # Get just the filename
+                'file_url': attachment.file.url,
+                'uploaded_at': attachment.uploaded_at.strftime('%Y-%m-%d %H:%M')
+            })
+        
         return JsonResponse({
             'id': complaint.id,
             'title': complaint.title,
             'description': complaint.description,
             'category': complaint.category,
             'priority': complaint.priority,
-            'location': complaint.location,
+            'location': complaint.location_description,
+            'address': complaint.address,
+            'latitude': float(complaint.latitude) if complaint.latitude else None,
+            'longitude': float(complaint.longitude) if complaint.longitude else None,
             'status': complaint.status,
             'created_at': complaint.created_at.strftime('%Y-%m-%d %H:%M'),
+            'attachments': attachments,
         })
     return redirect('my_complaints')
 
 
 def my_assistance(request):
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to view your assistance requests.', timer=3000)
+        return redirect('homepage')
     user_id = request.session.get('id')
     user = User.objects.filter(id=user_id).first()
     assistance_list = AssistanceRequest.objects.filter(user=user).order_by('-created_at')
-    return render(request, 'my_assistance.html', {'assistance_list': assistance_list})
+
+    context = {
+        'assistance_list': assistance_list,
+    }
+
+    return render(request, 'my_assistance.html', context)
 
 def update_assistance(request, pk):
     user_id = request.session.get('id')
@@ -216,9 +303,10 @@ def profile(request):
     """
     user_id = request.session.get('id')
     user = User.objects.filter(id=user_id).first()
+    
     if not user:
         sweetify.error(request, 'You must be logged in to view your profile.', timer=3000)
-        return redirect('login')
+        return redirect('homepage')
 
     if request.method == 'POST':
         # Handle profile picture upload
@@ -250,8 +338,6 @@ def profile(request):
         'user': user,
     }
     return render(request, 'profile.html', context)
-
-
 
 
 def resident_logout(request):

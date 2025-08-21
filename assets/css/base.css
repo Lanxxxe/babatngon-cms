@@ -77,7 +77,15 @@ body {
 }
 
 .nav-link-modern:hover::after {
-    width: 100%;
+    width: 95%;
+}
+
+.nav-link-modern.active::after {
+    width: 95%;
+}
+
+.nav-link-modern.active {
+    color: var(--primary-blue-dark);
 }
 
 /* Modern Buttons */

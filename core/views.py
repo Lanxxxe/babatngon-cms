@@ -18,6 +18,7 @@ def register(request):
         address = request.POST.get('address', '').strip()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
+        
         # Basic validation
         if not all([first_name, last_name, email, phone, address, password1, password2]):
             sweetify.error(request, 'All required fields must be filled.', timer=3000)
@@ -44,7 +45,7 @@ def register(request):
                 address=address,
                 password=hashed_password
             )
-            sweetify.success(request, 'Account created successfully! Please login.', timer=3000)
+            sweetify.success(request, 'Account created successfully! Please wait for the admin to verify your account.', timer=3000)
             return redirect('login')
         except IntegrityError:
             sweetify.error(request, 'An account with this email already exists.', timer=3000)
