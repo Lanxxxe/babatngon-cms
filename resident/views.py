@@ -141,25 +141,50 @@ def file_assistance(request):
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
         type_ = request.POST.get('type', '').strip()
+        other_assistance_type = request.POST.get('other_assistance_type', '').strip()
         urgency = request.POST.get('urgency', 'low')
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
         user_id = request.session.get('id')
         user = User.objects.filter(id=user_id).first()
+        
+        # Validate required fields
         if not all([title, description, type_]):
             sweetify.error(request, 'Please fill in all required fields.', timer=3000)
-
             return render(request, 'file_assistance.html')
+        
+        # If "Others" is selected, validate that other_assistance_type is provided
+        if type_ == 'Others' and not other_assistance_type:
+            sweetify.error(request, 'Please specify the other assistance type.', timer=3000)
+            return render(request, 'file_assistance.html')
+        
+        # Use the specified other assistance type if "Others" is selected
+        final_type = other_assistance_type if type_ == 'Others' else type_
+        
+        # Convert coordinates to float if provided, otherwise set to None
+        try:
+            lat_float = float(latitude) if latitude else None
+            lng_float = float(longitude) if longitude else None
+        except (ValueError, TypeError):
+            lat_float = None
+            lng_float = None
+        
         assistance = AssistanceRequest.objects.create(
             user=user,
             title=title,
             description=description,
-            type=type_,
-            urgency=urgency
+            type=final_type,
+            urgency=urgency,
+            address=address,
+            latitude=lat_float,
+            longitude=lng_float
         )
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
         sweetify.success(request, 'Assistance request submitted!', timer=3000)
-        return redirect('resident_dashboard')
+        return redirect('file_assistance')
     return render(request, 'file_assistance.html')
 
 def my_complaints(request):
@@ -272,13 +297,61 @@ def update_assistance(request, pk):
     if request.method == 'POST':
         assistance.title = request.POST.get('title', assistance.title)
         assistance.description = request.POST.get('description', assistance.description)
-        assistance.type = request.POST.get('type', assistance.type)
+        type_ = request.POST.get('type', assistance.type)
+        other_assistance_type = request.POST.get('other_assistance_type', '').strip()
         assistance.urgency = request.POST.get('urgency', assistance.urgency)
+        assistance.address = request.POST.get('address', assistance.address)
+        
+        # Handle "Others" assistance type
+        if type_ == 'Others' and other_assistance_type:
+            assistance.type = other_assistance_type
+        elif type_ != 'Others':
+            assistance.type = type_
+        
+        # Handle coordinate updates
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        
+        try:
+            assistance.latitude = float(latitude) if latitude else assistance.latitude
+            assistance.longitude = float(longitude) if longitude else assistance.longitude
+        except (ValueError, TypeError):
+            # Keep existing coordinates if invalid input
+            pass
+        
+        # Handle attachment deletions
+        attachments_to_delete = request.POST.getlist('delete_attachments')
+        if attachments_to_delete:
+            for attachment_id in attachments_to_delete:
+                try:
+                    attachment = AssistanceAttachment.objects.get(id=attachment_id, assistance=assistance)
+                    # Delete the physical file
+                    if attachment.file and os.path.exists(attachment.file.path):
+                        os.remove(attachment.file.path)
+                    attachment.delete()
+                except AssistanceAttachment.DoesNotExist:
+                    pass  # Attachment doesn't exist, skip
+        
+        # Handle new file uploads
+        new_files = request.FILES.getlist('new_attachments')
+        for file in new_files:
+            AssistanceAttachment.objects.create(assistance=assistance, file=file)
+        
         assistance.save()
         sweetify.success(request, 'Assistance updated.', timer=2000)
         return redirect('my_assistance')
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Get attachments for the assistance request
+        attachments = []
+        for attachment in assistance.attachments.all():
+            attachments.append({
+                'id': attachment.id,
+                'file_name': attachment.file.name.split('/')[-1],  # Get just the filename
+                'file_url': attachment.file.url,
+                'uploaded_at': attachment.uploaded_at.strftime('%Y-%m-%d %H:%M')
+            })
+        
         return JsonResponse({
             'id': assistance.id,
             'title': assistance.title,
@@ -286,7 +359,11 @@ def update_assistance(request, pk):
             'type': assistance.type,
             'urgency': assistance.urgency,
             'status': assistance.status,
+            'address': assistance.address,
+            'latitude': float(assistance.latitude) if assistance.latitude else None,
+            'longitude': float(assistance.longitude) if assistance.longitude else None,
             'created_at': assistance.created_at.strftime('%Y-%m-%d %H:%M'),
+            'attachments': attachments,
         })
     return redirect('my_assistance')
 

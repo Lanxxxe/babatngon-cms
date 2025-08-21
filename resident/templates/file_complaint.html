@@ -1,124 +1,190 @@
 {% extends 'base_resident.html' %}
 {% block title %}File Complaint{% endblock %}
 
+{% block internal_css %}
+<style>
+    .map-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+    
+    #coordinates-display {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+    
+    /* Custom marker icon styling */
+    .leaflet-marker-icon {
+        filter: hue-rotate(0deg) brightness(1.1);
+    }
+</style>
+
+{% endblock %}
+
+
 {% block breadcrumb %}
 File Complaint
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid py-4 ">
+    <div class="row justify-content-center ">
+        <div class="col-12 col-lg-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-success text-center py-3">
+                    <h3 class="mb-0">
+                        File Complaint
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            <!-- Subject field - full width -->
+                            <div class="col-12 mb-3">
+                                <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road">
+                                <div class="invalid-feedback">Please enter a subject.</div>
+                            </div>
+                            
+                            <!-- Description field - full width -->
+                            <div class="col-12 mb-3">
+                                <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
+                                <div class="invalid-feedback">Please enter a description.</div>
+                            </div>
+                            
+                            <!-- Category field - half width on medium+ screens, full on small -->
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category<span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select category</option>
+                                    <option value="Sanitation">Sanitation</option>
+                                    <option value="Safety/Security">Safety/Security</option>
+                                    <option value="Infrastructure">Infrastructure</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Noise">Noise</option>
+                                    <option value="Environment">Environment</option>
+                                    <option value="Disaster/Emergency">Disaster/Emergency</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Traffic/Transport">Traffic/Transport</option>
+                                    <option value="Corruption/Abuse">Corruption/Abuse</option>
+                                    <option value="Discrimination">Discrimination</option>
+                                    <option value="Service Delivery">Service Delivery</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a category.</div>
+                            </div>
+                            
+                            <!-- Priority field - half width on medium+ screens, full on small -->
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Other category specification - hidden by default -->
+                            <div class="col-12 mb-3" id="other-category-container" style="display: none;">
+                                <label for="other_category" class="form-label">Please specify other category<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="other_category" name="other_category" placeholder="Enter the specific category">
+                                <div class="invalid-feedback">Please specify the other category.</div>
+                            </div>
+                            
+                            <!-- Location field - full width -->
+                            <div class="col-12 mb-3">
+                                <label for="location" class="form-label">Location Description</label>
+                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall">
+                                <div class="form-text">Provide a brief description of the location.</div>
+                            </div>
+                            
+                            <!-- Address field - full width -->
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled automatically when you pin location on map" readonly>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    This field will be automatically filled when you pin a location on the map below.
+                                </div>
+                            </div>
+                            
+                            <!-- Map Location Picker - full width -->
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Pin Exact Location on Map</label>
+                                <div class="map-container">
+                                    <div id="complaint-map" style="height: 300px; border-radius: 8px; border: 2px solid #dee2e6;"></div>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Click on the map to pin the exact location of your complaint. You can drag the marker to adjust the position.
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span id="coordinates-display">Click on the map to select location</span>
+                                    </small>
+                                </div>
+                                <!-- Hidden inputs to store coordinates -->
+                                <input type="hidden" id="latitude" name="latitude">
+                                <input type="hidden" id="longitude" name="longitude">
+                            </div>
+                            
+                            <!-- Attachments field - full width -->
+                            <div class="col-12 mb-3">
+                                <label for="attachments" class="form-label">Attachments (optional)</label>
+                                <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+                            </div>
+                            
+                            <!-- Submit button - full width -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">Submit Complaint</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <div class="d-flex justify-content-center align-items-center px-md-5 px-0 " style="min-height: 80vh;">
     <div class="card container-fluid shadow-lg p-4" style="width: 100%;">
         <h3 class="mb-4 text-center text-primary ">File a Complaint</h3>
-        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-            {% csrf_token %}
-            <div class="row">
-                <!-- Subject field - full width -->
-                <div class="col-12 mb-3">
-                    <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road">
-                    <div class="invalid-feedback">Please enter a subject.</div>
-                </div>
-                
-                <!-- Description field - full width -->
-                <div class="col-12 mb-3">
-                    <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
-                    <div class="invalid-feedback">Please enter a description.</div>
-                </div>
-                
-                <!-- Category field - half width on medium+ screens, full on small -->
-                <div class="col-md-6 mb-3">
-                    <label for="category" class="form-label">Category<span class="text-danger">*</span></label>
-                    <select class="form-select" id="category" name="category" required>
-                        <option value="">Select category</option>
-                        <option value="Sanitation">Sanitation</option>
-                        <option value="Safety/Security">Safety/Security</option>
-                        <option value="Infrastructure">Infrastructure</option>
-                        <option value="Utilities">Utilities</option>
-                        <option value="Noise">Noise</option>
-                        <option value="Environment">Environment</option>
-                        <option value="Disaster/Emergency">Disaster/Emergency</option>
-                        <option value="Health">Health</option>
-                        <option value="Traffic/Transport">Traffic/Transport</option>
-                        <option value="Corruption/Abuse">Corruption/Abuse</option>
-                        <option value="Discrimination">Discrimination</option>
-                        <option value="Service Delivery">Service Delivery</option>
-                        <option value="Others">Others</option>
-                    </select>
-                    <div class="invalid-feedback">Please select a category.</div>
-                </div>
-                
-                <!-- Priority field - half width on medium+ screens, full on small -->
-                <div class="col-md-6 mb-3">
-                    <label for="priority" class="form-label">Priority</label>
-                    <select class="form-select" id="priority" name="priority">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                </div>
-                
-                <!-- Other category specification - hidden by default -->
-                <div class="col-12 mb-3" id="other-category-container" style="display: none;">
-                    <label for="other_category" class="form-label">Please specify other category<span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="other_category" name="other_category" placeholder="Enter the specific category">
-                    <div class="invalid-feedback">Please specify the other category.</div>
-                </div>
-                
-                <!-- Location field - full width -->
-                <div class="col-12 mb-3">
-                    <label for="location" class="form-label">Location Description</label>
-                    <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall">
-                    <div class="form-text">Provide a brief description of the location.</div>
-                </div>
-                
-                <!-- Address field - full width -->
-                <div class="col-12 mb-3">
-                    <label for="address" class="form-label">Address</label>
-                    <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled automatically when you pin location on map" readonly>
-                    <div class="form-text">
-                        <i class="bi bi-info-circle me-1"></i>
-                        This field will be automatically filled when you pin a location on the map below.
-                    </div>
-                </div>
-                
-                <!-- Map Location Picker - full width -->
-                <div class="col-12 mb-3">
-                    <label class="form-label">Pin Exact Location on Map</label>
-                    <div class="map-container">
-                        <div id="complaint-map" style="height: 300px; border-radius: 8px; border: 2px solid #dee2e6;"></div>
-                    </div>
-                    <div class="form-text mt-2">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Click on the map to pin the exact location of your complaint. You can drag the marker to adjust the position.
-                    </div>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <span id="coordinates-display">Click on the map to select location</span>
-                        </small>
-                    </div>
-                    <!-- Hidden inputs to store coordinates -->
-                    <input type="hidden" id="latitude" name="latitude">
-                    <input type="hidden" id="longitude" name="longitude">
-                </div>
-                
-                <!-- Attachments field - full width -->
-                <div class="col-12 mb-3">
-                    <label for="attachments" class="form-label">Attachments (optional)</label>
-                    <input type="file" class="form-control" id="attachments" name="attachments" multiple>
-                    <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
-                </div>
-                
-                <!-- Submit button - full width -->
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary w-100">Submit Complaint</button>
-                </div>
-            </div>
-        </form>
+
     </div>
 </div>
+
+{% endblock %}
+
+{% block internal_js %}
 <script>
+    // Initialize Leaflet Map for Location Picking
+    let complaintMap;
+    let locationMarker;
+    
+    // Default coordinates for Babatngon, Leyte (you can adjust these)
+    const defaultLat = 11.4227;
+    const defaultLng = 124.8454;
+
     // Bootstrap validation
     (() => {
         'use strict';
@@ -149,17 +215,10 @@ File Complaint
         }
     });
 
-    // Initialize Leaflet Map for Location Picking
-    let complaintMap;
-    let locationMarker;
-    
-    // Default coordinates for Babatngon, Leyte (you can adjust these)
-    const defaultLat = 11.4227;
-    const defaultLng = 124.8454;
 
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize the map
-        complaintMap = L.map('complaint-map').setView([defaultLat, defaultLng], 15);
+        complaintMap = L.map('complaint-map').setView([defaultLat, defaultLng], 13);
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -305,39 +364,5 @@ File Complaint
         return parts.join(', ');
     }
 
-    // Add some custom styles for the map
-    const mapStyle = document.createElement('style');
-    mapStyle.textContent = `
-        .map-container {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .leaflet-popup-content {
-            margin: 8px 12px;
-            line-height: 1.4;
-        }
-        
-        .leaflet-popup-content-wrapper {
-            border-radius: 8px;
-        }
-        
-        #coordinates-display {
-            font-weight: 500;
-            color: #495057;
-        }
-        
-        .leaflet-control-attribution {
-            font-size: 10px;
-        }
-        
-        /* Custom marker icon styling */
-        .leaflet-marker-icon {
-            filter: hue-rotate(0deg) brightness(1.1);
-        }
-    `;
-    document.head.appendChild(mapStyle);
 </script>
 {% endblock %}

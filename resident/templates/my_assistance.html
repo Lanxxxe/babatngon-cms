@@ -1,6 +1,110 @@
 {% extends 'base_resident.html' %}
 {% block title %}My Assistance Requests{% endblock %}
 
+{% block internal_css %} 
+
+<style>
+  .bg-orange {
+      background-color: #fd7e14 !important;
+  }
+
+  .modal-lg {
+      max-width: 900px;
+  }
+
+  #view-map, #edit-map {
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .leaflet-popup-content {
+      margin: 8px 12px;
+      line-height: 1.4;
+  }
+
+  .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+  }
+
+  .leaflet-control-attribution {
+      font-size: 10px;
+  }
+
+  dl dt {
+      font-weight: 600;
+  }
+
+  dl dd {
+      margin-bottom: 0.5rem;
+  }
+
+  #view-description {
+      word-wrap: break-word;
+      white-space: pre-wrap;
+  }
+
+  .modal-body h6 {
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 0.5rem;
+  }
+
+  #edit-coordinates-display {
+      padding: 0.375rem 0;
+      font-size: 0.875rem;
+  }
+
+  .map-container {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .attachment-card {
+      border: 1px solid #e3e6f0;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+  }
+
+  .attachment-card:hover {
+      border-color: #5a67d8;
+      box-shadow: 0 4px 12px rgba(90, 103, 216, 0.15);
+      transform: translateY(-2px);
+  }
+
+  .attachment-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f8f9fc;
+      border-radius: 6px;
+  }
+
+  .card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.2;
+  }
+
+  #imagePreviewModal .modal-body {
+      background-color: #f8f9fa;
+  }
+
+  #imagePreviewModal img {
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .btn-sm {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+  }
+</style>
+
+{% endblock %}
+
 {% block breadcrumb %}
 My Assistance Requests
 {% endblock %}
@@ -14,6 +118,7 @@ My Assistance Requests
                 <th>Subject</th>
                 <th>Assistance Type</th>
                 <th>Status</th>
+                <th>Urgency</th>
                 <th>Filed On</th>
                 <th>Actions</th>
             </tr>
@@ -26,10 +131,22 @@ My Assistance Requests
                 <td>
                     <span class="badge 
                         {% if assistance.status == 'pending' %}bg-warning
-                        {% elif assistance.status == 'in_progress' %}bg-info
+                        {% elif assistance.status == 'approved' %}bg-info
+                        {% elif assistance.status == 'in_progress' %}bg-primary
                         {% elif assistance.status == 'completed' %}bg-success
-                        {% else %}bg-danger{% endif %}">
+                        {% elif assistance.status == 'rejected' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
                         {{ assistance.status|title }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge 
+                        {% if assistance.urgency == 'low' %}bg-success
+                        {% elif assistance.urgency == 'medium' %}bg-warning
+                        {% elif assistance.urgency == 'high' %}bg-orange
+                        {% elif assistance.urgency == 'critical' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ assistance.urgency|default:"N/A" }}
                     </span>
                 </td>
                 <td>{{ assistance.created_at|date:"M d, Y" }}</td>
@@ -41,7 +158,7 @@ My Assistance Requests
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="5" class="text-center text-muted">No assistance requests found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">No assistance requests found.</td></tr>
         {% endfor %}
         </tbody>
     </table>
@@ -49,29 +166,85 @@ My Assistance Requests
 
 <!-- View Modal -->
 <div class="modal fade" id="viewAssistanceModal" tabindex="-1" aria-labelledby="viewAssistanceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content shadow-lg border-0">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="viewAssistanceModalLabel">
-          <i class="bi bi-eye me-2"></i>Assistance Details
+          <i class="bi bi-eye me-2"></i>Assistance Request Details
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body px-4 py-3">
-        <dl class="row mb-0">
-          <dt class="col-sm-4 text-end text-primary">Subject:</dt>
-          <dd class="col-sm-8" id="view-title"></dd>
-          <dt class="col-sm-4 text-end text-primary">Description:</dt>
-          <dd class="col-sm-8" id="view-description"></dd>
-          <dt class="col-sm-4 text-end text-primary">Assistance:</dt>
-          <dd class="col-sm-8" id="view-type"></dd>
-          <dt class="col-sm-4 text-end text-primary">Urgency:</dt>
-          <dd class="col-sm-8" id="view-priority"></dd>
-          <dt class="col-sm-4 text-end text-primary">Status:</dt>
-          <dd class="col-sm-8" id="view-status"></dd>
-          <dt class="col-sm-4 text-end text-primary">Filed On:</dt>
-          <dd class="col-sm-8" id="view-created"></dd>
-        </dl>
+        <div class="row">
+          <!-- Assistance Information -->
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-info-circle me-1"></i>Request Information
+            </h6>
+            <dl class="row">
+              <dt class="col-sm-4 text-end">Subject:</dt>
+              <dd class="col-sm-8" id="view-title"></dd>
+              
+              <dt class="col-sm-4 text-end">Type:</dt>
+              <dd class="col-sm-8" id="view-type"></dd>
+              
+              <dt class="col-sm-4 text-end">Urgency:</dt>
+              <dd class="col-sm-8" id="view-priority"></dd>
+              
+              <dt class="col-sm-4 text-end">Status:</dt>
+              <dd class="col-sm-8" id="view-status"></dd>
+              
+              <dt class="col-sm-4 text-end">Filed On:</dt>
+              <dd class="col-sm-8" id="view-created"></dd>
+            </dl>
+          </div>
+          
+          <!-- Location Information -->
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-geo-alt me-1"></i>Location Information
+            </h6>
+            <dl class="row">
+              <dt class="col-sm-4 text-end">Address:</dt>
+              <dd class="col-sm-8" id="view-address"></dd>
+              
+              <dt class="col-sm-4 text-end">Coordinates:</dt>
+              <dd class="col-sm-8" id="view-coordinates"></dd>
+            </dl>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-file-text me-1"></i>Description
+            </h6>
+            <div class="bg-light p-3 rounded">
+              <p class="mb-0" id="view-description"></p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map Section -->
+        <div class="row mt-3" id="assistance-map-section" style="display: none;">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-map me-1"></i>Location on Map
+            </h6>
+            <div id="view-map" style="height: 300px; border: 1px solid #ddd; border-radius: 0.375rem;"></div>
+          </div>
+        </div>
+        
+        <!-- Attachments Section -->
+        <div class="row mt-3" id="assistance-attachments-section">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-paperclip me-1"></i>Attachments
+            </h6>
+            <div id="view-attachments"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer bg-light">
         <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
@@ -84,8 +257,8 @@ My Assistance Requests
 
 <!-- Update Modal -->
 <div class="modal fade" id="editAssistanceModal" tabindex="-1" aria-labelledby="editAssistanceModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="post" id="editAssistanceForm">
+  <div class="modal-dialog modal-lg">
+    <form method="post" enctype="multipart/form-data" id="editAssistanceForm">
       {% csrf_token %}
       <div class="modal-content shadow-lg border-0">
         <div class="modal-header bg-success text-white">
@@ -96,37 +269,96 @@ My Assistance Requests
         </div>
         <div class="modal-body px-4 py-3">
           <input type="hidden" name="assistance_id" id="edit-id">
-          <div class="mb-3">
-            <label for="edit-title" class="form-label text-success">Title</label>
-            <input type="text" class="form-control" name="title" id="edit-title" required>
+          <input type="hidden" name="latitude" id="edit-latitude">
+          <input type="hidden" name="longitude" id="edit-longitude">
+          
+          <div class="row g-3">
+            <!-- Left Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-title" class="form-label text-success">Title</label>
+                <input type="text" class="form-control" name="title" id="edit-title" required>
+              </div>
+              <div class="mb-3">
+                <label for="edit-type" class="form-label text-success">Type of Assistance</label>
+                <select class="form-select" name="type" id="edit-type" required>
+                  <option value="Medical">Medical</option>
+                  <option value="Financial">Financial</option>
+                  <option value="Food/Supplies">Food/Supplies</option>
+                  <option value="Evacuation/Shelter">Evacuation/Shelter</option>
+                  <option value="Legal">Legal</option>
+                  <option value="Livelihood">Livelihood</option>
+                  <option value="Education">Education</option>
+                  <option value="Transportation">Transportation</option>
+                  <option value="Disaster/Emergency">Disaster/Emergency</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              
+              <!-- Other assistance type specification for edit modal - hidden by default -->
+              <div class="mb-3" id="edit-other-assistance-container" style="display: none;">
+                <label for="edit-other-assistance-type" class="form-label text-success">
+                  Please specify other assistance type<span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" name="other_assistance_type" id="edit-other-assistance-type" 
+                       placeholder="Enter the specific type of assistance you need">
+                <div class="invalid-feedback">Please specify the other assistance type.</div>
+              </div>
+              <div class="mb-3">
+                <label for="edit-urgency" class="form-label text-success">Urgency</label>
+                <select class="form-select" name="urgency" id="edit-urgency">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="edit-description" class="form-label text-success">Description</label>
+                <textarea class="form-control" name="description" id="edit-description" rows="3" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label text-success">
+                  <i class="bi bi-geo-alt me-1"></i>Update Location
+                </label>
+                <div id="edit-map" style="height: 200px; border: 1px solid #ddd; border-radius: 0.375rem;"></div>
+                <div id="edit-coordinates-display" class="form-text mt-1"></div>
+              </div>
+              <div class="mb-3">
+                <label for="edit-address" class="form-label text-success">Address</label>
+                <textarea class="form-control" name="address" id="edit-address" rows="3" 
+                          placeholder="Address will be auto-filled when you update location"></textarea>
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="edit-description" class="form-label text-success">Description</label>
-            <textarea class="form-control" name="description" id="edit-description" rows="3" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="edit-type" class="form-label text-success">Type of Assistance</label>
-            <select class="form-select" name="type" id="edit-type" required>
-              <option value="Medical">Medical</option>
-              <option value="Financial">Financial</option>
-              <option value="Food/Supplies">Food/Supplies</option>
-              <option value="Evacuation/Shelter">Evacuation/Shelter</option>
-              <option value="Legal">Legal</option>
-              <option value="Livelihood">Livelihood</option>
-              <option value="Education">Education</option>
-              <option value="Transportation">Transportation</option>
-              <option value="Disaster/Emergency">Disaster/Emergency</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="edit-urgency" class="form-label text-success">Urgency</label>
-            <select class="form-select" name="urgency" id="edit-urgency">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
+          
+          <!-- Attachments Section -->
+          <div class="row mt-3">
+            <div class="col-12">
+              <h6 class="text-success mb-3"><i class="bi bi-paperclip me-1"></i>Manage Attachments</h6>
+              
+              <!-- Existing Attachments -->
+              <div class="mb-3">
+                <label class="form-label">Current Attachments</label>
+                <div id="edit-existing-attachments">
+                  <!-- Existing attachments will be populated here -->
+                </div>
+              </div>
+              
+              <!-- Add New Attachments -->
+              <div class="mb-3">
+                <label for="edit-attachments" class="form-label">Add New Attachments (optional)</label>
+                <input type="file" class="form-control" id="edit-attachments" name="new_attachments" multiple>
+                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+                
+                <!-- New files preview container -->
+                <div id="edit-new-files-preview"></div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer bg-light">
@@ -142,35 +374,554 @@ My Assistance Requests
   </div>
 </div>
 
-<script>
-function viewAssistance(id) {
-    fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('view-title').textContent = data.title;
-        document.getElementById('view-description').textContent = data.description;
-        document.getElementById('view-type').textContent = data.type;
-        document.getElementById('view-priority').textContent = data.urgency;
-        document.getElementById('view-status').textContent = data.status;
-        document.getElementById('view-created').textContent = data.created_at;
-        var modal = new bootstrap.Modal(document.getElementById('viewAssistanceModal'));
-        modal.show();
-    });
-}
 
-function editAssistance(id) {
-    fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('edit-id').value = data.id;
-        document.getElementById('edit-title').value = data.title;
-        document.getElementById('edit-description').value = data.description;
-        document.getElementById('edit-type').value = data.type;
-        document.getElementById('edit-urgency').value = data.urgency;
-        document.getElementById('editAssistanceForm').action = "{% url 'update_assistance' 0 %}".replace('0', id);
-        var modal = new bootstrap.Modal(document.getElementById('editAssistanceModal'));
-        modal.show();
-    });
-}
+{% endblock %}
+
+{% block internal_js %}
+<script>
+  let viewMap;
+  let editMap;
+  let editMarker;
+
+  function viewAssistance(id) {
+      fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(response => response.json())
+      .then(data => {
+          // Fill basic information
+          document.getElementById('view-title').textContent = data.title;
+          document.getElementById('view-description').textContent = data.description;
+          document.getElementById('view-type').textContent = data.type;
+          
+          // Format urgency with badge
+          const priorityElement = document.getElementById('view-priority');
+          const priorityClass = getUrgencyClass(data.urgency);
+          priorityElement.innerHTML = `<span class="badge ${priorityClass}">${data.urgency.charAt(0).toUpperCase() + data.urgency.slice(1)}</span>`;
+          
+          // Format status with badge
+          const statusElement = document.getElementById('view-status');
+          const statusClass = getAssistanceStatusClass(data.status);
+          statusElement.innerHTML = `<span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`;
+          
+          document.getElementById('view-created').textContent = data.created_at;
+          document.getElementById('view-address').textContent = data.address || 'Not specified';
+          
+          // Handle coordinates and map
+          const mapSection = document.getElementById('assistance-map-section');
+          const coordinatesElement = document.getElementById('view-coordinates');
+          
+          if (data.latitude && data.longitude) {
+              coordinatesElement.textContent = `${parseFloat(data.latitude).toFixed(6)}, ${parseFloat(data.longitude).toFixed(6)}`;
+              mapSection.style.display = 'block';
+              
+              // Initialize map after modal is shown
+              setTimeout(() => {
+                  if (viewMap) {
+                      viewMap.remove();
+                  }
+                  viewMap = L.map('view-map').setView([data.latitude, data.longitude], 16);
+                  
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '© OpenStreetMap contributors',
+                      maxZoom: 19
+                  }).addTo(viewMap);
+                  
+                  // Add marker for assistance location
+                  L.marker([data.latitude, data.longitude])
+                      .addTo(viewMap)
+                      .bindPopup(`
+                          <div class="text-center">
+                              <strong>Assistance Location</strong><br>
+                              <small>Lat: ${parseFloat(data.latitude).toFixed(6)}<br>Lng: ${parseFloat(data.longitude).toFixed(6)}</small><br>
+                              <em>${data.type} assistance requested here</em>
+                          </div>
+                      `)
+                      .openPopup();
+              }, 300);
+          } else {
+              coordinatesElement.textContent = 'Not specified';
+              mapSection.style.display = 'none';
+          }
+          
+          // Handle attachments
+          const attachmentsContainer = document.getElementById('view-attachments');
+          if (data.attachments && data.attachments.length > 0) {
+              let attachmentsHtml = '<div class="row g-2">';
+              data.attachments.forEach(function(attachment, index) {
+                  const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
+                  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
+                  const icon = getFileIcon(fileExtension);
+                  
+                  attachmentsHtml += `
+                      <div class="col-md-6 col-lg-4">
+                          <div class="card attachment-card h-100">
+                              <div class="card-body p-3">
+                                  <div class="d-flex align-items-center">
+                                      <div class="attachment-icon me-3">
+                                          <img src="${attachment.file_url}" class="img-fluid" alt="${attachment.file_name}">
+                                      </div>
+                                      <div class="flex-grow-1">
+                                          <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
+                                              ${attachment.file_name}
+                                          </h6>
+                                          <small class="text-muted">
+                                              Uploaded: ${attachment.uploaded_at}
+                                          </small>
+                                      </div>
+                                  </div>
+                                  <div class="mt-2 d-flex gap-1">
+                                      <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                          <i class="bi bi-download me-1"></i>Download
+                                      </a>
+                                      ${isImage ? `<button type="button" class="btn btn-sm btn-outline-info" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
+                                          <i class="bi bi-eye me-1"></i>Preview
+                                      </button>` : ''}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+              });
+              attachmentsHtml += '</div>';
+              attachmentsContainer.innerHTML = attachmentsHtml;
+          } else {
+              attachmentsContainer.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No attachments uploaded for this assistance request.</p>';
+          }
+          
+          // Show modal
+          var modal = new bootstrap.Modal(document.getElementById('viewAssistanceModal'));
+          modal.show();
+      })
+      .catch(error => {
+          console.error('Error fetching assistance details:', error);
+          alert('Error loading assistance details. Please try again.');
+      });
+  }
+
+  function initViewMap(latitude, longitude) {
+      // Remove existing map if any
+      if (viewMap) {
+          viewMap.remove();
+      }
+      
+      const defaultLat = 11.4484;
+      const defaultLng = 124.8558;
+      
+      const lat = latitude || defaultLat;
+      const lng = longitude || defaultLng;
+      
+      viewMap = L.map('view-map').setView([lat, lng], 15);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+      }).addTo(viewMap);
+      
+      if (latitude && longitude) {
+          L.marker([latitude, longitude]).addTo(viewMap);
+          document.getElementById('view-coordinates').innerHTML = 
+              `<i class="bi bi-geo-alt-fill text-success me-1"></i>Coordinates: ${parseFloat(latitude).toFixed(6)}, ${parseFloat(longitude).toFixed(6)}`;
+      } else {
+          document.getElementById('view-coordinates').innerHTML = 
+              '<i class="bi bi-info-circle text-muted me-1"></i>No location pinned for this assistance request';
+      }
+  }
+
+  function editAssistance(id) {
+      fetch("{% url 'update_assistance' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(response => response.json())
+      .then(data => {
+          document.getElementById('edit-id').value = data.id;
+          document.getElementById('edit-title').value = data.title;
+          document.getElementById('edit-description').value = data.description;
+          document.getElementById('edit-type').value = data.type;
+          document.getElementById('edit-urgency').value = data.urgency;
+          document.getElementById('edit-address').value = data.address || '';
+          document.getElementById('edit-latitude').value = data.latitude || '';
+          document.getElementById('edit-longitude').value = data.longitude || '';
+          
+          // Handle "Others" assistance type display
+          const editOthersContainer = document.getElementById('edit-other-assistance-container');
+          const editOthersInput = document.getElementById('edit-other-assistance-type');
+          
+          // Check if the current type is not in the standard options (indicating it's a custom "Others" type)
+          const standardTypes = ['Medical', 'Financial', 'Food/Supplies', 'Evacuation/Shelter', 'Legal', 'Livelihood', 'Education', 'Transportation', 'Disaster/Emergency'];
+          
+          if (!standardTypes.includes(data.type)) {
+              // This is a custom type, so select "Others" and show the custom input
+              document.getElementById('edit-type').value = 'Others';
+              editOthersContainer.style.display = 'block';
+              editOthersInput.value = data.type;
+              editOthersInput.setAttribute('required', 'required');
+          } else {
+              // Standard type, hide the others container
+              editOthersContainer.style.display = 'none';
+              editOthersInput.value = '';
+              editOthersInput.removeAttribute('required');
+          }
+          
+          // Update coordinates display
+          if (data.latitude && data.longitude) {
+              document.getElementById('edit-coordinates-display').innerHTML = 
+                  `<i class="bi bi-geo-alt-fill text-success me-1"></i>Current: ${parseFloat(data.latitude).toFixed(6)}, ${parseFloat(data.longitude).toFixed(6)}`;
+          } else {
+              document.getElementById('edit-coordinates-display').textContent = 'No location pinned';
+          }
+          
+          // Handle existing attachments
+          displayEditAttachments(data.attachments || []);
+          
+          document.getElementById('editAssistanceForm').action = "{% url 'update_assistance' 0 %}".replace('0', id);
+          var modal = new bootstrap.Modal(document.getElementById('editAssistanceModal'));
+          modal.show();
+          
+          // Initialize edit map after modal is shown
+          setTimeout(() => {
+              initEditMap(data.latitude, data.longitude);
+          }, 300);
+      });
+  }
+
+  function initEditMap(latitude, longitude) {
+      // Remove existing map if any
+      if (editMap) {
+          editMap.remove();
+      }
+      
+      const defaultLat = 11.4484;
+      const defaultLng = 124.8558;
+      
+      const lat = latitude || defaultLat;
+      const lng = longitude || defaultLng;
+      
+      editMap = L.map('edit-map').setView([lat, lng], 15);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+      }).addTo(editMap);
+      
+      // Add existing marker if coordinates exist
+      if (latitude && longitude) {
+          editMarker = L.marker([latitude, longitude]).addTo(editMap);
+      }
+      
+      // Add click event to update location
+      editMap.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          
+          // Remove existing marker
+          if (editMarker) {
+              editMap.removeLayer(editMarker);
+          }
+          
+          // Add new marker
+          editMarker = L.marker([lat, lng]).addTo(editMap);
+          
+          // Update form fields
+          document.getElementById('edit-latitude').value = lat;
+          document.getElementById('edit-longitude').value = lng;
+          
+          // Update coordinates display
+          document.getElementById('edit-coordinates-display').innerHTML = 
+              `<i class="bi bi-geo-alt-fill text-success me-1"></i>New: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          
+          // Reverse geocoding to get address
+          reverseGeocode(lat, lng);
+      });
+  }
+
+  // Function to perform reverse geocoding
+  function reverseGeocode(lat, lng) {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      
+      fetch(url)
+          .then(response => response.json())
+          .then(data => {
+              if (data && data.display_name) {
+                  document.getElementById('edit-address').value = data.display_name;
+              }
+          })
+          .catch(error => {
+              console.error('Error with reverse geocoding:', error);
+              document.getElementById('edit-address').value = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          });
+  }
+
+  // Function to get appropriate file icon based on extension
+  function getFileIcon(extension) {
+      const ext = extension.toLowerCase();
+      
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) {
+          return 'bi-file-earmark-image';
+      } else if (['pdf'].includes(ext)) {
+          return 'bi-file-earmark-pdf';
+      } else if (['doc', 'docx'].includes(ext)) {
+          return 'bi-file-earmark-word';
+      } else if (['xls', 'xlsx'].includes(ext)) {
+          return 'bi-file-earmark-excel';
+      } else if (['ppt', 'pptx'].includes(ext)) {
+          return 'bi-file-earmark-ppt';
+      } else if (['txt'].includes(ext)) {
+          return 'bi-file-earmark-text';
+      } else if (['zip', 'rar', '7z'].includes(ext)) {
+          return 'bi-file-earmark-zip';
+      } else if (['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(ext)) {
+          return 'bi-file-earmark-play';
+      } else if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
+          return 'bi-file-earmark-music';
+      } else {
+          return 'bi-file-earmark';
+      }
+  }
+
+  // Function to preview images
+  function previewImage(imageUrl, fileName) {
+      const previewModal = new bootstrap.Modal(document.createElement('div'));
+      const modalHtml = `
+          <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-centered">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title">
+                              <i class="bi bi-image me-2"></i>${fileName}
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body text-center p-0">
+                          <img src="${imageUrl}" class="img-fluid" alt="${fileName}" style="max-height: 70vh; width: auto;">
+                      </div>
+                      <div class="modal-footer">
+                          <a href="${imageUrl}" target="_blank" class="btn btn-primary">
+                              <i class="bi bi-download me-1"></i>Download Full Size
+                          </a>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `;
+      
+      // Remove existing preview modal if any
+      const existingModal = document.getElementById('imagePreviewModal');
+      if (existingModal) {
+          existingModal.remove();
+      }
+      
+      // Add new modal to body
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+      modal.show();
+      
+      // Clean up modal when hidden
+      document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+          this.remove();
+      });
+  }
+
+  // Function to get urgency badge class
+  function getUrgencyClass(urgency) {
+      switch(urgency) {
+          case 'low': return 'bg-success';
+          case 'medium': return 'bg-warning';
+          case 'high': return 'bg-orange';
+          case 'critical': return 'bg-danger';
+          default: return 'bg-secondary';
+      }
+  }
+
+  // Function to get assistance status badge class
+  function getAssistanceStatusClass(status) {
+      switch(status) {
+          case 'pending': return 'bg-warning';
+          case 'approved': return 'bg-info';
+          case 'in_progress': return 'bg-primary';
+          case 'completed': return 'bg-success';
+          case 'rejected': return 'bg-danger';
+          default: return 'bg-secondary';
+      }
+  }
+
+  // Handle "Others" assistance type selection in edit modal
+  document.addEventListener('DOMContentLoaded', function() {
+      const editTypeSelect = document.getElementById('edit-type');
+      if (editTypeSelect) {
+          editTypeSelect.addEventListener('change', function() {
+              const editOthersContainer = document.getElementById('edit-other-assistance-container');
+              const editOthersInput = document.getElementById('edit-other-assistance-type');
+              
+              if (this.value === 'Others') {
+                  editOthersContainer.style.display = 'block';
+                  editOthersInput.setAttribute('required', 'required');
+              } else {
+                  editOthersContainer.style.display = 'none';
+                  editOthersInput.removeAttribute('required');
+                  editOthersInput.value = ''; // Clear the input when hidden
+              }
+          });
+      }
+  });
+
+  // Function to display existing attachments in edit modal
+  function displayEditAttachments(attachments) {
+      const container = document.getElementById('edit-existing-attachments');
+      
+      if (attachments.length === 0) {
+          container.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No attachments currently uploaded for this assistance request.</p>';
+          return;
+      }
+      
+      let attachmentsHtml = '<div class="row g-2">';
+      attachments.forEach(function(attachment) {
+          const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
+          const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
+          const icon = getFileIcon(fileExtension);
+          
+          attachmentsHtml += `
+              <div class="col-md-6" id="attachment-${attachment.id}">
+                  <div class="card attachment-card h-100">
+                      <div class="card-body p-3">
+                          <div class="d-flex align-items-center">
+                              <div class="attachment-icon me-3">
+                                  <i class="bi ${icon} fs-4 text-primary"></i>
+                              </div>
+                              <div class="flex-grow-1">
+                                  <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
+                                      ${attachment.file_name}
+                                  </h6>
+                                  <small class="text-muted">
+                                      Uploaded: ${attachment.uploaded_at}
+                                  </small>
+                              </div>
+                          </div>
+                          <div class="mt-2 d-flex gap-1">
+                              <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                  <i class="bi bi-download me-1"></i>Download
+                              </a>
+                              ${isImage ? `<button type="button" class="btn btn-sm btn-outline-info" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
+                                  <i class="bi bi-eye me-1"></i>Preview
+                              </button>` : ''}
+                              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAttachment(${attachment.id})">
+                                  <i class="bi bi-trash me-1"></i>Remove
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+      });
+      attachmentsHtml += '</div>';
+      
+      container.innerHTML = attachmentsHtml;
+  }
+
+  // Function to preview new file selections
+  function previewNewFiles() {
+      const fileInput = document.getElementById('edit-attachments');
+      const previewContainer = document.getElementById('edit-new-files-preview');
+      
+      if (fileInput.files.length === 0) {
+          previewContainer.innerHTML = '';
+          return;
+      }
+      
+      let previewHtml = '<div class="mt-3"><h6><i class="bi bi-plus-circle me-1"></i>New Files to Upload:</h6><div class="row g-2">';
+      
+      Array.from(fileInput.files).forEach((file, index) => {
+          const fileExtension = file.name.split('.').pop().toLowerCase();
+          const icon = getFileIcon(fileExtension);
+          const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+          
+          previewHtml += `
+              <div class="col-md-6">
+                  <div class="card border-success">
+                      <div class="card-body p-3">
+                          <div class="d-flex align-items-center">
+                              <div class="attachment-icon me-3">
+                                  <i class="bi ${icon} fs-5 text-success"></i>
+                              </div>
+                              <div class="flex-grow-1">
+                                  <h6 class="card-title mb-1 text-truncate" title="${file.name}">
+                                      ${file.name}
+                                  </h6>
+                                  <small class="text-muted">
+                                      Size: ${fileSize} MB
+                                  </small>
+                              </div>
+                          </div>
+                          <div class="mt-2">
+                              <span class="badge bg-success">
+                                  <i class="bi bi-upload me-1"></i>Ready to upload
+                              </span>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+      });
+      
+      previewHtml += '</div></div>';
+      previewContainer.innerHTML = previewHtml;
+  }
+
+  // Function to remove attachment
+  function removeAttachment(attachmentId) {
+      if (confirm('Are you sure you want to remove this attachment?')) {
+          // Hide the attachment card
+          const attachmentCard = document.getElementById(`attachment-${attachmentId}`);
+          if (attachmentCard) {
+              attachmentCard.style.display = 'none';
+              
+              // Add hidden input to mark for deletion
+              const form = document.getElementById('editAssistanceForm');
+              const deleteInput = document.createElement('input');
+              deleteInput.type = 'hidden';
+              deleteInput.name = 'delete_attachments';
+              deleteInput.value = attachmentId;
+              form.appendChild(deleteInput);
+              
+              // Show success message
+              const successAlert = document.createElement('div');
+              successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+              successAlert.innerHTML = `
+                  <i class="bi bi-check-circle me-1"></i>
+                  Attachment marked for removal. It will be deleted when you save the assistance request.
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
+              attachmentCard.parentNode.insertBefore(successAlert, attachmentCard);
+              
+              // Auto-dismiss alert after 3 seconds
+              setTimeout(() => {
+                  if (successAlert && successAlert.parentNode) {
+                      successAlert.remove();
+                  }
+              }, 3000);
+          }
+      }
+  }
+
+  // Add event listener for file input change
+  document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('edit-attachments');
+      if (fileInput) {
+          fileInput.addEventListener('change', previewNewFiles);
+      }
+  });
+
+  // Clean up maps when modals are hidden
+  document.getElementById('viewAssistanceModal').addEventListener('hidden.bs.modal', function () {
+      if (viewMap) {
+          viewMap.remove();
+          viewMap = null;
+      }
+  });
+
+  document.getElementById('editAssistanceModal').addEventListener('hidden.bs.modal', function () {
+      if (editMap) {
+          editMap.remove();
+          editMap = null;
+          editMarker = null;
+      }
+  });
 </script>
 {% endblock %}

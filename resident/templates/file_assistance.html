@@ -1,65 +1,200 @@
 {% extends 'base_resident.html' %}
 {% block title %}Request Assistance{% endblock %}
 
+{% block internal_css %}
+<style>
+    .map-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+    
+    #coordinates-display {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+    
+    /* Custom marker icon styling for assistance */
+    .leaflet-marker-icon {
+        filter: hue-rotate(120deg) brightness(1.1);
+    }
+</style>
+{% endblock %}
+
+
 {% block breadcrumb %}
 Request Assistance
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card shadow-lg p-4" style="width: 100%; max-width: 500px;">
-        <h3 class="mb-4 text-center text-success">Request Assistance</h3>
-        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Request for Medical Aid">
-                <div class="invalid-feedback">Please enter a subject.</div>
+<div class="container-fluid py-4 ">
+    <div class="row justify-content-center ">
+        <div class="col-12 col-lg-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-success text-center py-3">
+                    <h3 class="mb-0">
+                        Request Assistance
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Form Grid Layout -->
+                        <div class="row g-3">
+                            <!-- Left Column -->
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">
+                                        <i class="bi bi-card-heading me-1 text-success"></i>
+                                        Subject<span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="e.g. Request for Medical Aid">
+                                    <div class="invalid-feedback">Please enter a subject.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="type" class="form-label">
+                                        <i class="bi bi-gear me-1 text-success"></i>
+                                        Type of Assistance<span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="">Select type</option>
+                                        <option value="Medical">Medical</option>
+                                        <option value="Financial">Financial</option>
+                                        <option value="Food/Supplies">Food/Supplies</option>
+                                        <option value="Evacuation/Shelter">Evacuation/Shelter</option>
+                                        <option value="Legal">Legal</option>
+                                        <option value="Livelihood">Livelihood</option>
+                                        <option value="Education">Education</option>
+                                        <option value="Transportation">Transportation</option>
+                                        <option value="Disaster/Emergency">Disaster/Emergency</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                    <div class="invalid-feedback">Please select a type of assistance.</div>
+                                </div>
+
+                                <!-- Other assistance type specification - hidden by default -->
+                                <div class="mb-3" id="other-assistance-container" style="display: none;">
+                                    <label for="other_assistance_type" class="form-label">
+                                        <i class="bi bi-pencil me-1 text-success"></i>
+                                        Please specify other assistance type<span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="other_assistance_type" name="other_assistance_type" 
+                                           placeholder="Enter the specific type of assistance you need">
+                                    <div class="invalid-feedback">Please specify the other assistance type.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="urgency" class="form-label">
+                                        <i class="bi bi-exclamation-triangle me-1 text-success"></i>
+                                        Urgency Level
+                                    </label>
+                                    <select class="form-select" id="urgency" name="urgency">
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">
+                                        <i class="bi bi-file-text me-1 text-success"></i>
+                                        Description<span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" id="description" name="description" rows="4" required 
+                                              placeholder="Describe your assistance request in detail..."></textarea>
+                                    <div class="invalid-feedback">Please enter a description.</div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-lg-6">
+                                <!-- Location Section -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-geo-alt me-1 text-success"></i>
+                                        Pin Your Location
+                                    </label>
+                                    <div class="map-container">
+                                        <div class="border rounded" style="height: 300px; border-radius: 8px; border: 2px solid #dee2e6;" id="map"></div>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Click on the map to pin your location or where assistance is needed. You can drag the marker to adjust the position.
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <span id="coordinates-display">Click on the map to select location</span>
+                                        </small>
+                                    </div>
+                                    <!-- Hidden inputs for coordinates -->
+                                    <input type="hidden" id="latitude" name="latitude">
+                                    <input type="hidden" id="longitude" name="longitude">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">
+                                        <i class="bi bi-house me-1 text-success"></i>
+                                        Address
+                                    </label>
+                                    <textarea class="form-control" id="address" name="address" rows="3" 
+                                              placeholder="Address will be automatically filled when you pin a location, or you can enter it manually"></textarea>
+                                    <div class="form-text">
+                                        <i class="bi bi-lightbulb me-1"></i>
+                                        This will be auto-filled when you pin a location on the map
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="attachments" class="form-label">
+                                        <i class="bi bi-paperclip me-1 text-success"></i>
+                                        Supporting Files (optional)
+                                    </label>
+                                    <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                                    <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-send me-2"></i>Submit Assistance Request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
-                <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your assistance request in detail..."></textarea>
-                <div class="invalid-feedback">Please enter a description.</div>
-            </div>
-            <div class="mb-3">
-                <label for="type" class="form-label">Type of Assistance<span class="text-danger">*</span></label>
-                <select class="form-select" id="type" name="type" required>
-                    <option value="">Select type</option>
-                    <option value="Medical">Medical</option>
-                    <option value="Financial">Financial</option>
-                    <option value="Food/Supplies">Food/Supplies</option>
-                    <option value="Evacuation/Shelter">Evacuation/Shelter</option>
-                    <option value="Legal">Legal</option>
-                    <option value="Livelihood">Livelihood</option>
-                    <option value="Education">Education</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Disaster/Emergency">Disaster/Emergency</option>
-                    <option value="Other">Other</option>
-                </select>
-                <div class="invalid-feedback">Please select a type of assistance.</div>
-            </div>
-            <div class="mb-3">
-                <label for="urgency" class="form-label">Urgency</label>
-                <select class="form-select" id="urgency" name="urgency">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                </select>
-            </div>
-            <!-- <div class="mb-3">
-                <label for="location" class="form-label">Location</label>
-                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 1, near Barangay Hall">
-            </div> -->
-            <div class="mb-3">
-                <label for="attachments" class="form-label">Supporting Files (optional)</label>
-                <input type="file" class="form-control" id="attachments" name="attachments" multiple>
-                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
-            </div>
-            <button type="submit" class="btn btn-success w-100">Submit Request</button>
-        </form>
+        </div>
     </div>
 </div>
+
+
+
+{% endblock %}
+
+{% block internal_js %}
 <script>
     // Bootstrap validation
     (() => {
@@ -75,5 +210,182 @@ Request Assistance
             }, false);
         });
     })();
+
+    // Handle "Others" assistance type selection
+    document.getElementById('type').addEventListener('change', function() {
+        const otherAssistanceContainer = document.getElementById('other-assistance-container');
+        const otherAssistanceInput = document.getElementById('other_assistance_type');
+        
+        if (this.value === 'Others') {
+            otherAssistanceContainer.style.display = 'block';
+            otherAssistanceInput.setAttribute('required', 'required');
+        } else {
+            otherAssistanceContainer.style.display = 'none';
+            otherAssistanceInput.removeAttribute('required');
+            otherAssistanceInput.value = ''; // Clear the input when hidden
+        }
+    });
+
+    // Initialize map
+    let map;
+    let marker;
+
+    function initMap() {
+        // Default coordinates (Babatngon, Leyte - you can adjust these)
+        const defaultLat = 11.4227;
+        const defaultLng = 124.8454;
+
+        // Initialize the map
+        map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Add click event to map
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            // Remove existing marker
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            // Add new marker with draggable option
+            marker = L.marker([lat, lng], {
+                draggable: true,
+                title: 'Assistance Location'
+            }).addTo(map);
+
+            // Update location data
+            updateLocationData(lat, lng);
+
+            // Handle marker drag
+            marker.on('dragend', function(e) {
+                const newLat = e.target.getLatLng().lat;
+                const newLng = e.target.getLatLng().lng;
+                updateLocationData(newLat, newLng);
+            });
+
+            // Add popup to marker
+            marker.bindPopup(`
+                <div class="text-center">
+                    <strong>Assistance Location</strong><br>
+                    <small>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</small><br>
+                    <em>You can drag this marker to adjust</em>
+                </div>
+            `).openPopup();
+        });
+
+        // Try to get user's current location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    // Center map on user's location
+                    map.setView([userLat, userLng], 16);
+                    
+                    // Add a blue circle to show user's approximate location
+                    L.circle([userLat, userLng], {
+                        color: '#198754',
+                        fillColor: '#198754',
+                        fillOpacity: 0.1,
+                        radius: 100
+                    }).addTo(map).bindPopup('Your approximate location');
+                },
+                function(error) {
+                    console.log('Geolocation error:', error);
+                    // Keep default location if geolocation fails
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 600000
+                }
+            );
+        }
+    }
+
+    function updateLocationData(lat, lng) {
+        // Store coordinates
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+
+        // Update display
+        document.getElementById('coordinates-display').innerHTML = 
+            `<i class="bi bi-geo-alt-fill text-success me-1"></i>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+        // Reverse geocoding to get address
+        reverseGeocode(lat, lng);
+    }
+
+    // Function to perform reverse geocoding
+    function reverseGeocode(lat, lng) {
+        const addressField = document.getElementById('address');
+        
+        // Show loading state
+        addressField.value = 'Loading address...';
+        addressField.style.color = '#6c757d';
+        
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    // Extract and format the address
+                    const address = formatAddress(data);
+                    addressField.value = address;
+                    addressField.style.color = '#212529';
+                } else {
+                    addressField.value = 'Address not found for this location';
+                    addressField.style.color = '#dc3545';
+                }
+            })
+            .catch(error => {
+                console.error('Error with reverse geocoding:', error);
+                addressField.value = 'Unable to fetch address';
+                addressField.style.color = '#dc3545';
+            });
+    }
+
+    // Function to format the address from Nominatim response
+    function formatAddress(data) {
+        const address = data.address || {};
+        const parts = [];
+        
+        // Build address components in logical order
+        if (address.house_number) parts.push(address.house_number);
+        if (address.road) parts.push(address.road);
+        if (address.neighbourhood) parts.push(address.neighbourhood);
+        if (address.suburb) parts.push(address.suburb);
+        if (address.village) parts.push(address.village);
+        if (address.town) parts.push(address.town);
+        if (address.city) parts.push(address.city);
+        if (address.municipality) parts.push(address.municipality);
+        if (address.county) parts.push(address.county);
+        if (address.state) parts.push(address.state);
+        if (address.postcode) parts.push(address.postcode);
+        if (address.country) parts.push(address.country);
+        
+        // If no detailed address components, use display_name but clean it up
+        if (parts.length === 0) {
+            return data.display_name;
+        }
+        
+        return parts.join(', ');
+    }
+
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+    });
+
 </script>
+
 {% endblock %}
