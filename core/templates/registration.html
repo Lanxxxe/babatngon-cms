@@ -36,17 +36,22 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="first_name" class="form-label fw-medium">First Name<span class="text-danger">*</span> </label>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="e.g., Juan" required>
                                     <div class="invalid-feedback">Please enter your first name.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="middle_name" class="form-label fw-medium">Middle Name</label>
-                                    <input type="text" class="form-control" id="middle_name" name="middle_name" required>
+                                    <input type="text" class="form-control" id="middle_name" name="middle_name" placeholder="e.g., Carlos">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="last_name" class="form-label fw-medium">Last Name<span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="e.g., Dela Cruz" required>
                                     <div class="invalid-feedback">Please enter your last name.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="suffix" class="form-label fw-medium">Suffix<span class="text-danger"></span></label>
+                                    <input type="text" class="form-control" id="suffix" name="suffix" placeholder="e.g., Jr., Sr., III">
+                                    <div class="invalid-feedback">Please enter your suffix.</div>
                                 </div>
                             </div>
                         </div>
@@ -61,14 +66,14 @@
                                     <label for="username" class="form-label fw-medium">Username<span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text">@</span>
-                                        <input type="text" class="form-control" id="username" name="username" required>
+                                        <input type="text" class="form-control" id="username" name="username" placeholder="e.g., juan_cruz2024" required>
                                         <div class="invalid-feedback">Please choose a username.</div>
                                     </div>
                                     <div class="form-text">Choose a unique username (3-20 characters)</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="email" class="form-label fw-medium">Email Address<span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="e.g., juan.delacruz@gmail.com" required>
                                     <div class="invalid-feedback">Please enter a valid email address.</div>
                                 </div>
                             </div>
@@ -83,7 +88,7 @@
                                 <div class="col-md-6">
                                     <label for="phone" class="form-label fw-medium">Phone Number<span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="phone" name="phone" 
-                                           placeholder="+63 XXX XXX XXXX" required>
+                                        placeholder="+63 XXX XXX XXXX" required>
                                     <div class="invalid-feedback">Please enter your phone number.</div>
                                 </div>
                                 <div class="col-md-6">
@@ -122,7 +127,7 @@
                             <div class="mt-3">
                                 <label for="address" class="form-label fw-medium">Complete Address<span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="address" name="address" rows="2" 
-                                          placeholder="House number, street, subdivision..." required></textarea>
+                                        placeholder="e.g., 123 Rizal Street, San Antonio Subdivision" required></textarea>
                                 <div class="invalid-feedback">Please enter your complete address.</div>
                             </div>
                         </div>
@@ -136,7 +141,7 @@
                                 <div class="col-md-6">
                                     <label for="password1" class="form-label fw-medium">Password</label>
                                     <div class="input-group">
-                                        <input type="password" class="form-control" id="password1" name="password1" required>
+                                        <input type="password" class="form-control" id="password1" name="password1" placeholder="Create a strong password" required>
                                         <button class="btn" type="button" id="togglePassword1">
                                             <i class="bi bi-eye"></i>
                                         </button>
@@ -151,7 +156,7 @@
                                 <div class="col-md-6">
                                     <label for="password2" class="form-label fw-medium">Confirm Password</label>
                                     <div class="input-group">
-                                        <input type="password" class="form-control" id="password2" name="password2" required>
+                                        <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm your password" required>
                                         <button class="btn" type="button" id="togglePassword2">
                                             <i class="bi bi-eye"></i>
                                         </button>
@@ -160,28 +165,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Preferences -->
-                        <!-- <div class="mb-4">
-                            <h5 class="fw-semibold mb-3">
-                                <i class="bi bi-gear me-2"></i>Preferences
-                            </h5>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="email_notifications" 
-                                       name="email_notifications" checked>
-                                <label class="form-check-label" for="email_notifications">
-                                    <strong>Email Notifications</strong>
-                                    <div class="text-muted small">Receive updates about your complaints via email</div>
-                                </label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="sms_notifications" name="sms_notifications">
-                                <label class="form-check-label" for="sms_notifications">
-                                    <strong>SMS Notifications</strong>
-                                    <div class="text-muted small">Receive important updates via text message</div>
-                                </label>
-                            </div>
-                        </div> -->
 
                         <!-- Terms and Conditions -->
                         <div class="mb-4">
