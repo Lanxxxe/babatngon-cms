@@ -281,36 +281,74 @@ def accounts(request):
     }
     return render(request, 'accounts.html', context)
 
+
+
 # Register new staff/admin
 @require_POST
 def add_account(request):
     try:
+        # Account Information
         username = request.POST.get('username', '').strip()
-        full_name = request.POST.get('full_name', '').strip()
         email = request.POST.get('email', '').strip()
         role = request.POST.get('role', 'staff').strip()
         department = request.POST.get('department', '').strip()
+        position = request.POST.get('position', '').strip()
+        
+        # Personal Information
+        first_name = request.POST.get('first_name', '').strip()
+        middle_name = request.POST.get('middle_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        suffix = request.POST.get('suffix', '').strip()
+        
+        # Security
         password = request.POST.get('password', '').strip()
-        if not all([username, full_name, email, password, role]):
-            sweetify.error(request, 'All fields except department are required.', timer=3000)
+        confirm_password = request.POST.get('confirm_password', '').strip()
+        
+        # Validation
+        required_fields = [username, email, role, department, position, first_name, last_name, password]
+        if not all(required_fields):
+            sweetify.error(request, 'Please fill in all required fields.', timer=3000)
             return redirect('accounts')
+        
+        # Password validation
+        if password != confirm_password:
+            sweetify.error(request, 'Passwords do not match.', timer=3000)
+            return redirect('accounts')
+        
+        if len(password) < 8:
+            sweetify.error(request, 'Password must be at least 8 characters long.', timer=3000)
+            return redirect('accounts')
+        
+        # Check for existing username
         if Admin.objects.filter(username=username).exists():
             sweetify.error(request, 'Username already exists.', timer=3000)
             return redirect('accounts')
+        
+        # Check for existing email
         if Admin.objects.filter(email=email).exists():
             sweetify.error(request, 'Email already exists.', timer=3000)
             return redirect('accounts')
+        
+        # Create the account
         Admin.objects.create(
             username=username,
-            full_name=full_name,
             email=email,
             role=role,
             department=department,
+            position=position,
+            first_name=first_name,
+            middle_name=middle_name if middle_name else None,
+            last_name=last_name,
+            suffix=suffix if suffix else None,
             password=make_password(password)
         )
-        sweetify.toast(request, 'Account registered successfully!', timer=2000)
-    except Exception:
-        sweetify.error(request, 'Failed to register account.', timer=3000)
+        
+        full_name = f"{first_name} {last_name}"
+        sweetify.toast(request, f'Account for {full_name} registered successfully!', timer=2000)
+        
+    except Exception as e:
+        sweetify.error(request, 'Failed to register account. Please try again.', timer=3000)
+    
     return redirect('accounts')
 
 # Change password for staff/admin
@@ -358,6 +396,7 @@ def delete_account(request):
     return redirect('accounts')
 
 
+
 def admin_logout(request):
     """
     Admin logout view.
@@ -365,3 +404,7 @@ def admin_logout(request):
     request.session.flush()  # Clear all session data
     sweetify.toast(request, 'You have been logged out successfully.', timer=2000)
     return redirect('admin_login')
+
+
+
+

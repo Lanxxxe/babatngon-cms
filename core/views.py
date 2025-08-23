@@ -57,6 +57,7 @@ def register(request):
             return render(request, 'registration.html')
     return render(request, 'registration.html')
 
+
 def login(request):
     if request.method == 'POST':
         username_or_email = request.POST.get('username', '').strip()
@@ -95,14 +96,19 @@ def login(request):
 def index(request):
     return render(request, 'index.html')
 
+
 def about(request):
 
 
     return render(request, 'about.html')
+
+
 def features(request):
 
 
     return render(request, 'features.html')
+
+
 def contact(request):
 
 
