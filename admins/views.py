@@ -3,8 +3,8 @@ from django.contrib.auth.hashers import make_password
 from django.views.decorators.http import require_POST
 from django.db.models import Count
 from django.contrib import messages
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.http import JsonResponse
 from .models import Complaint, AssistanceRequest
 from core.models import Admin, User
 from django.contrib.auth.hashers import check_password
@@ -29,9 +29,20 @@ def admin_login(request):
             # Set session for admin
             request.session['admin_id'] = admin.id
             request.session['admin_username'] = admin.username
+            request.session['admin_email'] = admin.email
+            request.session['admin_first_name'] = admin.first_name
+            request.session['admin_last_name'] = admin.last_name
+            request.session['admin_full_name'] = admin.full_name
             request.session['admin_role'] = admin.role
             sweetify.toast(request, f'Welcome, {admin.full_name}!', timer=2000)
-            return redirect('admin_dashboard')
+
+            if admin.role == 'staff':
+                return redirect('staff_dashboard')
+
+            elif admin.role == 'admin':
+                return redirect('admin_dashboard')
+
+            # return redirect('admin_dashboard')
         except Exception as e:
             sweetify.toast(request, 'An error occurred during login. Please try again.', timer=3000, icon='error')
             return redirect('admin_login')
@@ -251,20 +262,20 @@ def assign_complaint(request):
         complaint.assigned_to = staff
         complaint.assigned_by = current_admin
         
-        # If assigning to someone, set status to in_progress
+        complaint.status = 'pending'
+ 
         if staff:
-            complaint.status = 'in_progress'
             sweetify.toast(request, f'Complaint #{complaint.id} assigned to {staff.full_name}', timer=2000)
+ 
         else:
-            complaint.status = 'pending'
             sweetify.toast(request, f'Complaint #{complaint.id} unassigned', timer=2000)
-            
+
         complaint.save()
         
         return JsonResponse({'success': True})
         
     except Exception as e:
-        sweetify.error(request, 'Failed to assign complaint. Please try again.', timer=3000)
+        sweetify.error(request, f'Failed to assign complaint. Please try again. {e}', persistent=True, timer=3000)
         return JsonResponse({'success': False, 'error': str(e)})
 
 
@@ -273,7 +284,6 @@ def update_complaint_status(request):
     """
     Update complaint status.
     """
-    from django.http import JsonResponse
     
     try:
         complaint_id = request.POST.get('complaint_id')
@@ -300,14 +310,80 @@ def admin_assistance(request):
     """
     Display all assistance requests for admin management.
     """
-
-    assistance_requests = AssistanceRequest.objects.select_related('user').all().order_by('-created_at')
+    assistance_requests = AssistanceRequest.objects.select_related('user', 'assigned_to').all().order_by('-created_at')
+    # Get all staff members for assignment dropdown
+    staff_members = Admin.objects.all().order_by('first_name', 'last_name').filter(role='staff')
 
     data = {
-        'assistance_requests': assistance_requests
+        'assistance_requests': assistance_requests,
+        'staff_members': staff_members
     }
 
     return render(request, 'admin_assistance.html', data)
+
+
+@require_POST
+def assign_assistance(request):
+    """
+    Assign an assistance request to a staff member.
+    """
+    from django.http import JsonResponse
+    
+    try:
+        assistance_id = request.POST.get('assistance_id')
+        staff_id = request.POST.get('staff_id')
+        
+        assistance = AssistanceRequest.objects.get(id=assistance_id)
+        staff = Admin.objects.get(id=staff_id) if staff_id else None
+        
+        # Get current admin from session
+        current_admin_id = request.session.get('admin_id')
+        current_admin = Admin.objects.get(id=current_admin_id) if current_admin_id else None
+        
+        assistance.assigned_to = staff
+
+        assistance.status = 'pending'
+
+        if staff:
+            sweetify.toast(request, f'Assistance request #{assistance.id} assigned to {staff.full_name}', timer=2000)
+        else:
+             sweetify.toast(request, f'Assistance request #{assistance.id} unassigned', timer=2000)
+
+        assistance.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        sweetify.error(request, f'Failed to assign assistance request. Please try again. {e}', persistent=True, timer=3000)
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST 
+def update_assistance_status(request):
+    """
+    Update assistance request status.
+    """
+    from django.http import JsonResponse
+    
+    try:
+        assistance_id = request.POST.get('assistance_id')
+        new_status = request.POST.get('status')
+        
+        assistance = AssistanceRequest.objects.get(id=assistance_id)
+        assistance.status = new_status
+        
+        if new_status == 'completed':
+            from django.utils import timezone
+            assistance.completed_at = timezone.now()
+            
+        assistance.save()
+        
+        sweetify.toast(request, f'Assistance request #{assistance.id} status updated to {new_status.title()}', timer=2000)
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        sweetify.error(request, 'Failed to update status. Please try again.', timer=3000)
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 def admin_resident(request):

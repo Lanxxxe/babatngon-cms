@@ -17,8 +17,11 @@ def get_admin_info(request):
     admin_info = {
         'id': request.session.get('admin_id'),
         'username': request.session.get('admin_username'),
-        'role': request.session.get('admin_role'),
+        'email': request.session.get('admin_email'),
+        'first_name': request.session.get('admin_first_name'),
+        'last_name': request.session.get('admin_last_name'),
         'full_name': request.session.get('admin_full_name'),
+        'role': request.session.get('admin_role'),
     }
     return {'admin': admin_info}
 

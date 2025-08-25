@@ -14,12 +14,18 @@
                         <p><strong>Type:</strong> {{ assistance.type|title }}</p>
                         <p><strong>Urgency:</strong> {{ assistance.urgency|title }}</p>
                         <p><strong>Status:</strong> {{ assistance.status|title }}</p>
+                        {% if assistance.assigned_to %}
+                        <p><strong>Assigned To:</strong> {{ assistance.assigned_to.first_name }} {{ assistance.assigned_to.last_name }} ({{ assistance.assigned_to.position }})</p>
+                        {% endif %}
                     </div>
                     <div class="col-md-6">
                         <p><strong>Resident:</strong> {{ assistance.user.first_name }} {{ assistance.user.last_name }}</p>
                         <p><strong>Email:</strong> {{ assistance.user.email }}</p>
                         <p><strong>Phone:</strong> {{ assistance.user.phone|default:"Not provided" }}</p>
                         <p><strong>Date Filed:</strong> {{ assistance.created_at|date:"F d, Y" }}</p>
+                        {% if assistance.completed_at %}
+                        <p><strong>Completed At:</strong> {{ assistance.completed_at|date:"F d, Y" }}</p>
+                        {% endif %}
                     </div>
                     <div class="col-12">
                         <h6>Description</h6>
@@ -58,9 +64,21 @@
                 <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Close</button>
                 <div class="dropdown">
                     <button class="btn btn-admin-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        Update Status
+                        Actions
                     </button>
                     <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Assign To Staff</h6></li>
+                        {% for staff in staff_members %}
+                            <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, {{ staff.id }})">
+                                <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
+                                {% if assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                            </a></li>
+                        {% endfor %}
+                        <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, null)">
+                            <i class="bi bi-person-x me-2"></i>Unassign
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Update Status</h6></li>
                         <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
                             <i class="bi bi-check-circle me-2"></i>Approve
                         </a></li>

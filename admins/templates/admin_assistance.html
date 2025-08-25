@@ -112,6 +112,7 @@
                         <th>Type</th>
                         <th>Urgency</th>
                         <th>Status</th>
+                        <th>Assigned To</th>
                         <th>Date Filed</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
@@ -161,6 +162,21 @@
                                 </span>
                             </td>
                             <td>
+                                {% if assistance.assigned_to %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            {{ assistance.assigned_to.first_name|first }}{{ assistance.assigned_to.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium small">{{ assistance.assigned_to.first_name }} {{ assistance.assigned_to.last_name }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ assistance.assigned_to.position }}</div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 <div class="small">{{ assistance.created_at|date:"M d, Y" }}</div>
                                 <div class="text-muted" style="font-size: 11px;">{{ assistance.created_at|timesince }} ago</div>
                             </td>
@@ -174,6 +190,18 @@
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu">
+                                            <li><h6 class="dropdown-header">Assign To Staff</h6></li>
+                                            {% for staff in staff_members %}
+                                                <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, {{ staff.id }})">
+                                                    <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
+                                                    {% if assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                                                </a></li>
+                                            {% endfor %}
+                                            <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, null)">
+                                                <i class="bi bi-person-x me-2"></i>Unassign
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">Update Status</h6></li>
                                             <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
                                                 <i class="bi bi-check-circle me-2"></i>Mark Approved
                                             </a></li>
@@ -197,7 +225,7 @@
 
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center text-muted">No assistance requests found.</td>
+                            <td colspan="10" class="text-center text-muted">No assistance requests found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -238,6 +266,23 @@
 </div>
 
 <script>
+    // CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
     // Select all functionality
     document.getElementById('selectAll').addEventListener('change', function() {
         const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
@@ -246,13 +291,55 @@
         });
     });
 
+    function assignAssistance(assistanceId, staffId) {
+        const formData = new FormData();
+        formData.append('assistance_id', assistanceId);
+        formData.append('staff_id', staffId || '');
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        fetch('{% url "assign_assistance" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh the page to show updated assignment
+            } else {
+                console.error('Assignment failed:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
     function editAssistance(id) {
         window.location.href = `/admin/assistance/${id}/edit/`;
     }
 
     function updateStatus(id, status) {
         if (confirm(`Are you sure you want to update the status to ${status}?`)) {
-            console.log(`Updating assistance request ${id} to ${status}`);
+            const formData = new FormData();
+            formData.append('assistance_id', id);
+            formData.append('status', status);
+            formData.append('csrfmiddlewaretoken', csrftoken);
+
+            fetch('{% url "update_assistance_status" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh the page to show updated status
+                } else {
+                    console.error('Status update failed:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     }
 
