@@ -1,0 +1,82 @@
+<!-- Assistance Request Detail Modal -->
+<div class="modal fade" id="assistanceModal{{ assistance.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assistance Request Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="assistanceModalBody">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Request #{{ assistance.id }}</h6>
+                        <p><strong>Title:</strong> {{ assistance.title }}</p>
+                        <p><strong>Type:</strong> {{ assistance.type|title }}</p>
+                        <p><strong>Urgency:</strong> {{ assistance.urgency|title }}</p>
+                        <p><strong>Status:</strong> {{ assistance.status|title }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Resident:</strong> {{ assistance.user.first_name }} {{ assistance.user.last_name }}</p>
+                        <p><strong>Email:</strong> {{ assistance.user.email }}</p>
+                        <p><strong>Phone:</strong> {{ assistance.user.phone|default:"Not provided" }}</p>
+                        <p><strong>Date Filed:</strong> {{ assistance.created_at|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="col-12">
+                        <h6>Description</h6>
+                        <p>{{ assistance.description }}</p>
+                        
+                        {% if assistance.address %}
+                        <h6>Address</h6>
+                        <p>{{ assistance.address }}</p>
+                        {% endif %}
+
+                        {% if assistance.admin_remarks %}
+                        <h6>Admin Remarks</h6>
+                        <p>{{ assistance.admin_remarks }}</p>
+                        {% endif %}
+
+                        {% if assistance.completion_notes %}
+                        <h6>Completion Notes</h6>
+                        <p>{{ assistance.completion_notes }}</p>
+                        {% endif %}
+
+                        <h6>Attachments</h6>
+                        <div class="d-flex gap-2">
+                            {% for attachment in assistance.attachments.all %}
+                                <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-paperclip me-1"></i>
+                                    {{ attachment.file.name|slice:"20:" }}...
+                                </a>
+                            {% empty %}
+                                <span class="text-muted">No attachments</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="dropdown">
+                    <button class="btn btn-admin-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Update Status
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
+                            <i class="bi bi-check-circle me-2"></i>Approve
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'in_progress')">
+                            <i class="bi bi-play me-2"></i>In Progress
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'completed')">
+                            <i class="bi bi-check me-2"></i>Complete
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="updateStatus({{ assistance.id }}, 'rejected')">
+                            <i class="bi bi-x-circle me-2"></i>Reject
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

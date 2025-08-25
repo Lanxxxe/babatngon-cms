@@ -71,6 +71,15 @@
                     </a>
                 </div>
                 <div class="nav-item-admin">
+                    <a href="{% url 'admin_assistance' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_assistance' %}active{% endif %}">
+                        <div class="nav-icon-admin">
+                            <i class="bi bi-hand-thumbs-up"></i>
+                        </div>
+                        <span class="nav-text-admin">Assistance</span>
+                        <!-- <span class="nav-badge">8</span> -->
+                    </a>
+                </div>
+                <div class="nav-item-admin">
                     <a href="{% url 'admin_residents' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_residents' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-people"></i>

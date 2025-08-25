@@ -111,7 +111,7 @@
                         <th>Category</th>
                         <th>Priority</th>
                         <th>Status</th>
-                        <!-- <th>Assigned To</th> -->
+                        <th>Assigned To</th>
                         <th>Date Filed</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
@@ -159,6 +159,21 @@
                                     {{ complaint.status|title }}
                                 </span>
                             </td>
+                            <td>
+                                {% if complaint.assigned_to %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            {{ complaint.assigned_to.first_name|first }}{{ complaint.assigned_to.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium small">{{ complaint.assigned_to.first_name }} {{ complaint.assigned_to.last_name }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ complaint.assigned_to.position }}</div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+                            </td>
 
                             <td>
                                 <div class="small">{{ complaint.created_at|date:"M d, Y" }}</div>
@@ -177,6 +192,18 @@
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu">
+                                            <li><h6 class="dropdown-header">Assign To Staff</h6></li>
+                                            {% for staff in staff_members %}
+                                                <li><a class="dropdown-item" href="#" onclick="assignComplaint({{ complaint.id }}, {{ staff.id }})">
+                                                    <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
+                                                    {% if complaint.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                                                </a></li>
+                                            {% endfor %}
+                                            <li><a class="dropdown-item" href="#" onclick="assignComplaint({{ complaint.id }}, null)">
+                                                <i class="bi bi-person-x me-2"></i>Unassign
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">Update Status</h6></li>
                                             <li><a class="dropdown-item" href="#" onclick="updateStatus({{ complaint.id }}, 'in_progress')">
                                                 <i class="bi bi-play me-2"></i>Mark In Progress
                                             </a></li>
@@ -240,6 +267,23 @@
 
 
 <script>
+    // CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
     // Select all functionality
     document.getElementById('selectAll').addEventListener('change', function() {
         const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
@@ -248,13 +292,55 @@
         });
     });
 
+    function assignComplaint(complaintId, staffId) {
+        const formData = new FormData();
+        formData.append('complaint_id', complaintId);
+        formData.append('staff_id', staffId || '');
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        fetch('{% url "assign_complaint" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh the page to show updated assignment
+            } else {
+                console.error('Assignment failed:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
     function editComplaint(id) {
         window.location.href = `/admin/complaints/${id}/edit/`;
     }
 
     function updateStatus(id, status) {
         if (confirm(`Are you sure you want to update the status to ${status}?`)) {
-            console.log(`Updating complaint ${id} to ${status}`);
+            const formData = new FormData();
+            formData.append('complaint_id', id);
+            formData.append('status', status);
+            formData.append('csrfmiddlewaretoken', csrftoken);
+
+            fetch('{% url "update_complaint_status" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh the page to show updated status
+                } else {
+                    console.error('Status update failed:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     }
 

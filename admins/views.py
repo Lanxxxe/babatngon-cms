@@ -5,7 +5,7 @@ from django.db.models import Count
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.shortcuts import render
-from .models import Complaint
+from .models import Complaint, AssistanceRequest
 from core.models import Admin, User
 from django.contrib.auth.hashers import check_password
 import sweetify
@@ -218,14 +218,96 @@ def admin_analytics(request):
 
 
 def admin_complaints(request):
-
-    complaints = Complaint.objects.all().order_by('-created_at')
+    complaints = Complaint.objects.select_related('user', 'assigned_to').all().order_by('-created_at')
+    # Get all staff members for assignment dropdown
+    staff_members = Admin.objects.all().order_by('first_name', 'last_name').filter(role='staff')
 
     data = {
-        'complaints': complaints
+        'complaints': complaints,
+        'staff_members': staff_members
     }
 
     return render(request, 'admin_complaints.html', data)
+
+
+@require_POST
+def assign_complaint(request):
+    """
+    Assign a complaint to a staff member.
+    """
+    from django.http import JsonResponse
+    
+    try:
+        complaint_id = request.POST.get('complaint_id')
+        staff_id = request.POST.get('staff_id')
+        
+        complaint = Complaint.objects.get(id=complaint_id)
+        staff = Admin.objects.get(id=staff_id) if staff_id else None
+        
+        # Get current admin from session
+        current_admin_id = request.session.get('admin_id')
+        current_admin = Admin.objects.get(id=current_admin_id) if current_admin_id else None
+        
+        complaint.assigned_to = staff
+        complaint.assigned_by = current_admin
+        
+        # If assigning to someone, set status to in_progress
+        if staff:
+            complaint.status = 'in_progress'
+            sweetify.toast(request, f'Complaint #{complaint.id} assigned to {staff.full_name}', timer=2000)
+        else:
+            complaint.status = 'pending'
+            sweetify.toast(request, f'Complaint #{complaint.id} unassigned', timer=2000)
+            
+        complaint.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        sweetify.error(request, 'Failed to assign complaint. Please try again.', timer=3000)
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST 
+def update_complaint_status(request):
+    """
+    Update complaint status.
+    """
+    from django.http import JsonResponse
+    
+    try:
+        complaint_id = request.POST.get('complaint_id')
+        new_status = request.POST.get('status')
+        
+        complaint = Complaint.objects.get(id=complaint_id)
+        complaint.status = new_status
+        
+        if new_status == 'resolved':
+            from django.utils import timezone
+            complaint.resolved_at = timezone.now()
+            
+        complaint.save()
+        
+        sweetify.toast(request, f'Complaint #{complaint.id} status updated to {new_status.title()}', timer=2000)
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        sweetify.error(request, 'Failed to update status. Please try again.', timer=3000)
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def admin_assistance(request):
+    """
+    Display all assistance requests for admin management.
+    """
+
+    assistance_requests = AssistanceRequest.objects.select_related('user').all().order_by('-created_at')
+
+    data = {
+        'assistance_requests': assistance_requests
+    }
+
+    return render(request, 'admin_assistance.html', data)
 
 
 def admin_resident(request):

@@ -19,7 +19,7 @@
                         <div class="d-flex align-items-center mb-4">
                             <div class="me-3">
                                 {% if user.profile_picture %}
-                                    <img src="{{ user.profile_picture.url }}" class="rounded-circle" width="80" height="80" alt="Profile Picture">
+                                    <img src="{{ user.profile_picture.url }}" class="rounded-circle object-fit-cover" width="80" height="80" alt="Profile Picture">
                                 {% else %}
                                     <img src="{% static 'images/community-placeholder.png' %}" class="rounded-circle" width="80" height="80" alt="Profile Picture">
                                 {% endif %}
@@ -30,17 +30,24 @@
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <label class="form-label">First Name</label>
                                 <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}" readonly>
                             </div>
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <label class="form-label">Middle Name</label>
                                 <input type="text" class="form-control" name="middle_name" value="{{ user.middle_name }}" readonly>
                             </div>
-                            <div class="col-md-4 mb-2">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-2">
                                 <label class="form-label">Last Name</label>
                                 <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}" readonly>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Suffix</label>
+                                <input type="text" class="form-control" name="suffix" value="{{ user.suffix }}" readonly>
                             </div>
                         </div>
                         <div class="row mb-3">

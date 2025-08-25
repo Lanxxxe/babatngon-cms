@@ -1,0 +1,286 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Manage Assistance Requests - Admin Portal{% endblock %}
+{% block page_title %}Assistance Management{% endblock %}
+{% block page_subtitle %}Review, assign, and track all community assistance requests{% endblock %}
+
+{% block content %}
+<!-- Filters and Actions -->
+<div class="card-admin mb-3">
+    <div class="card-body-admin py-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="searchAssistance" class="form-label">Search</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchAssistance" 
+                           placeholder="Search by ID, resident, or title...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select class="form-select form-select-sm" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="typeFilter" class="form-label">Type</label>
+                <select class="form-select form-select-sm" id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="medical">Medical</option>
+                    <option value="financial">Financial</option>
+                    <option value="legal">Legal</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="social">Social</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="urgencyFilter" class="form-label">Urgency</label>
+                <select class="form-select form-select-sm" id="urgencyFilter">
+                    <option value="">All Urgency</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-admin-primary btn-sm">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <button class="btn btn-admin-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="bulkAssign()">
+                                <i class="bi bi-people me-2"></i>Bulk Assign
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportData()">
+                                <i class="bi bi-download me-2"></i>Export Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="printReport()">
+                                <i class="bi bi-printer me-2"></i>Print Report
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assistance Requests Table -->
+<div class="card-admin">
+    <div class="card-header-admin d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-semibold">All Assistance Requests</span>
+            <small class="text-muted ms-2">Showing 1-10 of {{ assistance_requests|length }} requests</small>
+        </div>
+        <div class="d-flex gap-1">
+            <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Card View
+            </button>
+            <button class="btn btn-admin-primary btn-sm">
+                <i class="bi bi-list-ul me-1"></i>Table View
+            </button>
+        </div>
+    </div>
+    <div class="card-body-admin p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
+                        </th>
+                        <th>ID</th>
+                        <th>Resident</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th>Date Filed</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assistance in assistance_requests %}
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input"></td>
+                            <td><span class="fw-semibold text-primary">#{{ assistance.id }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                        {{ assistance.user.first_name|first }}{{ assistance.user.last_name|first }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium small">{{ assistance.user.first_name }} {{ assistance.user.last_name }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{ assistance.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="fw-medium small text-truncate" style="max-width: 180px;">
+                                        {{ assistance.title }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ assistance.description|truncatechars:40 }}</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ assistance.type|title }}</span></td>
+                            <td>
+                                <span class="badge 
+                                    {% if assistance.urgency == 'critical' %}bg-danger
+                                    {% elif assistance.urgency == 'high' %}bg-danger
+                                    {% elif assistance.urgency == 'medium' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ assistance.urgency|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if assistance.status == 'pending' %}bg-warning
+                                    {% elif assistance.status == 'approved' %}bg-info
+                                    {% elif assistance.status == 'in_progress' %}bg-info
+                                    {% elif assistance.status == 'completed' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ assistance.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small">{{ assistance.created_at|date:"M d, Y" }}</div>
+                                <div class="text-muted" style="font-size: 11px;">{{ assistance.created_at|timesince }} ago</div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assistanceModal{{ assistance.id }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
+                                                <i class="bi bi-check-circle me-2"></i>Mark Approved
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'in_progress')">
+                                                <i class="bi bi-play me-2"></i>Mark In Progress
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'completed')">
+                                                <i class="bi bi-check me-2"></i>Mark Completed
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteAssistance({{ assistance.id }})">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% include "admin_assistance/assistance_modal.html" %}
+
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No assistance requests found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <select class="form-select form-select-sm" style="width: auto;">
+                    <option value="10">10 per page</option>
+                    <option value="25">25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    function editAssistance(id) {
+        window.location.href = `/admin/assistance/${id}/edit/`;
+    }
+
+    function updateStatus(id, status) {
+        if (confirm(`Are you sure you want to update the status to ${status}?`)) {
+            console.log(`Updating assistance request ${id} to ${status}`);
+        }
+    }
+
+    function deleteAssistance(id) {
+        if (confirm('Are you sure you want to delete this assistance request? This action cannot be undone.')) {
+            console.log(`Deleting assistance request ${id}`);
+        }
+    }
+
+    function bulkAssign() {
+        const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+        if (selected.length === 0) {
+            alert('Please select assistance requests to assign.');
+            return;
+        }
+        console.log('Bulk assign modal');
+    }
+
+    function exportData() {
+        window.open('/admin/assistance/export/', '_blank');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    function toggleView() {
+        console.log('Toggle view');
+    }
+</script>
+{% endblock %}
