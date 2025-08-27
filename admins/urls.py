@@ -9,6 +9,7 @@ urlpatterns = [
     path('complaints/assign/', assign_complaint, name='assign_complaint'),
     path('complaints/update-status/', update_complaint_status, name='update_complaint_status'),
     path('assistance/', admin_assistance, name='admin_assistance'),
+    path('assistance/<int:assistance_id>/details/', assistance_details, name='assistance_details'),
     path('assistance/assign/', assign_assistance, name='assign_assistance'),
     path('assistance/update-status/', update_assistance_status, name='update_assistance_status'),
     path('residents/', admin_resident, name='admin_residents'),

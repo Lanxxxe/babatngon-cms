@@ -4,81 +4,140 @@
 {% block page_title %}Assistance Management{% endblock %}
 {% block page_subtitle %}Review, assign, and track all community assistance requests{% endblock %}
 
+{% block extra_css %}
+
+<style>
+    .modal-xl {
+        max-width: 1200px;
+    }
+
+    .map-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+
+    dl dt {
+        font-weight: 600;
+    }
+
+    dl dd {
+        margin-bottom: 0.5rem;
+    }
+
+    .attachment-card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .attachment-card:hover {
+        border-color: #5a67d8;
+        box-shadow: 0 4px 12px rgba(90, 103, 216, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .attachment-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fc;
+        border-radius: 6px;
+    }
+
+    .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Filters and Actions -->
 <div class="card-admin mb-3">
     <div class="card-body-admin py-3">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label for="searchAssistance" class="form-label">Search</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control" id="searchAssistance" 
-                           placeholder="Search by ID, resident, or title...">
+        <form method="GET" id="filterForm">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label for="searchAssistance" class="form-label">Search</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchAssistance" name="search"
+                               placeholder="Search by ID, resident, or title..." value="{{ current_search }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-2">
-                <label for="statusFilter" class="form-label">Status</label>
-                <select class="form-select form-select-sm" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="typeFilter" class="form-label">Type</label>
-                <select class="form-select form-select-sm" id="typeFilter">
-                    <option value="">All Types</option>
-                    <option value="medical">Medical</option>
-                    <option value="financial">Financial</option>
-                    <option value="legal">Legal</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="social">Social</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="urgencyFilter" class="form-label">Urgency</label>
-                <select class="form-select form-select-sm" id="urgencyFilter">
-                    <option value="">All Urgency</option>
-                    <option value="critical">Critical</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex gap-1">
-                    <button class="btn btn-admin-primary btn-sm">
-                        <i class="bi bi-funnel me-1"></i>Filter
-                    </button>
-                    <button class="btn btn-admin-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
-                    </button>
-                    <div class="dropdown">
-                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots"></i>
+                <div class="col-md-2">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select form-select-sm" id="statusFilter" name="status">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="typeFilter" class="form-label">Type</label>
+                    <select class="form-select form-select-sm" id="typeFilter" name="type">
+                        <option value="">All Types</option>
+                        {% for type in types %}
+                            <option value="{{ type }}" {% if current_type == type %}selected{% endif %}>
+                                {{ type|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="urgencyFilter" class="form-label">Urgency</label>
+                    <select class="form-select form-select-sm" id="urgencyFilter" name="urgency">
+                        <option value="">All Urgency</option>
+                        {% for urgency in urgencies %}
+                            <option value="{{ urgency }}" {% if current_urgency == urgency %}selected{% endif %}>
+                                {{ urgency|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label for="designationFilter" class="form-label">Designation</label>
+                    <select class="form-select form-select-sm" id="designationFilter" name="designation">
+                        <option value="unassigned" {% if current_designation == 'unassigned' or current_designation == '' %}selected{% endif %}>Unassigned</option>
+                        <option value="assigned" {% if current_designation == 'assigned' %}selected{% endif %}>Assigned</option>
+                        <option value="all" {% if current_designation == 'all' %}selected{% endif %}>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-admin-primary btn-sm">
+                            <i class="bi bi-funnel me-1"></i>Filter
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="bulkAssign()">
-                                <i class="bi bi-people me-2"></i>Bulk Assign
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="exportData()">
-                                <i class="bi bi-download me-2"></i>Export Data
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="printReport()">
-                                <i class="bi bi-printer me-2"></i>Print Report
-                            </a></li>
-                        </ul>
+                        <button type="button" class="btn btn-admin-secondary btn-sm" id="resetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -87,7 +146,13 @@
     <div class="card-header-admin d-flex justify-content-between align-items-center">
         <div>
             <span class="fw-semibold">All Assistance Requests</span>
-            <small class="text-muted ms-2">Showing 1-10 of {{ assistance_requests|length }} requests</small>
+            <small class="text-muted ms-2">
+                {% if page_obj %}
+                    Showing {{ start_index }}-{{ end_index }} of {{ total_assistance_requests }} requests
+                {% else %}
+                    Showing 0 of 0 requests
+                {% endif %}
+            </small>
         </div>
         <div class="d-flex gap-1">
             <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
@@ -182,7 +247,7 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assistanceModal{{ assistance.id }}">
+                                    <button class="btn btn-admin-primary btn-sm" onclick="loadAssistanceDetails(this)" data-assistance-id="{{ assistance.id }}" title="View Details">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <div class="dropdown">
@@ -194,7 +259,7 @@
                                             {% for staff in staff_members %}
                                                 <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, {{ staff.id }})">
                                                     <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
-                                                    {% if assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                                                    {% if assistance.assigned_to and assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
                                                 </a></li>
                                             {% endfor %}
                                             <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, null)">
@@ -220,9 +285,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        {% include "admin_assistance/assistance_modal.html" %}
-
                     {% empty %}
                         <tr>
                             <td colspan="10" class="text-center text-muted">No assistance requests found.</td>
@@ -233,39 +295,330 @@
         </div>
     </div>
     <div class="card-footer bg-light py-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <select class="form-select form-select-sm" style="width: auto;">
-                    <option value="10">10 per page</option>
-                    <option value="25">25 per page</option>
-                    <option value="50">50 per page</option>
-                    <option value="100">100 per page</option>
+        <div class="d-flex justify-content-between align-items-center px-3">
+            <div class="w-25">
+                <select class="form-select form-select-sm w-50" id="perPageSelect" onchange="changePerPage()">
+                    <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 per page</option>
+                    <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 per page</option>
+                    <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 per page</option>
+                    <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100 per page</option>
                 </select>
             </div>
+            
+            {% if page_obj %}
             <nav>
                 <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <span class="page-link">Previous</span>
-                    </li>
-                    <li class="page-item active">
-                        <span class="page-link">1</span>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
+                    <!-- Previous button -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage({{ page_obj.previous_page_number }})">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Page numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="goToPage({{ num }})">{{ num }}</a>
+                            </li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="goToPage({{ num }})">{{ num }}</a>
+                            </li>
+                        {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next button -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage({{ page_obj.next_page_number }})">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    {% endif %}
                 </ul>
             </nav>
+            {% endif %}
         </div>
     </div>
 </div>
 
+<!-- Assistance Details Modal -->
+<div class="modal fade" id="assistanceDetailsModal" tabindex="-1" aria-labelledby="assistanceDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="assistanceDetailsModalLabel">
+                    <i class="bi bi-eye me-2"></i>Assistance Request Details - #<span id="assistanceId"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <div class="row">
+                    <!-- Request Information -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-info-circle me-1"></i>Request Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Type:</dt>
+                            <dd class="col-sm-8" id="assistanceType">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Urgency:</dt>
+                            <dd class="col-sm-8" id="urgencyLevel">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Status:</dt>
+                            <dd class="col-sm-8" id="status">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Filed On:</dt>
+                            <dd class="col-sm-8" id="requestedDate">-</dd>
+                        </dl>
+                    </div>
+                    
+                    <!-- Resident Information -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-person me-1"></i>Resident Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Name:</dt>
+                            <dd class="col-sm-8" id="residentName">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Email:</dt>
+                            <dd class="col-sm-8" id="residentEmail">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Phone:</dt>
+                            <dd class="col-sm-8" id="residentPhone">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Address:</dt>
+                            <dd class="col-sm-8" id="residentAddress">-</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-file-text me-1"></i>Description
+                        </h6>
+                        <div class="bg-light p-3 rounded">
+                            <p class="mb-0" id="assistanceDescription">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Assignment Information -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-person-check me-1"></i>Assignment Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Assigned To:</dt>
+                            <dd class="col-sm-8" id="assignedTo">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Assigned By:</dt>
+                            <dd class="col-sm-8" id="assignedBy">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Assigned Date:</dt>
+                            <dd class="col-sm-8" id="assignedDate">-</dd>
+                        </dl>
+                    </div>
+                    
+                    <!-- Completion Information -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-check-circle me-1"></i>Completion Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Completed By:</dt>
+                            <dd class="col-sm-8" id="completedBy">-</dd>
+                            
+                            <dt class="col-sm-4 text-end">Completed Date:</dt>
+                            <dd class="col-sm-8" id="completedDate">-</dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <!-- Admin Notes -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-clipboard-check me-1"></i>Admin Notes
+                        </h6>
+                        <div class="bg-light p-3 rounded">
+                            <p class="mb-0" id="adminNotes">No notes available</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Section -->
+                <div class="row mt-3" id="assistanceMapContainer" style="display: none;">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-geo-alt me-1"></i>Location
+                        </h6>
+                        <div class="map-container">
+                            <div id="assistanceMap" style="height: 300px; border: 1px solid #ddd; border-radius: 0.375rem;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Attachments Section -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-paperclip me-1"></i>Attachments
+                        </h6>
+                        <div id="attachmentsContainer">
+                            <p class="text-muted mb-0">Loading attachments...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
 <script>
+    let assistanceMap = null;
+
+    function loadAssistanceDetails(button) {
+        const assistanceId = button.getAttribute('data-assistance-id');
+        
+        fetch(`/admin/assistance/${assistanceId}/details/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const assistance = data.assistance;
+                    
+                    // Update modal content
+                    document.getElementById('assistanceId').textContent = assistance.id;
+                    document.getElementById('assistanceType').textContent = assistance.type || 'N/A';
+                    document.getElementById('assistanceDescription').textContent = assistance.description || 'N/A';
+                    document.getElementById('requestedDate').textContent = assistance.requested_date || 'N/A';
+                    document.getElementById('urgencyLevel').textContent = assistance.urgency_level || 'N/A';
+                    document.getElementById('status').textContent = assistance.status || 'N/A';
+                    
+                    // Update resident information
+                    document.getElementById('residentName').textContent = assistance.resident_name || 'N/A';
+                    document.getElementById('residentPhone').textContent = assistance.resident_phone || 'N/A';
+                    document.getElementById('residentEmail').textContent = assistance.resident_email || 'N/A';
+                    document.getElementById('residentAddress').textContent = assistance.resident_address || 'N/A';
+                    
+                    // Update assignment information
+                    document.getElementById('assignedTo').textContent = assistance.assigned_to || 'Not Assigned';
+                    document.getElementById('assignedBy').textContent = assistance.assigned_by || 'N/A';
+                    document.getElementById('assignedDate').textContent = assistance.assigned_date || 'N/A';
+                    
+                    // Update completion information
+                    document.getElementById('completedBy').textContent = assistance.completed_by || 'N/A';
+                    document.getElementById('completedDate').textContent = assistance.completed_date || 'N/A';
+                    document.getElementById('adminNotes').textContent = assistance.admin_notes || 'No notes available';
+                    
+                    // Handle attachments
+                    const attachmentsContainer = document.getElementById('attachmentsContainer');
+                    if (assistance.attachments && assistance.attachments.length > 0) {
+                        let attachmentsHtml = '';
+                        assistance.attachments.forEach(attachment => {
+                            attachmentsHtml += `
+                                <div class="col-md-4 mb-3">
+                                    <div class="card attachment-card h-100">
+                                        <div class="card-body text-center p-3">
+                                            <div class="attachment-icon mx-auto mb-2">
+                                                <i class="fas fa-file-alt text-primary"></i>
+                                            </div>
+                                            <h6 class="card-title mb-2">${attachment.name}</h6>
+                                            <small class="text-muted d-block mb-2">${attachment.size}</small>
+                                            <a href="${attachment.url}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                <i class="fas fa-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        attachmentsContainer.innerHTML = `
+                            <div class="row">
+                                ${attachmentsHtml}
+                            </div>
+                        `;
+                    } else {
+                        attachmentsContainer.innerHTML = '<p class="text-muted mb-0">No attachments available</p>';
+                    }
+                    
+                    // Handle map
+                    const mapContainer = document.getElementById('assistanceMapContainer');
+                    if (assistance.latitude && assistance.longitude) {
+                        mapContainer.style.display = 'block';
+                        
+                        // Initialize map when modal is shown
+                        setTimeout(() => {
+                            if (assistanceMap) {
+                                assistanceMap.remove();
+                            }
+                            
+                            assistanceMap = L.map('assistanceMap').setView([assistance.latitude, assistance.longitude], 15);
+                            
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            }).addTo(assistanceMap);
+                            
+                            const marker = L.marker([assistance.latitude, assistance.longitude]).addTo(assistanceMap);
+                            marker.bindPopup(`
+                                <strong>Assistance Location</strong><br>
+                                ${assistance.type}<br>
+                                <small>Requested by: ${assistance.resident_name}</small>
+                            `).openPopup();
+                        }, 300);
+                    } else {
+                        mapContainer.style.display = 'none';
+                    }
+                    
+                    // Show modal
+                    new bootstrap.Modal(document.getElementById('assistanceDetailsModal')).show();
+                } else {
+                    alert('Error loading assistance details: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading assistance details');
+            });
+    }
+
+    // Clean up map when modal is hidden
+    document.getElementById('assistanceDetailsModal').addEventListener('hidden.bs.modal', function () {
+        if (assistanceMap) {
+            assistanceMap.remove();
+            assistanceMap = null;
+        }
+    });
+
     // CSRF token for AJAX requests
     function getCookie(name) {
         let cookieValue = null;
@@ -282,6 +635,58 @@
         return cookieValue;
     }
     const csrftoken = getCookie('csrftoken');
+
+    // Reset filters functionality
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        // Clear all form fields
+        document.getElementById('filterForm').reset();
+        // Redirect to the page without query parameters
+        window.location.href = window.location.pathname;
+    });
+
+    // Change per page functionality
+    function changePerPage() {
+        const perPage = document.getElementById('perPageSelect').value;
+        const url = new URL(window.location);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.set('page', 1); // Reset to first page when changing per page
+        window.location.href = url.toString();
+    }
+
+    // Function to navigate to a specific page while preserving filters
+    function goToPage(pageNumber) {
+        const url = new URL(window.location);
+        url.searchParams.set('page', pageNumber);
+        window.location.href = url.toString();
+    }
+
+    // Auto-submit form when filter values change (optional for better UX)
+    const filterSelects = document.querySelectorAll('#statusFilter, #typeFilter, #urgencyFilter, #designationFilter');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            // Reset to page 1 when filters change
+            const form = document.getElementById('filterForm');
+            const hiddenPageInput = form.querySelector('input[name="page"]');
+            if (hiddenPageInput) {
+                hiddenPageInput.remove();
+            }
+            form.submit();
+        });
+    });
+
+    // Submit form when Enter is pressed in search field
+    document.getElementById('searchAssistance').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Reset to page 1 when searching
+            const form = document.getElementById('filterForm');
+            const hiddenPageInput = form.querySelector('input[name="page"]');
+            if (hiddenPageInput) {
+                hiddenPageInput.remove();
+            }
+            form.submit();
+        }
+    });
 
     // Select all functionality
     document.getElementById('selectAll').addEventListener('change', function() {
@@ -369,5 +774,13 @@
     function toggleView() {
         console.log('Toggle view');
     }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
 </script>
 {% endblock %}
