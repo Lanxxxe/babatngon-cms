@@ -116,7 +116,7 @@ My Assistance Requests
         <thead>
             <tr>
                 <th>Subject</th>
-                <th>Assistance Type</th>
+                <th>Description</th>
                 <th>Status</th>
                 <th>Urgency</th>
                 <th>Filed On</th>
@@ -127,7 +127,7 @@ My Assistance Requests
         {% for assistance in assistance_list %}
             <tr>
                 <td>{{ assistance.title }}</td>
-                <td>{{ assistance.type }}</td>
+                <td  style="width: 21rem;">{{ assistance.description }}</td>
                 <td>
                     <span class="badge 
                         {% if assistance.status == 'pending' %}bg-warning

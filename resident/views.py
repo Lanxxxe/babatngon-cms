@@ -5,39 +5,13 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 from core.models import User
 from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
-
 from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import os, uuid, time
 import sweetify
 
-
-# Utility function for handling profile picture upload
-def handle_profile_picture_upload(user, uploaded_file):
-    """
-    Handles saving the uploaded profile picture for the user.
-    Deletes the old picture if it exists.
-    """
-    if not uploaded_file:
-        return
-    # Save to uploads/profile_pictures/<user_id>_<filename>
-    upload_dir = os.path.join(settings.MEDIA_ROOT, 'profile_pictures')
-    os.makedirs(upload_dir, exist_ok=True)
-    filename = f"{user.id}_{uploaded_file.name}"
-    file_path = os.path.join(upload_dir, filename)
-    with open(file_path, 'wb+') as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
-    # Remove old picture if exists and is not default
-    if user.profile_picture and os.path.exists(user.profile_picture.path):
-        try:
-            os.remove(user.profile_picture.path)
-        except Exception:
-            pass
-    # Update user profile_picture field
-    user.profile_picture = f"profile_pictures/{filename}"
-    user.save()
+from . import file_upload_view
 
 
 # Create your views here.
@@ -95,12 +69,12 @@ def file_complaint(request):
         
         # Validate required fields
         if not all([title, description, category]):
-            sweetify.error(request, 'Please fill in all required fields.', timer=3000)
+            sweetify.error(request, 'Please fill in all required fields.', persistent=True, timer=3000)
             return render(request, 'file_complaint.html')
         
         # If "Others" is selected, validate that other_category is provided
         if category == 'Others' and not other_category:
-            sweetify.error(request, 'Please specify the other category.', timer=3000)
+            sweetify.error(request, 'Please specify the other category.', persistent=True, timer=3000)
             return render(request, 'file_complaint.html')
         
         # Use the specified other category if "Others" is selected
@@ -129,13 +103,13 @@ def file_complaint(request):
         for f in request.FILES.getlist('attachments'):
             ComplaintAttachment.objects.create(complaint=complaint, file=f)
 
-        sweetify.success(request, 'Complaint filed successfully!', timer=3000)
+        sweetify.success(request, 'Complaint filed successfully!', persistent=True, timer=3000)
         return redirect('file_complaint')
     return render(request, 'file_complaint.html')
 
 def file_assistance(request):
     if not request.session.get('id'):
-        sweetify.error(request, 'You must be logged in to request assistance.', timer=3000)
+        sweetify.error(request, 'You must be logged in to request assistance.', persistent=True, timer=3000)
         return redirect('homepage')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
@@ -151,12 +125,12 @@ def file_assistance(request):
         
         # Validate required fields
         if not all([title, description, type_]):
-            sweetify.error(request, 'Please fill in all required fields.', timer=3000)
+            sweetify.error(request, 'Please fill in all required fields.', persistent=True, timer=3000)
             return render(request, 'file_assistance.html')
         
         # If "Others" is selected, validate that other_assistance_type is provided
         if type_ == 'Others' and not other_assistance_type:
-            sweetify.error(request, 'Please specify the other assistance type.', timer=3000)
+            sweetify.error(request, 'Please specify the other assistance type.', persistent=True, timer=3000)
             return render(request, 'file_assistance.html')
         
         # Use the specified other assistance type if "Others" is selected
@@ -183,13 +157,13 @@ def file_assistance(request):
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
-        sweetify.success(request, 'Assistance request submitted!', timer=3000)
+        sweetify.success(request, 'Assistance request submitted!', persistent=True, timer=3000)
         return redirect('file_assistance')
     return render(request, 'file_assistance.html')
 
 def my_complaints(request):
     if not request.session.get('id'):
-        sweetify.error(request, 'You must be logged in to view your complaints.', timer=3000)
+        sweetify.error(request, 'You must be logged in to view your complaints.', persistent=True, timer=3000)
         return redirect('homepage')
     
     user_id = request.session.get('id')
@@ -201,7 +175,7 @@ def delete_complaint(request, pk):
     user_id = request.session.get('id')
     complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
     complaint.delete()
-    sweetify.success(request, 'Complaint deleted.', timer=2000)
+    sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
     return redirect('my_complaints')
 
 def update_complaint(request, pk):
@@ -245,7 +219,7 @@ def update_complaint(request, pk):
             ComplaintAttachment.objects.create(complaint=complaint, file=file)
         
         complaint.save()
-        sweetify.success(request, 'Complaint updated successfully.', timer=2000)
+        sweetify.success(request, 'Complaint updated successfully.', persistent=True, timer=2000)
         return redirect('my_complaints')
     
     # For AJAX/modal prefill
@@ -338,7 +312,7 @@ def update_assistance(request, pk):
             AssistanceAttachment.objects.create(assistance=assistance, file=file)
         
         assistance.save()
-        sweetify.success(request, 'Assistance updated.', timer=2000)
+        sweetify.success(request, 'Assistance updated.', persistent=True, timer=2000)
         return redirect('my_assistance')
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -371,7 +345,7 @@ def delete_assistance(request, pk):
     user_id = request.session.get('id')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
     assistance.delete()
-    sweetify.success(request, 'Assistance request deleted.', timer=2000)
+    sweetify.success(request, 'Assistance request deleted.', persistent=True, timer=2000)
     return redirect('my_assistance')
 
 def profile(request):
@@ -389,8 +363,8 @@ def profile(request):
         # Handle profile picture upload
         profile_picture = request.FILES.get('profile_picture')
         if profile_picture:
-            handle_profile_picture_upload(user, profile_picture)
-            sweetify.success(request, 'Profile picture updated.', timer=2000)
+            file_upload_view.handle_profile_picture_upload(request, user, profile_picture)
+            sweetify.success(request, 'Profile picture updated.', persistent=True, timer=2000)
 
         # Handle password change
         current_password = request.POST.get('current_password', '').strip()

@@ -1,0 +1,253 @@
+<!-- Assistance Request Detail Modal -->
+<div class="modal fade" id="assistanceModal{{ assistance.id }}" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye me-2"></i>Assistance Request Details - #{{ assistance.id }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <div class="row">
+                    <!-- Request Information -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-info-circle me-1"></i>Request Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Subject:</dt>
+                            <dd class="col-sm-8">{{ assistance.title }}</dd>
+                            
+                            <dt class="col-sm-4 text-end">Type:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-secondary">{{ assistance.type|title }}</span>
+                            </dd>
+                            
+                            <dt class="col-sm-4 text-end">Urgency:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge 
+                                    {% if assistance.urgency == 'critical' %}bg-danger
+                                    {% elif assistance.urgency == 'high' %}bg-danger
+                                    {% elif assistance.urgency == 'medium' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ assistance.urgency|title }}
+                                </span>
+                            </dd>
+                            
+                            <dt class="col-sm-4 text-end">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge 
+                                    {% if assistance.status == 'pending' %}bg-warning
+                                    {% elif assistance.status == 'approved' %}bg-info
+                                    {% elif assistance.status == 'in_progress' %}bg-info
+                                    {% elif assistance.status == 'completed' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ assistance.status|title }}
+                                </span>
+                            </dd>
+                            
+                            <dt class="col-sm-4 text-end">Filed On:</dt>
+                            <dd class="col-sm-8">{{ assistance.created_at|date:"F d, Y g:i A" }}</dd>
+                            
+                            {% if assistance.completed_at %}
+                            <dt class="col-sm-4 text-end">Completed At:</dt>
+                            <dd class="col-sm-8">{{ assistance.completed_at|date:"F d, Y g:i A" }}</dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                    
+                    <!-- Resident Information -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-person me-1"></i>Resident Information
+                        </h6>
+                        <dl class="row">
+                            <dt class="col-sm-4 text-end">Name:</dt>
+                            <dd class="col-sm-8">{{ assistance.user.first_name }} {{ assistance.user.last_name }}</dd>
+                            
+                            <dt class="col-sm-4 text-end">Email:</dt>
+                            <dd class="col-sm-8">{{ assistance.user.email }}</dd>
+                            
+                            <dt class="col-sm-4 text-end">Phone:</dt>
+                            <dd class="col-sm-8">{{ assistance.user.phone|default:"Not provided" }}</dd>
+                            
+                            {% if assistance.assigned_to %}
+                            <dt class="col-sm-4 text-end">Assigned To:</dt>
+                            <dd class="col-sm-8">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                        {{ assistance.assigned_to.first_name|first }}{{ assistance.assigned_to.last_name|first }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium small">{{ assistance.assigned_to.first_name }} {{ assistance.assigned_to.last_name }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{ assistance.assigned_to.position }}</div>
+                                    </div>
+                                </div>
+                            </dd>
+                            {% else %}
+                            <dt class="col-sm-4 text-end">Assigned To:</dt>
+                            <dd class="col-sm-8">
+                                <span class="text-muted">Unassigned</span>
+                            </dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-file-text me-1"></i>Description
+                        </h6>
+                        <div class="bg-light p-3 rounded">
+                            <p class="mb-0">{{ assistance.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Location Information -->
+                {% if assistance.address or assistance.latitude and assistance.longitude %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-geo-alt me-1"></i>Location Information
+                        </h6>
+                        <div class="row">
+                            {% if assistance.address %}
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-3 text-end">Address:</dt>
+                                    <dd class="col-sm-9">{{ assistance.address }}</dd>
+                                </dl>
+                            </div>
+                            {% endif %}
+                            {% if assistance.latitude and assistance.longitude %}
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-3 text-end">Coordinates:</dt>
+                                    <dd class="col-sm-9">{{ assistance.latitude|floatformat:6 }}, {{ assistance.longitude|floatformat:6 }}</dd>
+                                </dl>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Map Section -->
+                        {% if assistance.latitude and assistance.longitude %}
+                        <div class="mt-3">
+                            <div class="map-container">
+                                <div id="assistanceMap{{ assistance.id }}" style="height: 300px; border: 1px solid #ddd; border-radius: 0.375rem;"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Admin Notes Section -->
+                {% if assistance.admin_remarks or assistance.completion_notes %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-clipboard-check me-1"></i>Admin Notes
+                        </h6>
+                        {% if assistance.admin_remarks %}
+                        <div class="mb-2">
+                            <strong>Admin Remarks:</strong>
+                            <div class="bg-light p-2 rounded mt-1">
+                                <p class="mb-0">{{ assistance.admin_remarks }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if assistance.completion_notes %}
+                        <div class="mb-2">
+                            <strong>Completion Notes:</strong>
+                            <div class="bg-light p-2 rounded mt-1">
+                                <p class="mb-0">{{ assistance.completion_notes }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Attachments Section -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-paperclip me-1"></i>Attachments
+                        </h6>
+                        {% if assistance.attachments.all %}
+                        <div class="row g-2">
+                            {% for attachment in assistance.attachments.all %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card attachment-card h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="attachment-icon me-3">
+                                                <i class="bi bi-paperclip text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="card-title mb-1">{{ attachment.file.name|truncatechars:25 }}</h6>
+                                                <small class="text-muted">{{ attachment.uploaded_at|date:"M d, Y" }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-info-circle me-1"></i>No attachments uploaded for this assistance request.
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Close
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear me-1"></i>Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Assign To Staff</h6></li>
+                        {% for staff in staff_members %}
+                            <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, {{ staff.id }})">
+                                <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
+                                {% if assistance.assigned_to and assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                            </a></li>
+                        {% endfor %}
+                        <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, null)">
+                            <i class="bi bi-person-x me-2"></i>Unassign
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Update Status</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
+                            <i class="bi bi-check-circle me-2"></i>Mark Approved
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'in_progress')">
+                            <i class="bi bi-play me-2"></i>Mark In Progress
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'completed')">
+                            <i class="bi bi-check me-2"></i>Mark Completed
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="updateStatus({{ assistance.id }}, 'rejected')">
+                            <i class="bi bi-x-circle me-2"></i>Reject
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

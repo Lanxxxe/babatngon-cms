@@ -1,0 +1,388 @@
+{% extends 'base_staff.html' %}
+
+{% block title %}Staff Dashboard - Barangay CMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of system performance and key metrics{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ total_complaints|default:0 }}</div>
+                    <div class="stat-label">Assigned Complaints</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+12% from last month
+                    </div>
+                </div>
+                <i class="bi bi-clipboard-data text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ assistance_requests|default:0 }}</div>
+                    <div class="stat-label">Assistance Request</div>
+                    <div class="stat-change">
+                        <i class="bi bi-arrow-up me-1"></i>+3% this month
+                    </div>
+                </div>
+                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ pending_complaints|default:0 }}</div>
+                    <div class="stat-label">Pending Review</div>
+                    <div class="stat-change">Requires attention</div>
+                </div>
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ in_progress_complaints|default:0 }}</div>
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-change">Being resolved</div>
+                </div>
+                <i class="bi bi-gear text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    
+</div>
+
+<div class="row g-4">
+    <!-- Recent Complaints -->
+    <div class="col-lg-8">
+        <div class="card-admin">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-list-ul me-2"></i>Recent Complaints
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <a href="{% url 'staff_complaints' %}" role="button" class="btn btn-primary btn-sm pb-0">
+                        View All
+                    </a>
+                </div>
+            </div>
+            <div class="card-body-admin p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Resident</th>
+                                <th>Subject</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in recent_complaints %}
+                                <tr>
+                                    <td><span class="fw-semibold text-primary">#{{ complaint.id }}</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                                {{ complaint.user.first_name|first }}{{ complaint.user.last_name|first }}
+                                            </div>
+                                            <span class="fw-medium">{{ complaint.user.first_name }} {{ complaint.user.last_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;">
+                                            {{ complaint.title }}
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ complaint.category }}</span></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if complaint.priority == 'urgent' %}bg-danger
+                                            {% elif complaint.priority == 'high' %}bg-danger
+                                            {% elif complaint.priority == 'medium' %}bg-warning
+                                            {% else %}bg-success{% endif %}">
+                                            {{ complaint.priority|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if complaint.status == 'pending' %}bg-warning
+                                            {% elif complaint.status == 'in_progress' %}bg-info
+                                            {% elif complaint.status == 'resolved' %}bg-success
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ complaint.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="text-muted small">{{ complaint.created_at|date:"M d, Y" }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-admin-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-admin-secondary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No complaints found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <!-- <div class="quick-actions mb-3">
+            <h6 class="mb-3 fw-semibold">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </h6>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-people text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Bulk Assign</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-download text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Export Data</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-bell text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Send Alert</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-gear text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Settings</div>
+                    </a>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Priority Complaints -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin text-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>High Priority Assigned
+            </div>
+            <div class="card-body-admin">
+                {% for complaint in high_priority_complaints %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                        <div>
+                            <div class="fw-semibold small">#{{ complaint.id }}</div>
+                            <div class="text-muted small">{{ complaint.title|truncatechars:30 }}</div>
+                            <div class="text-muted" style="font-size: 10px;">
+                                <span class="badge badge-sm 
+                                    {% if complaint.priority == 'urgent' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ complaint.priority|title }}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#complaintModal{{ complaint.id }}">
+                            View
+                        </button>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-check-circle text-success mb-2" style="font-size: 24px;"></i>
+                        <div>No high priority complaints assigned</div>
+                    </div>
+                {% endfor %}
+                
+                {% if high_priority_complaints %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'staff_complaints' %}?priority=high" class="btn btn-admin-outline btn-sm">
+                        View All High Priority
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <!-- <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-activity me-2"></i>System Status
+            </div>
+            <div class="card-body-admin">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Server Status</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Database</span>
+                    <span class="badge bg-success">Connected</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Email Service</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small">SMS Service</span>
+                    <span class="badge bg-warning">Limited</span>
+                </div>
+            </div>
+        </div> -->
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mt-2">
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-bar-chart me-2"></i>Complaints by Category
+            </div>
+            <div class="card-body-admin">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-graph-up me-2"></i>Resolution Trend
+            </div>
+            <div class="card-body-admin">
+                <canvas id="trendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get category data from assigned complaints
+        const complaints = {{ assigned_complaints|length }};
+        
+        // Calculate category distribution from assigned complaints
+        let categoryData = {
+            'Infrastructure': 0,
+            'Public Safety': 0,
+            'Environment': 0,
+            'Health': 0,
+            'Others': 0
+        };
+        
+        {% for complaint in assigned_complaints %}
+            {% if complaint.category == 'infrastructure' %}
+                categoryData['Infrastructure']++;
+            {% elif complaint.category == 'safety' or complaint.category == 'public_safety' %}
+                categoryData['Public Safety']++;
+            {% elif complaint.category == 'environment' %}
+                categoryData['Environment']++;
+            {% elif complaint.category == 'health' %}
+                categoryData['Health']++;
+            {% else %}
+                categoryData['Others']++;
+            {% endif %}
+        {% endfor %}
+
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categoryData),
+                datasets: [{
+                    data: Object.values(categoryData),
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // Trend Chart - Monthly resolution data
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Resolved',
+                    data: [{{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }, {
+                    label: 'Assigned',
+                    data: [{{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

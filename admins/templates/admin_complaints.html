@@ -8,76 +8,70 @@
 <!-- Filters and Actions -->
 <div class="card-admin mb-3">
     <div class="card-body-admin py-3">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label for="searchComplaints" class="form-label">Search</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control" id="searchComplaints" 
-                           placeholder="Search by ID, resident, or subject...">
+        <form method="GET" id="filterForm">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label for="searchComplaints" class="form-label">Search</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchComplaints" name="search"
+                               placeholder="Search by ID, resident, or subject..." value="{{ current_search }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-2">
-                <label for="statusFilter" class="form-label">Status</label>
-                <select class="form-select form-select-sm" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="categoryFilter" class="form-label">Category</label>
-                <select class="form-select form-select-sm" id="categoryFilter">
-                    <option value="">All Categories</option>
-                    <option value="infrastructure">Infrastructure</option>
-                    <option value="public_safety">Public Safety</option>
-                    <option value="environment">Environment</option>
-                    <option value="health">Health</option>
-                    <option value="utilities">Utilities</option>
-                    <option value="others">Others</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="priorityFilter" class="form-label">Priority</label>
-                <select class="form-select form-select-sm" id="priorityFilter">
-                    <option value="">All Priorities</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex gap-1">
-                    <button class="btn btn-admin-primary btn-sm">
-                        <i class="bi bi-funnel me-1"></i>Filter
-                    </button>
-                    <button class="btn btn-admin-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
-                    </button>
-                    <div class="dropdown">
-                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots"></i>
+                <div class="col-md-1">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select form-select-sm" id="statusFilter" name="status">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="resolved" {% if current_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="categoryFilter" class="form-label">Category</label>
+                    <select class="form-select form-select-sm" id="categoryFilter" name="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}" {% if current_category == category %}selected{% endif %}>
+                                {{ category|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label for="priorityFilter" class="form-label">Priority</label>
+                    <select class="form-select form-select-sm" id="priorityFilter" name="priority">
+                        <option value="">All Priorities</option>
+                        {% for priority in priorities %}
+                            <option value="{{ priority }}" {% if current_priority == priority %}selected{% endif %}>
+                                {{ priority|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label for="designationFilter" class="form-label">Designation</label>
+                    <select class="form-select form-select-sm" id="designationFilter" name="designation">
+                        <option value="unassigned" {% if current_designation == 'unassigned' or current_designation == '' %}selected{% endif %}>Unassigned</option>
+                        <option value="assigned" {% if current_designation == 'assigned' %}selected{% endif %}>Assigned</option>
+                        <option value="all" {% if current_designation == 'all' %}selected{% endif %}>All</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-admin-primary btn-sm">
+                            <i class="bi bi-funnel me-1"></i>Filter
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="bulkAssign()">
-                                <i class="bi bi-people me-2"></i>Bulk Assign
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="exportData()">
-                                <i class="bi bi-download me-2"></i>Export Data
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="printReport()">
-                                <i class="bi bi-printer me-2"></i>Print Report
-                            </a></li>
-                        </ul>
+                        <button type="button" class="btn btn-admin-secondary btn-sm" id="resetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -86,7 +80,13 @@
     <div class="card-header-admin d-flex justify-content-between align-items-center">
         <div>
             <span class="fw-semibold">All Complaints</span>
-            <small class="text-muted ms-2">Showing 1-10 of 247 complaints</small>
+            <small class="text-muted ms-2">
+                {% if page_obj %}
+                    Showing {{ start_index }}-{{ end_index }} of {{ total_complaints }} complaints
+                {% else %}
+                    Showing 0 of 0 complaints
+                {% endif %}
+            </small>
         </div>
         <div class="d-flex gap-1">
             <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
@@ -111,7 +111,7 @@
                         <th>Category</th>
                         <th>Priority</th>
                         <th>Status</th>
-                        <!-- <th>Assigned To</th> -->
+                        <th>Assigned To</th>
                         <th>Date Filed</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
@@ -159,6 +159,21 @@
                                     {{ complaint.status|title }}
                                 </span>
                             </td>
+                            <td>
+                                {% if complaint.assigned_to %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                            {{ complaint.assigned_to.first_name|first }}{{ complaint.assigned_to.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium small">{{ complaint.assigned_to.first_name }} {{ complaint.assigned_to.last_name }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ complaint.assigned_to.position }}</div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Unassigned</span>
+                                {% endif %}
+                            </td>
 
                             <td>
                                 <div class="small">{{ complaint.created_at|date:"M d, Y" }}</div>
@@ -177,6 +192,18 @@
                                             <i class="bi bi-three-dots"></i>
                                         </button>
                                         <ul class="dropdown-menu">
+                                            <li><h6 class="dropdown-header">Assign To Staff</h6></li>
+                                            {% for staff in staff_members %}
+                                                <li><a class="dropdown-item" href="#" onclick="assignComplaint({{ complaint.id }}, {{ staff.id }})">
+                                                    <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
+                                                    {% if complaint.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
+                                                </a></li>
+                                            {% endfor %}
+                                            <li><a class="dropdown-item" href="#" onclick="assignComplaint({{ complaint.id }}, null)">
+                                                <i class="bi bi-person-x me-2"></i>Unassign
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><h6 class="dropdown-header">Update Status</h6></li>
                                             <li><a class="dropdown-item" href="#" onclick="updateStatus({{ complaint.id }}, 'in_progress')">
                                                 <i class="bi bi-play me-2"></i>Mark In Progress
                                             </a></li>
@@ -205,34 +232,64 @@
         </div>
     </div>
     <div class="card-footer bg-light py-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <select class="form-select form-select-sm" style="width: auto;">
-                    <option value="10">10 per page</option>
-                    <option value="25">25 per page</option>
-                    <option value="50">50 per page</option>
-                    <option value="100">100 per page</option>
+        <div class="d-flex justify-content-between align-items-center px-3">
+            <div class="w-25">
+                <select class="form-select form-select-sm w-50" id="perPageSelect" onchange="changePerPage()">
+                    <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 per page</option>
+                    <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 per page</option>
+                    <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 per page</option>
+                    <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100 per page</option>
                 </select>
             </div>
+            
+            {% if page_obj %}
             <nav>
                 <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <span class="page-link">Previous</span>
-                    </li>
-                    <li class="page-item active">
-                        <span class="page-link">1</span>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
+                    <!-- Previous button -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage({{ page_obj.previous_page_number }})">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Page numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="goToPage({{ num }})">{{ num }}</a>
+                            </li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="goToPage({{ num }})">{{ num }}</a>
+                            </li>
+                        {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next button -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage({{ page_obj.next_page_number }})">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    {% endif %}
                 </ul>
             </nav>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -240,6 +297,83 @@
 
 
 <script>
+    // CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Reset filters functionality
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        // Clear all form fields
+        document.getElementById('filterForm').reset();
+        // Redirect to the page without query parameters
+        window.location.href = window.location.pathname;
+    });
+
+    // Change per page functionality
+    function changePerPage() {
+        const perPage = document.getElementById('perPageSelect').value;
+        const url = new URL(window.location);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.set('page', 1); // Reset to first page when changing per page
+        window.location.href = url.toString();
+    }
+
+    // Function to navigate to a specific page while preserving filters
+    function goToPage(pageNumber) {
+        const url = new URL(window.location);
+        url.searchParams.set('page', pageNumber);
+        window.location.href = url.toString();
+    }
+
+    // Function to preserve query parameters when navigating
+    function getQueryString() {
+        const params = new URLSearchParams(window.location.search);
+        // Remove page parameter to avoid conflicts
+        params.delete('page');
+        return params.toString();
+    }
+
+    // Auto-submit form when filter values change (optional for better UX)
+    const filterSelects = document.querySelectorAll('#statusFilter, #categoryFilter, #priorityFilter, #designationFilter');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            // Reset to page 1 when filters change
+            const form = document.getElementById('filterForm');
+            const hiddenPageInput = form.querySelector('input[name="page"]');
+            if (hiddenPageInput) {
+                hiddenPageInput.remove();
+            }
+            form.submit();
+        });
+    });
+
+    // Submit form when Enter is pressed in search field
+    document.getElementById('searchComplaints').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Reset to page 1 when searching
+            const form = document.getElementById('filterForm');
+            const hiddenPageInput = form.querySelector('input[name="page"]');
+            if (hiddenPageInput) {
+                hiddenPageInput.remove();
+            }
+            form.submit();
+        }
+    });
+
     // Select all functionality
     document.getElementById('selectAll').addEventListener('change', function() {
         const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
@@ -248,13 +382,55 @@
         });
     });
 
+    function assignComplaint(complaintId, staffId) {
+        const formData = new FormData();
+        formData.append('complaint_id', complaintId);
+        formData.append('staff_id', staffId || '');
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        fetch('{% url "assign_complaint" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh the page to show updated assignment
+            } else {
+                console.error('Assignment failed:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
     function editComplaint(id) {
         window.location.href = `/admin/complaints/${id}/edit/`;
     }
 
     function updateStatus(id, status) {
         if (confirm(`Are you sure you want to update the status to ${status}?`)) {
-            console.log(`Updating complaint ${id} to ${status}`);
+            const formData = new FormData();
+            formData.append('complaint_id', id);
+            formData.append('status', status);
+            formData.append('csrfmiddlewaretoken', csrftoken);
+
+            fetch('{% url "update_complaint_status" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh the page to show updated status
+                } else {
+                    console.error('Status update failed:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     }
 

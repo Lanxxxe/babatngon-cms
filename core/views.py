@@ -13,6 +13,7 @@ def register(request):
         first_name = request.POST.get('first_name', '').strip()
         middle_name = request.POST.get('middle_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
+        suffix = request.POST.get('suffix', '').strip()
         email = request.POST.get('email', '').strip()
         phone = request.POST.get('phone', '').strip()
         address = request.POST.get('address', '').strip()
@@ -40,6 +41,7 @@ def register(request):
                 first_name=first_name,
                 middle_name=middle_name,
                 last_name=last_name,
+                suffix=suffix,
                 email=email,
                 phone=phone,
                 address=address,
@@ -54,6 +56,7 @@ def register(request):
             sweetify.error(request, f'Error: {str(e)}', timer=3000)
             return render(request, 'registration.html')
     return render(request, 'registration.html')
+
 
 def login(request):
     if request.method == 'POST':
@@ -93,14 +96,19 @@ def login(request):
 def index(request):
     return render(request, 'index.html')
 
+
 def about(request):
 
 
     return render(request, 'about.html')
+
+
 def features(request):
 
 
     return render(request, 'features.html')
+
+
 def contact(request):
 
 
