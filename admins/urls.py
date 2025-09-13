@@ -15,6 +15,10 @@ urlpatterns = [
     path('assistance/update-status/', update_assistance_status, name='update_assistance_status'),
     path('residents/', admin_resident, name='admin_residents'),
     path('notifications/', admin_notification, name='admin_notifications'),
+    path('notifications/mark-read/', mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/archive/', archive_notification, name='archive_notification'),
+    path('notifications/<str:notification_type>/<int:notification_id>/details/', notification_details, name='notification_details'),
 
     # Accounts Management
     path('accounts/', accounts, name='accounts'),

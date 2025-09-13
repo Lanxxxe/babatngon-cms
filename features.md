@@ -91,4 +91,9 @@
 - [ ] Can approve accounts
 - [ ] Can disabled accounts
 
+#### Profile
+- Profile
+	- [x] View
+	- [ ] Update
+
 

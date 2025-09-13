@@ -6,10 +6,10 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
-from .models import Complaint, AssistanceRequest
+from .models import Complaint, AssistanceRequest, Admin_Notification, Resident_Notification
 from core.models import Admin, User
 from django.contrib.auth.hashers import check_password
-import sweetify
+import sweetify, json
 
 def admin_login(request):
     """
@@ -739,9 +739,187 @@ def admin_resident(request):
 
 
 def admin_notification(request):
+    """
+    Display notifications for admin and staff, separated by source.
+    """
+    # Get filter parameters
+    admin_type_filter = request.GET.get('admin_type', '').strip()
+    admin_status_filter = request.GET.get('admin_status', '').strip()
+    resident_type_filter = request.GET.get('resident_type', '').strip()
+    resident_status_filter = request.GET.get('resident_status', '').strip()
+    
+    # Get admin/staff notifications
+    admin_notifications = Admin_Notification.objects.select_related(
+        'recipient', 'sender', 'related_complaint', 'related_assistance'
+    ).all().order_by('-created_at')
+    
+    # Apply admin notification filters
+    if admin_type_filter:
+        admin_notifications = admin_notifications.filter(notification_type=admin_type_filter)
+    if admin_status_filter:
+        if admin_status_filter == 'unread':
+            admin_notifications = admin_notifications.filter(is_read=False)
+        elif admin_status_filter == 'read':
+            admin_notifications = admin_notifications.filter(is_read=True)
+        elif admin_status_filter == 'archived':
+            admin_notifications = admin_notifications.filter(is_archived=True)
+    
+    # Get resident notifications
+    resident_notifications = Resident_Notification.objects.select_related(
+        'recipient', 'sender', 'related_complaint', 'related_assistance'
+    ).all().order_by('-created_at')
+    
+    # Apply resident notification filters
+    if resident_type_filter:
+        resident_notifications = resident_notifications.filter(notification_type=resident_type_filter)
+    if resident_status_filter:
+        if resident_status_filter == 'unread':
+            resident_notifications = resident_notifications.filter(is_read=False)
+        elif resident_status_filter == 'read':
+            resident_notifications = resident_notifications.filter(is_read=True)
+        elif resident_status_filter == 'archived':
+            resident_notifications = resident_notifications.filter(is_archived=True)
+    
+    # Calculate stats
+    total_notifications = admin_notifications.count() + resident_notifications.count()
+    pending_cases = admin_notifications.filter(is_read=False).count() + resident_notifications.filter(is_read=False).count()
+    resolved_notifications = admin_notifications.filter(Q(notification_type='case_resolved') | Q(related_complaint__status='resolved') | Q(related_assistance__status='completed')).count()
+    urgent_notifications = admin_notifications.filter(priority='urgent').count() + resident_notifications.filter(priority='urgent').count()
+    
+    # Pagination for admin notifications
+    admin_paginator = Paginator(admin_notifications, 10)
+    admin_page_number = request.GET.get('admin_page', 1)
+    admin_page_obj = admin_paginator.get_page(admin_page_number)
+    
+    # Pagination for resident notifications
+    resident_paginator = Paginator(resident_notifications, 10)
+    resident_page_number = request.GET.get('resident_page', 1)
+    resident_page_obj = resident_paginator.get_page(resident_page_number)
+    
+    # Get unique notification types for filters
+    admin_notification_types = Admin_Notification.objects.values_list('notification_type', flat=True).distinct()
+    resident_notification_types = Resident_Notification.objects.values_list('notification_type', flat=True).distinct()
+    
+    context = {
+        'admin_notifications': admin_page_obj,
+        'resident_notifications': resident_page_obj,
+        'admin_page_obj': admin_page_obj,
+        'resident_page_obj': resident_page_obj,
+        
+        # Stats for cards
+        'total_notifications': total_notifications,
+        'pending_cases': pending_cases,
+        'resolved_notifications': resolved_notifications,
+        'urgent_notifications': urgent_notifications,
+        
+        # Filter options
+        'admin_notification_types': admin_notification_types,
+        'resident_notification_types': resident_notification_types,
+        
+        # Current filter values
+        'current_admin_type': admin_type_filter,
+        'current_admin_status': admin_status_filter,
+        'current_resident_type': resident_type_filter,
+        'current_resident_status': resident_status_filter,
+    }
+    
+    return render(request, 'admin_notification.html', context)
 
 
-    return render(request, 'admin_notification.html')
+@require_POST
+def mark_notification_read(request):
+    """
+    Mark a specific notification as read.
+    """
+    try:
+        data = json.loads(request.body)
+        notification_type = data.get('notification_type')
+        notification_id = data.get('notification_id')
+        
+        from .models import Admin_Notification, Resident_Notification
+        
+        if notification_type == 'admin':
+            notification = Admin_Notification.objects.get(id=notification_id)
+        else:
+            notification = Resident_Notification.objects.get(id=notification_id)
+        
+        notification.mark_as_read()
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST
+def mark_all_notifications_read(request):
+    """
+    Mark all notifications as read.
+    """
+    try:
+
+        Admin_Notification.objects.filter(is_read=False).update(is_read=True)
+        Resident_Notification.objects.filter(is_read=False).update(is_read=True)
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST
+def archive_notification(request):
+    """
+    Archive a specific notification.
+    """
+    try:
+        data = json.loads(request.body)
+        notification_type = data.get('notification_type')
+        notification_id = data.get('notification_id')
+        
+        from .models import Admin_Notification, Resident_Notification
+        
+        if notification_type == 'admin':
+            notification = Admin_Notification.objects.get(id=notification_id)
+        else:
+            notification = Resident_Notification.objects.get(id=notification_id)
+        
+        notification.archive()
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def notification_details(request, notification_type, notification_id):
+    """
+    Get notification details for modal or page display.
+    """
+    try:
+
+        if notification_type == 'admin':
+            notification = Admin_Notification.objects.select_related(
+                'recipient', 'sender', 'related_complaint', 'related_assistance'
+            ).get(id=notification_id)
+        else:
+            notification = Resident_Notification.objects.select_related(
+                'recipient', 'sender', 'related_complaint', 'related_assistance'
+            ).get(id=notification_id)
+        
+        # Mark as read when viewed
+        if not notification.is_read:
+            notification.mark_as_read()
+        
+        context = {
+            'notification': notification,
+            'notification_type': notification_type
+        }
+        
+        return render(request, 'notification_details.html', context)
+        
+    except Exception as e:
+        sweetify.error(request, f'Notification not found: {str(e)}', timer=3000)
+        return redirect('admin_notifications')
+
 
 
 # Accounts management view
@@ -879,6 +1057,7 @@ def admin_logout(request):
     request.session.flush()  # Clear all session data
     sweetify.toast(request, 'You have been logged out successfully.', timer=2000)
     return redirect('admin_login')
+
 
 
 

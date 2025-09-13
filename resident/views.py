@@ -1,17 +1,17 @@
+from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
+from admins.notification_utils import notify_new_case_filed
+from core.models import User
 from django.shortcuts import render
 from django.contrib.auth import logout
 from django.shortcuts import redirect, get_object_or_404
 from django.db import IntegrityError
 from django.http import JsonResponse
-from core.models import User
-from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
 from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import os, uuid, time
 import sweetify
 
-from . import file_upload_view
 
 
 # Create your views here.
@@ -49,6 +49,7 @@ def resident_dashboard(request):
         'recent_assistance': recent_assistance,
     }
     return render(request, 'resident_dashboard.html', context)
+
 
 def file_complaint(request):
     if not request.session.get('id'):
@@ -99,6 +100,15 @@ def file_complaint(request):
             latitude=lat_float,
             longitude=lng_float
         )
+
+        try:
+            notify_new_case_filed(complaint)  # Notifies all active admins
+        
+        except Exception as e:
+            # Log the error but do not interrupt the user flow
+            print(f"Error notifying admins of new complaint: {e}")
+            sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
+
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             ComplaintAttachment.objects.create(complaint=complaint, file=f)
@@ -106,6 +116,7 @@ def file_complaint(request):
         sweetify.success(request, 'Complaint filed successfully!', persistent=True, timer=3000)
         return redirect('file_complaint')
     return render(request, 'file_complaint.html')
+
 
 def file_assistance(request):
     if not request.session.get('id'):
@@ -154,12 +165,20 @@ def file_assistance(request):
             latitude=lat_float,
             longitude=lng_float
         )
+
+        try:
+            notify_new_case_filed(assistance)  # Notifies all active admins
+        except Exception as e:
+            print(f"Error notifying admins of new assistance request: {e}")
+            sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
+
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
         sweetify.success(request, 'Assistance request submitted!', persistent=True, timer=3000)
         return redirect('file_assistance')
     return render(request, 'file_assistance.html')
+
 
 def my_complaints(request):
     if not request.session.get('id'):
@@ -171,12 +190,14 @@ def my_complaints(request):
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
     return render(request, 'my_complaints.html', {'complaints': complaints})
 
+
 def delete_complaint(request, pk):
     user_id = request.session.get('id')
     complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
     complaint.delete()
     sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
     return redirect('my_complaints')
+
 
 def update_complaint(request, pk):
     user_id = request.session.get('id')
@@ -265,6 +286,7 @@ def my_assistance(request):
 
     return render(request, 'my_assistance.html', context)
 
+
 def update_assistance(request, pk):
     user_id = request.session.get('id')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
@@ -341,12 +363,14 @@ def update_assistance(request, pk):
         })
     return redirect('my_assistance')
 
+
 def delete_assistance(request, pk):
     user_id = request.session.get('id')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
     assistance.delete()
     sweetify.success(request, 'Assistance request deleted.', persistent=True, timer=2000)
     return redirect('my_assistance')
+
 
 def profile(request):
     """

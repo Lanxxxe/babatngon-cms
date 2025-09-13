@@ -1,17 +1,19 @@
 {% extends 'base_admin.html' %}
+{% load static %}
 
 {% block title %}Notifications - Admin Portal{% endblock %}
 {% block page_title %}Notification Center{% endblock %}
 {% block page_subtitle %}Manage system notifications and communication{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <!-- Notification Stats -->
 <div class="row g-3 mb-4">
     <div class="col-lg-3 col-md-6">
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">1,247</div>
+                    <div class="stat-number">{{ total_notifications }}</div>
                     <div class="stat-label">Total Notifications</div>
                     <div class="stat-change">This month</div>
                 </div>
@@ -24,8 +26,8 @@
         <div class="stat-card warning">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">23</div>
-                    <div class="stat-label">Unread</div>
+                    <div class="stat-number">{{ pending_cases }}</div>
+                    <div class="stat-label">Pending Cases</div>
                     <div class="stat-change">Requires attention</div>
                 </div>
                 <i class="bi bi-bell-fill text-warning" style="font-size: 20px; opacity: 0.6;"></i>
@@ -37,8 +39,8 @@
         <div class="stat-card success">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">892</div>
-                    <div class="stat-label">Delivered</div>
+                    <div class="stat-number">{{ resolved_notifications }}</div>
+                    <div class="stat-label">Resolved</div>
                     <div class="stat-change">98.5% success rate</div>
                 </div>
                 <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
@@ -50,18 +52,18 @@
         <div class="stat-card info">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">156</div>
-                    <div class="stat-label">Scheduled</div>
-                    <div class="stat-change">Upcoming</div>
+                    <div class="stat-number">{{ urgent_notifications }}</div>
+                    <div class="stat-label">Urgent</div>
+                    <div class="stat-change">High priority</div>
                 </div>
-                <i class="bi bi-clock text-info" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-exclamation-triangle text-info" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Action Buttons -->
-<div class="card-admin mb-3">
+{% comment %} <div class="card-admin mb-3">
     <div class="card-body-admin py-3">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -96,216 +98,278 @@
             </div>
         </div>
     </div>
-</div>
+</div> {% endcomment %}
 
 <div class="row g-3">
-    <!-- Notifications List -->
-    <div class="col-lg-8">
+    <!-- Admin/Staff Notifications -->
+    <div class="col-12">
         <div class="card-admin">
             <div class="card-header-admin d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="fw-semibold">All Notifications</span>
-                    <small class="text-muted ms-2">Recent system and user notifications</small>
+                    <span class="fw-semibold">Admin/Staff Notifications</span>
+                    <small class="text-muted ms-2">Notifications sent to administrators and staff</small>
                 </div>
                 <div class="d-flex gap-1">
-                    <select class="form-select form-select-sm" id="typeFilter" style="width: auto;">
+                    <select class="form-select form-select-sm" id="adminTypeFilter" style="width: auto;" onchange="filterAdminNotifications()">
                         <option value="">All Types</option>
-                        <option value="system">System</option>
-                        <option value="complaint">Complaint</option>
-                        <option value="user">User</option>
-                        <option value="announcement">Announcement</option>
+                        {% for type in admin_notification_types %}
+                            <option value="{{ type }}" {% if type == current_admin_type %}selected{% endif %}>{{ type|title }}</option>
+                        {% endfor %}
                     </select>
-                    <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
+                    <select class="form-select form-select-sm" id="adminStatusFilter" style="width: auto;" onchange="filterAdminNotifications()">
                         <option value="">All Status</option>
-                        <option value="unread">Unread</option>
-                        <option value="read">Read</option>
-                        <option value="archived">Archived</option>
+                        <option value="unread" {% if current_admin_status == 'unread' %}selected{% endif %}>Unread</option>
+                        <option value="read" {% if current_admin_status == 'read' %}selected{% endif %}>Read</option>
+                        <option value="archived" {% if current_admin_status == 'archived' %}selected{% endif %}>Archived</option>
                     </select>
                 </div>
             </div>
             <div class="card-body-admin p-0">
-                <div class="list-group list-group-flush">
-                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-danger">
-                        <div class="d-flex align-items-start">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="bg-danger bg-opacity-10 rounded-circle p-2">
-                                    <i class="bi bi-exclamation-triangle text-danger"></i>
+                {% if admin_notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for notification in admin_notifications %}
+                            <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 
+                                {% if notification.priority == 'urgent' %}border-danger{% elif notification.priority == 'high' %}border-warning{% elif notification.priority == 'normal' %}border-info{% else %}border-secondary{% endif %}">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
+                                            {% if notification.notification_type == 'case_assignment' %}
+                                                <i class="bi bi-person-check {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'status_update' %}
+                                                <i class="bi bi-arrow-repeat {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'new_complaint' %}
+                                                <i class="bi bi-exclamation-triangle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'case_resolved' %}
+                                                <i class="bi bi-check-circle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% else %}
+                                                <i class="bi bi-bell {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
+                                            {% if not notification.is_read %}
+                                                <span class="badge bg-primary ms-2 small">New</span>
+                                            {% endif %}
+                                            <span class="badge bg-secondary ms-2 small">{{ notification.get_notification_type_display }}</span>
+                                        </div>
+                                        <p class="mb-1 text-muted small">{{ notification.message|truncatechars:100 }}</p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-person me-1"></i>To: {{ notification.recipient.get_full_name }}
+                                            {% if notification.sender %}
+                                                <i class="bi bi-arrow-right mx-1"></i>From: {{ notification.sender.get_full_name }}
+                                            {% endif %}
+                                            <i class="bi bi-clock ms-2 me-1"></i>{{ notification.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    {% if not notification.is_read %}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('admin', {{ notification.id }})" title="Mark as Read">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewDetails('admin', {{ notification.id }})" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    {% if not notification.is_archived %}
+                                        <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification('admin', {{ notification.id }})" title="Archive">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h6 class="mb-0 me-2 small fw-semibold">High Priority Complaint Filed</h6>
-                                    <span class="badge bg-danger">Urgent</span>
-                                    <span class="badge bg-secondary ms-1">System</span>
-                                </div>
-                                <p class="mb-1 text-muted small">Complaint #001 - Broken streetlight reported by Juan Dela Cruz requires immediate attention.</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>2 hours ago
-                                    <i class="bi bi-person ms-3 me-1"></i>Juan Dela Cruz
-                                </small>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="markAsRead(1)">
-                                    <i class="bi bi-check me-2"></i>Mark as Read
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="viewDetails(1)">
-                                    <i class="bi bi-eye me-2"></i>View Details
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="archiveNotification(1)">
-                                    <i class="bi bi-archive me-2"></i>Archive
-                                </a></li>
-                            </ul>
-                        </div>
+                        {% endfor %}
                     </div>
-
-                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-success">
-                        <div class="d-flex align-items-start">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="bg-success bg-opacity-10 rounded-circle p-2">
-                                    <i class="bi bi-check-circle text-success"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h6 class="mb-0 me-2 small fw-semibold">Complaint Resolved</h6>
-                                    <span class="badge bg-success">Resolved</span>
-                                    <span class="badge bg-secondary ms-1">Complaint</span>
-                                </div>
-                                <p class="mb-1 text-muted small">Complaint #045 has been successfully resolved. Resident has been notified.</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>4 hours ago
-                                    <i class="bi bi-person ms-3 me-1"></i>Admin Team
-                                </small>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="markAsRead(2)">
-                                    <i class="bi bi-check me-2"></i>Mark as Read
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="viewDetails(2)">
-                                    <i class="bi bi-eye me-2"></i>View Details
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="archiveNotification(2)">
-                                    <i class="bi bi-archive me-2"></i>Archive
-                                </a></li>
-                            </ul>
-                        </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 48px;"></i>
+                        <p class="text-muted mt-2">No admin/staff notifications found</p>
                     </div>
-
-                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-info">
-                        <div class="d-flex align-items-start">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="bg-info bg-opacity-10 rounded-circle p-2">
-                                    <i class="bi bi-person-plus text-info"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h6 class="mb-0 me-2 small fw-semibold">New Resident Registration</h6>
-                                    <span class="badge bg-info">New User</span>
-                                    <span class="badge bg-secondary ms-1">User</span>
-                                </div>
-                                <p class="mb-1 text-muted small">Maria Santos has registered and is pending account verification.</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>6 hours ago
-                                    <i class="bi bi-person ms-3 me-1"></i>Maria Santos
-                                </small>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="approveUser(3)">
-                                    <i class="bi bi-check me-2"></i>Approve User
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="viewDetails(3)">
-                                    <i class="bi bi-eye me-2"></i>View Details
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="markAsRead(3)">
-                                    <i class="bi bi-check me-2"></i>Mark as Read
-                                </a></li>
+                {% endif %}
+            </div>
+            {% if admin_page_obj.has_other_pages %}
+                <div class="card-footer bg-light py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Showing {{ admin_page_obj.start_index }}-{{ admin_page_obj.end_index }} of {{ admin_page_obj.paginator.count }} notifications</small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if admin_page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?admin_page={{ admin_page_obj.previous_page_number }}{% if current_admin_type %}&admin_type={{ current_admin_type }}{% endif %}{% if current_admin_status %}&admin_status={{ current_admin_status }}{% endif %}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Previous</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in admin_page_obj.paginator.page_range %}
+                                    {% if admin_page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > admin_page_obj.number|add:'-3' and num < admin_page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?admin_page={{ num }}{% if current_admin_type %}&admin_type={{ current_admin_type }}{% endif %}{% if current_admin_status %}&admin_status={{ current_admin_status }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if admin_page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?admin_page={{ admin_page_obj.next_page_number }}{% if current_admin_type %}&admin_type={{ current_admin_type }}{% endif %}{% if current_admin_status %}&admin_status={{ current_admin_status }}{% endif %}">Next</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next</span>
+                                    </li>
+                                {% endif %}
                             </ul>
-                        </div>
-                    </div>
-
-                    <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 border-warning">
-                        <div class="d-flex align-items-start">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="bg-warning bg-opacity-10 rounded-circle p-2">
-                                    <i class="bi bi-megaphone text-warning"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h6 class="mb-0 me-2 small fw-semibold">System Maintenance Scheduled</h6>
-                                    <span class="badge bg-warning">Scheduled</span>
-                                    <span class="badge bg-secondary ms-1">Announcement</span>
-                                </div>
-                                <p class="mb-1 text-muted small">System maintenance scheduled for Sunday, 2:00 AM - 4:00 AM. Users have been notified.</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>1 day ago
-                                    <i class="bi bi-person ms-3 me-1"></i>System Admin
-                                </small>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="editAnnouncement(4)">
-                                    <i class="bi bi-pencil me-2"></i>Edit
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="viewDetails(4)">
-                                    <i class="bi bi-eye me-2"></i>View Details
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="markAsRead(4)">
-                                    <i class="bi bi-check me-2"></i>Mark as Read
-                                </a></li>
-                            </ul>
-                        </div>
+                        </nav>
                     </div>
                 </div>
-            </div>
-            <div class="card-footer bg-light py-2">
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">Showing 1-4 of 23 notifications</small>
-                    <nav>
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item disabled">
-                                <span class="page-link">Previous</span>
-                            </li>
-                            <li class="page-item active">
-                                <span class="page-link">1</span>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Sidebar -->
+    <!-- Resident Notifications -->
+    <div class="col-12">
+        <div class="card-admin">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-semibold">Resident Notifications</span>
+                    <small class="text-muted ms-2">Notifications sent to residents</small>
+                </div>
+                <div class="d-flex gap-1">
+                    <select class="form-select form-select-sm" id="residentTypeFilter" style="width: auto;" onchange="filterResidentNotifications()">
+                        <option value="">All Types</option>
+                        {% for type in resident_notification_types %}
+                            <option value="{{ type }}" {% if type == current_resident_type %}selected{% endif %}>{{ type|title }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-select form-select-sm" id="residentStatusFilter" style="width: auto;" onchange="filterResidentNotifications()">
+                        <option value="">All Status</option>
+                        <option value="unread" {% if current_resident_status == 'unread' %}selected{% endif %}>Unread</option>
+                        <option value="read" {% if current_resident_status == 'read' %}selected{% endif %}>Read</option>
+                        <option value="archived" {% if current_resident_status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body-admin p-0">
+                {% if resident_notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for notification in resident_notifications %}
+                            <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 
+                                {% if notification.priority == 'urgent' %}border-danger{% elif notification.priority == 'high' %}border-warning{% elif notification.priority == 'normal' %}border-success{% else %}border-secondary{% endif %}">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
+                                            {% if notification.notification_type == 'status_update' %}
+                                                <i class="bi bi-arrow-repeat {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-success{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'case_assigned' %}
+                                                <i class="bi bi-person-check {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-success{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'case_resolved' %}
+                                                <i class="bi bi-check-circle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-success{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'admin_response' %}
+                                                <i class="bi bi-chat-dots {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-success{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% else %}
+                                                <i class="bi bi-bell {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-success{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
+                                            {% if not notification.is_read %}
+                                                <span class="badge bg-primary ms-2 small">New</span>
+                                            {% endif %}
+                                            <span class="badge bg-secondary ms-2 small">{{ notification.get_notification_type_display }}</span>
+                                        </div>
+                                        <p class="mb-1 text-muted small">{{ notification.message|truncatechars:100 }}</p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-person me-1"></i>To: {{ notification.recipient.get_full_name|default:notification.recipient.email }}
+                                            {% if notification.sender %}
+                                                <i class="bi bi-arrow-right mx-1"></i>From: {{ notification.sender.get_full_name }}
+                                            {% endif %}
+                                            <i class="bi bi-clock ms-2 me-1"></i>{{ notification.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    {% if not notification.is_read %}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('resident', {{ notification.id }})" title="Mark as Read">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewDetails('resident', {{ notification.id }})" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    {% if not notification.is_archived %}
+                                        <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification('resident', {{ notification.id }})" title="Archive">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 48px;"></i>
+                        <p class="text-muted mt-2">No resident notifications found</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% if resident_page_obj.has_other_pages %}
+                <div class="card-footer bg-light py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Showing {{ resident_page_obj.start_index }}-{{ resident_page_obj.end_index }} of {{ resident_page_obj.paginator.count }} notifications</small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if resident_page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?resident_page={{ resident_page_obj.previous_page_number }}{% if current_resident_type %}&resident_type={{ current_resident_type }}{% endif %}{% if current_resident_status %}&resident_status={{ current_resident_status }}{% endif %}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Previous</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in resident_page_obj.paginator.page_range %}
+                                    {% if resident_page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > resident_page_obj.number|add:'-3' and num < resident_page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?resident_page={{ num }}{% if current_resident_type %}&resident_type={{ current_resident_type }}{% endif %}{% if current_resident_status %}&resident_status={{ current_resident_status }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if resident_page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?resident_page={{ resident_page_obj.next_page_number }}{% if current_resident_type %}&resident_type={{ current_resident_type }}{% endif %}{% if current_resident_status %}&resident_status={{ current_resident_status }}{% endif %}">Next</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% comment %} <!-- Keep original sidebar -->
+<div class="row g-3 mt-3">
     <div class="col-lg-4">
         <!-- Quick Actions -->
         <div class="quick-actions mb-3">
@@ -515,7 +579,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> {% endcomment %}
 
 <script>
     // Schedule option toggle
@@ -527,23 +591,146 @@
         document.getElementById('scheduleDateTime').style.display = 'none';
     });
 
+    // Filtering functions
+    function filterAdminNotifications() {
+        const typeFilter = document.getElementById('adminTypeFilter').value;
+        const statusFilter = document.getElementById('adminStatusFilter').value;
+        
+        const params = new URLSearchParams(window.location.search);
+        
+        // Update or remove admin filters
+        if (typeFilter) {
+            params.set('admin_type', typeFilter);
+        } else {
+            params.delete('admin_type');
+        }
+        
+        if (statusFilter) {
+            params.set('admin_status', statusFilter);
+        } else {
+            params.delete('admin_status');
+        }
+        
+        // Reset admin pagination
+        params.delete('admin_page');
+        
+        // Redirect with new filters
+        window.location.search = params.toString();
+    }
+
+    function filterResidentNotifications() {
+        const typeFilter = document.getElementById('residentTypeFilter').value;
+        const statusFilter = document.getElementById('residentStatusFilter').value;
+        
+        const params = new URLSearchParams(window.location.search);
+        
+        // Update or remove resident filters
+        if (typeFilter) {
+            params.set('resident_type', typeFilter);
+        } else {
+            params.delete('resident_type');
+        }
+        
+        if (statusFilter) {
+            params.set('resident_status', statusFilter);
+        } else {
+            params.delete('resident_status');
+        }
+        
+        // Reset resident pagination
+        params.delete('resident_page');
+        
+        // Redirect with new filters
+        window.location.search = params.toString();
+    }
+
     // Notification actions
-    function markAsRead(id) {
-        console.log(`Marking notification ${id} as read`);
+    function markAsRead(notificationType, id) {
+        if (confirm('Mark this notification as read?')) {
+            // Send AJAX request to mark as read
+            fetch(`/admin/notifications/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    'notification_type': notificationType,
+                    'notification_id': id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to mark notification as read');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
     }
 
     function markAllAsRead() {
         if (confirm('Mark all notifications as read?')) {
-            console.log('Marking all notifications as read');
+            // Send AJAX request to mark all as read
+            fetch(`/admin/notifications/mark-all-read/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to mark all notifications as read');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
         }
     }
 
-    function viewDetails(id) {
-        console.log(`Viewing details for notification ${id}`);
+    function viewDetails(notificationType, id) {
+        // Open modal or redirect to details page
+        window.location.href = `/admin/notifications/${notificationType}/${id}/details/`;
     }
 
-    function archiveNotification(id) {
-        console.log(`Archiving notification ${id}`);
+    function archiveNotification(notificationType, id) {
+        if (confirm('Archive this notification?')) {
+            // Send AJAX request to archive
+            fetch(`/admin/notifications/archive/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    'notification_type': notificationType,
+                    'notification_id': id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to archive notification');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
     }
 
     function approveUser(id) {
