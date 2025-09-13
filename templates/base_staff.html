@@ -22,6 +22,12 @@
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+     <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <link rel="stylesheet" href="{% static 'css/base_admin.css' %}">
     <title>{% block title %}Staff Portal - Barangay CMS{% endblock %}</title>
 </head>
@@ -42,27 +48,27 @@
             <div class="nav-section-admin">
                 <div class="nav-section-title-admin">Overview</div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'staff_dashboard' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <a href="{% url 'staff_dashboard' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-speedometer2"></i>
                         </div>
                         <span class="nav-text-admin">Dashboard</span>
                     </a>
                 </div>
-                <div class="nav-item-admin">
-                    <a href="{% url 'admin_analytics' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                {% comment %} <div class="nav-item-admin">
+                    <a href="{% url 'admin_analytics' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_analytics' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-graph-up"></i>
                         </div>
                         <span class="nav-text-admin">Analytics</span>
                     </a>
-                </div>
+                </div> {% endcomment %}
             </div>
 
             <div class="nav-section-admin">
                 <div class="nav-section-title-admin">Management</div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'staff_complaints' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
+                    <a href="{% url 'staff_complaints' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_complaints' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-clipboard-check"></i>
                         </div>
@@ -71,7 +77,7 @@
                     </a>
                 </div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'staff_assistance' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_assistance' %}active{% endif %}">
+                    <a href="{% url 'staff_assistance' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_assistance' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-hand-thumbs-up"></i>
                         </div>
@@ -113,11 +119,11 @@
             <div class="nav-section-admin">
                 <div class="nav-section-title-admin">System</div>
                 <div class="nav-item-admin">
-                    <a href="" class="nav-link-admin {% if request.resolver_match.url_name == 'accounts' %}active{% endif %}">
+                    <a href="{% url 'staff_profile' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_profile' %}active{% endif %}">
                         <div class="nav-icon-admin">
-                            <i class="bi bi-people"></i>
+                            <i class="bi bi-person"></i>
                         </div>
-                        <span class="nav-text-admin">Profile</span>
+                        <span class="nav-text-admin">My Profile</span>
                     </a>
                 </div>
                 <!-- <div class="nav-item-admin">

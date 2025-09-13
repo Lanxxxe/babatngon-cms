@@ -75,12 +75,12 @@
                     <i class="bi bi-list-ul me-2"></i>Recent Complaints
                 </div>
                 <div class="d-flex gap-2 align-items-center">
-                    <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
+                    {% comment %} <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
                         <option value="resolved">Resolved</option>
-                    </select>
+                    </select> {% endcomment %}
                     <a href="{% url 'staff_complaints' %}" role="button" class="btn btn-primary btn-sm pb-0">
                         View All
                     </a>
@@ -98,7 +98,7 @@
                                 <th>Priority</th>
                                 <th>Status</th>
                                 <th>Date</th>
-                                <th>Actions</th>
+                                {% comment %} <th>Actions</th> {% endcomment %}
                             </tr>
                         </thead>
                         <tbody>
@@ -140,7 +140,7 @@
                                     <td>
                                         <div class="text-muted small">{{ complaint.created_at|date:"M d, Y" }}</div>
                                     </td>
-                                    <td>
+                                    {% comment %} <td>
                                         <div class="btn-group btn-group-sm">
                                             <button class="btn btn-admin-primary btn-sm">
                                                 <i class="bi bi-eye"></i>
@@ -149,7 +149,7 @@
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </div>
-                                    </td>
+                                    </td> {% endcomment %}
                                 </tr>
                             {% empty %}
                                 <tr>
@@ -217,9 +217,9 @@
                                 </span>
                             </div>
                         </div>
-                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#complaintModal{{ complaint.id }}">
+                        <a href="{% url 'staff_view_case' 'complaint' complaint.id %}" class="btn btn-outline-danger btn-sm">
                             View
-                        </button>
+                        </a>
                     </div>
                 {% empty %}
                     <div class="text-center text-muted py-3">
@@ -230,8 +230,8 @@
                 
                 {% if high_priority_complaints %}
                 <div class="text-center mt-3">
-                    <a href="{% url 'staff_complaints' %}?priority=high" class="btn btn-admin-outline btn-sm">
-                        View All High Priority
+                    <a href="{% url 'staff_complaints' %}?priority=urgent" class="btn btn-admin-outline btn-sm">
+                        View All Urgent Priority
                     </a>
                 </div>
                 {% endif %}

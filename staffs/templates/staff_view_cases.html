@@ -1,0 +1,441 @@
+{% extends 'base_staff.html' %}
+
+{% block title %}
+    {% if case_type == 'complaint' %}
+        Complaint #{{ case.id }} Details - Staff Portal
+    {% else %}
+        Assistance Request #{{ case.id }} Details - Staff Portal
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if case_type == 'complaint' %}
+        Complaint #{{ case.id }} Details
+    {% else %}
+        Assistance Request #{{ case.id }} Details
+    {% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    {% if case_type == 'complaint' %}
+        View and manage complaint details
+    {% else %}
+        View and manage assistance request details
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Case Information -->
+    <div class="col-lg-8">
+        <!-- Basic Information Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Basic Information
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Subject/Title:</label>
+                            <p class="mb-0">{{ case.title }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                {% if case_type == 'complaint' %}Category:{% else %}Type:{% endif %}
+                            </label>
+                            <p class="mb-0">
+                                <span class="badge bg-secondary">
+                                    {% if case_type == 'complaint' %}{{ case.category|title }}{% else %}{{ case.type|title }}{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                {% if case_type == 'complaint' %}Priority:{% else %}Urgency:{% endif %}
+                            </label>
+                            <p class="mb-0">
+                                <span class="badge 
+                                    {% if case_type == 'complaint' %}
+                                        {% if case.priority == 'urgent' %}bg-danger
+                                        {% elif case.priority == 'high' %}bg-warning
+                                        {% elif case.priority == 'medium' %}bg-info
+                                        {% else %}bg-success{% endif %}
+                                    {% else %}
+                                        {% if case.urgency == 'critical' %}bg-danger
+                                        {% elif case.urgency == 'high' %}bg-warning
+                                        {% elif case.urgency == 'medium' %}bg-info
+                                        {% else %}bg-success{% endif %}
+                                    {% endif %}">
+                                    {% if case_type == 'complaint' %}{{ case.priority|title }}{% else %}{{ case.urgency|title }}{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Status:</label>
+                            <p class="mb-0">
+                                <span class="badge 
+                                    {% if case.status == 'pending' %}bg-warning
+                                    {% elif case.status == 'in_progress' %}bg-info
+                                    {% elif case.status == 'resolved' or case.status == 'completed' %}bg-success
+                                    {% elif case.status == 'approved' %}bg-primary
+                                    {% elif case.status == 'rejected' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ case.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date Filed:</label>
+                            <p class="mb-0">{{ case.created_at|date:"F d, Y \a\t g:i A" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Last Updated:</label>
+                            <p class="mb-0">{{ case.updated_at|date:"F d, Y \a\t g:i A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resident Information Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-person me-2"></i>Resident Information
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Name:</label>
+                            <p class="mb-0">{{ case.user.first_name }} {{ case.user.last_name }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email:</label>
+                            <p class="mb-0">{{ case.user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Phone:</label>
+                            <p class="mb-0">{{ case.user.phone|default:"Not provided" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Address:</label>
+                            <p class="mb-0">{{ case.user.address|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-text me-2"></i>Description
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <p class="mb-0">{{ case.description|linebreaks }}</p>
+            </div>
+        </div>
+
+        <!-- Location Information Card -->
+        {% if case.address or case.location_description or case.latitude and case.longitude %}
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-geo-alt me-2"></i>Location Information
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                {% if case.address %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Address:</label>
+                    <p class="mb-0">{{ case.address }}</p>
+                </div>
+                {% endif %}
+                
+                {% if case.location_description %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Location Description:</label>
+                    <p class="mb-0">{{ case.location_description }}</p>
+                </div>
+                {% endif %}
+
+                {% if case.latitude and case.longitude %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Coordinates:</label>
+                    <p class="mb-0">{{ case.latitude }}, {{ case.longitude }}</p>
+                </div>
+                
+                <!-- Map Container -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Location on Map:</label>
+                    <div id="caseMap" style="height: 400px; border-radius: 8px; border: 1px solid #ddd;"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Attachments Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-paperclip me-2"></i>Attachments
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                {% if case.attachments.all %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for attachment in case.attachments.all %}
+                            <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark me-1"></i>
+                                {{ attachment.file.name|slice:"20:" }}
+                                {% if attachment.file.name|length > 20 %}...{% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No attachments uploaded</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Admin Remarks Card -->
+        {% if case.admin_remarks %}
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-chat-text me-2"></i>Staff Remarks
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <p class="mb-0">{{ case.admin_remarks|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Resolution/Completion Notes Card -->
+        {% if case_type == 'complaint' and case.resolution_notes or case_type == 'assistance' and case.completion_notes %}
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% if case_type == 'complaint' %}Resolution Notes{% else %}Completion Notes{% endif %}
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <p class="mb-0">
+                    {% if case_type == 'complaint' %}{{ case.resolution_notes|linebreaks }}{% else %}{{ case.completion_notes|linebreaks }}{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions Sidebar -->
+    <div class="col-lg-4">
+        <!-- Actions Card -->
+        <div class="card-admin mb-3 sticky-top" style="top: 20px;">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>Actions
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <!-- Status Update -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Update Status:</label>
+                    <form method="post" action="{% url 'staff_update_case_status' case_type case.id %}">
+                        {% csrf_token %}
+                        <div class="input-group input-group-sm mb-2">
+                            <select name="status" class="form-select" id="statusSelect">
+                                {% if case_type == 'complaint' %}
+                                    <option value="pending" {% if case.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if case.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="resolved" {% if case.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="closed" {% if case.status == 'closed' %}selected{% endif %}>Closed</option>
+                                {% else %}
+                                    <option value="pending" {% if case.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="approved" {% if case.status == 'approved' %}selected{% endif %}>Approved</option>
+                                    <option value="in_progress" {% if case.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if case.status == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="rejected" {% if case.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                {% endif %}
+                            </select>
+                            <button type="submit" class="btn btn-admin-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Add Remarks -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Add Remarks:</label>
+                    <form method="post" action="{% url 'staff_add_remarks' case_type case.id %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <textarea name="remarks" class="form-control form-control-sm" rows="3" placeholder="Enter your remarks..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-admin-secondary btn-sm w-100">
+                            <i class="bi bi-chat-text me-1"></i>Add Remarks
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Resolution/Completion Notes (for resolved/completed cases) -->
+                {% if case.status == 'resolved' or case.status == 'completed' %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        {% if case_type == 'complaint' %}Resolution Notes:{% else %}Completion Notes:{% endif %}
+                    </label>
+                    <form method="post" action="{% url 'staff_add_notes' case_type case.id %}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <textarea name="notes" class="form-control form-control-sm" rows="3" 
+                                placeholder="{% if case_type == 'complaint' %}Enter resolution details...{% else %}Enter completion details...{% endif %}">{% if case_type == 'complaint' %}{{ case.resolution_notes }}{% else %}{{ case.completion_notes }}{% endif %}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-admin-success btn-sm w-100">
+                            <i class="bi bi-check-circle me-1"></i>
+                            {% if case_type == 'complaint' %}Update Resolution{% else %}Update Completion{% endif %}
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <!-- Quick Actions -->
+                <div class="d-grid gap-2">
+                    <a href="{% if case_type == 'complaint' %}{% url 'staff_complaints' %}{% else %}{% url 'staff_assistance' %}{% endif %}" 
+                       class="btn btn-admin-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to List
+                    </a>
+                    {% comment %} <button class="btn btn-admin-primary btn-sm" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Print Details
+                    </button>
+                    <button class="btn btn-admin-secondary btn-sm" onclick="exportCaseData()">
+                        <i class="bi bi-download me-1"></i>Export Data
+                    </button> {% endcomment %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Info Card -->
+        {% if case.assigned_to %}
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-check me-2"></i>Assignment Info
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <div class="mb-2">
+                    <label class="form-label fw-semibold small">Assigned to:</label>
+                    <p class="mb-0 small">{{  case.assigned_to.first_name }} {{  case.assigned_to.last_name }}</p>
+                </div>
+                {% if case.assigned_by %}
+                <div class="mb-2">
+                    <label class="form-label fw-semibold small">Assigned by:</label>
+                    <p class="mb-0 small">{{ case.assigned_by.first_name }} {{ case.assigned_by.last_name }}</p>
+                </div>
+                {% endif %}
+                <div class="mb-0">
+                    <label class="form-label fw-semibold small">Date:</label>
+                    <p class="mb-0 small">{{ case.created_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Initialize map if coordinates are available
+{% if case.latitude and case.longitude %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    var map = L.map('caseMap').setView([{{ case.latitude }}, {{ case.longitude }}], 16);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add marker
+    var marker = L.marker([{{ case.latitude }}, {{ case.longitude }}]).addTo(map);
+    
+    // Add popup with case information
+    marker.bindPopup(`
+        <div>
+            <h6>{% if case_type == 'complaint' %}Complaint{% else %}Assistance Request{% endif %} #{{ case.id }}</h6>
+            <p><strong>{{ case.title }}</strong></p>
+            {% if case.address %}<p><small>{{ case.address }}</small></p>{% endif %}
+            {% if case.location_description %}<p><small>{{ case.location_description }}</small></p>{% endif %}
+        </div>
+    `).openPopup();
+    
+    // Add click event to show coordinates
+    map.on('click', function(e) {
+        console.log('Coordinates: ' + e.latlng.lat + ', ' + e.latlng.lng);
+    });
+});
+{% endif %}
+
+// Export case data function
+function exportCaseData() {
+    // Create a simple text export of case data
+    var caseData = {
+        id: '{{ case.id }}',
+        type: '{{ case_type }}',
+        title: '{{ case.title|escapejs }}',
+        {% if case_type == 'complaint' %}
+        category: '{{ case.category|escapejs }}',
+        priority: '{{ case.priority|escapejs }}',
+        {% else %}
+        type: '{{ case.type|escapejs }}',
+        urgency: '{{ case.urgency|escapejs }}',
+        {% endif %}
+        status: '{{ case.status|escapejs }}',
+        resident: '{{ case.user.first_name|escapejs }} {{ case.user.last_name|escapejs }}',
+        email: '{{ case.user.email|escapejs }}',
+        description: '{{ case.description|escapejs }}',
+        created_at: '{{ case.created_at|date:"c" }}',
+        {% if case.latitude and case.longitude %}
+        coordinates: '{{ case.latitude }}, {{ case.longitude }}',
+        {% endif %}
+        {% if case.address %}
+        address: '{{ case.address|escapejs }}',
+        {% endif %}
+    };
+    
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(caseData, null, 2));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "{{ case_type }}_{{ case.id }}_details.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+// Form submission with confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    // Status update confirmation
+    document.querySelector('form[action*="update_case_status"]')?.addEventListener('submit', function(e) {
+        var newStatus = document.getElementById('statusSelect').value;
+        if (!confirm(`Are you sure you want to change the status to "${newStatus.replace('_', ' ')}"?`)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
+{% endblock %}

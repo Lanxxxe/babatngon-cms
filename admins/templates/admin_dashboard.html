@@ -66,19 +66,19 @@
 
 <div class="row g-4">
     <!-- Recent Complaints -->
-    <div class="col-lg-8">
-        <div class="card-admin">
+    <div class="row col-lg-8">
+        <div class="card-admin col-lg-12">
             <div class="card-header-admin d-flex justify-content-between align-items-center">
                 <div>
                     <i class="bi bi-list-ul me-2"></i>Recent Complaints
                 </div>
                 <div class="d-flex gap-2 align-items-center">
-                    <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
+                    {% comment %} <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
                         <option value="resolved">Resolved</option>
-                    </select>
+                    </select> {% endcomment %}
                     <a href="{% url 'admin_complaints' %}" role="button" class="btn btn-primary btn-sm pb-0">
                         View All
                     </a>
@@ -96,7 +96,7 @@
                                 <th>Priority</th>
                                 <th>Status</th>
                                 <th>Date</th>
-                                <th>Actions</th>
+                                {% comment %} <th>Actions</th> {% endcomment %}
                             </tr>
                         </thead>
                         <tbody>
@@ -112,7 +112,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="text-truncate" style="max-width: 200px;">
+                                        <div class="text-truncate" style="max-width: 150px;">
                                             {{ complaint.title }}
                                         </div>
                                     </td>
@@ -138,7 +138,7 @@
                                     <td>
                                         <div class="text-muted small">{{ complaint.created_at|date:"M d, Y" }}</div>
                                     </td>
-                                    <td>
+                                    {% comment %} <td>
                                         <div class="btn-group btn-group-sm">
                                             <button class="btn btn-admin-primary btn-sm">
                                                 <i class="bi bi-eye"></i>
@@ -147,7 +147,7 @@
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </div>
-                                    </td>
+                                    </td> {% endcomment %}
                                 </tr>
                             {% empty %}
                                 <tr>
@@ -159,42 +159,103 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <!-- <div class="quick-actions mb-3">
-            <h6 class="mb-3 fw-semibold">
-                <i class="bi bi-lightning me-2"></i>Quick Actions
-            </h6>
-            <div class="row g-2">
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-people text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Bulk Assign</div>
-                    </a>
+        <div class="card-admin col-lg-12 mt-4">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-list-ul me-2"></i>Recent Requested Assistance
                 </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-download text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Export Data</div>
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-bell text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Send Alert</div>
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-gear text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Settings</div>
+                <div class="d-flex gap-2 align-items-center">
+                    {% comment %} <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select> {% endcomment %}
+                    <a href="{% url 'admin_assistance' %}" role="button" class="btn btn-primary btn-sm pb-0">
+                        View All
                     </a>
                 </div>
             </div>
-        </div> -->
+            <div class="card-body-admin p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Resident</th>
+                                <th>Subject</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                {% comment %} <th>Actions</th> {% endcomment %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assistance in recent_assistance %}
+                                <tr>
+                                    <td><span class="fw-semibold text-primary">#{{ assistance.id }}</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                                                {{ assistance.user.first_name|first }}{{ assistance.user.last_name|first }}
+                                            </div>
+                                            <span class="fw-medium">{{ assistance.user.first_name }} {{ assistance.user.last_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 150px;">
+                                            {{ assistance.title }}
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ assistance.type }}</span></td>
+                                    <td>
+                                        <span class="badge
+                                            {% if assistance.urgency == 'urgent' %}bg-danger
+                                            {% elif assistance.urgency == 'high' %}bg-danger
+                                            {% elif assistance.urgency == 'medium' %}bg-warning
+                                            {% else %}bg-success{% endif %}">
+                                            {{ assistance.urgency|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge
+                                            {% if assistance.status == 'pending' %}bg-warning
+                                            {% elif assistance.status == 'in_progress' %}bg-info
+                                            {% elif assistance.status == 'resolved' %}bg-success
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ assistance.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="text-muted small">{{ assistance.created_at|date:"M d, Y" }}</div>
+                                    </td>
+                                    {% comment %} <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-admin-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-admin-secondary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                    </td> {% endcomment %}
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No assistance found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4 ">
 
         <!-- Priority Complaints -->
         <div class="card-admin mb-3">
@@ -224,8 +285,41 @@
             </div>
         </div>
 
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-3">
+            <h6 class="mb-3 fw-semibold">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </h6>
+            <div class="row g-2">
+                {% comment %} <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-people text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Bulk Assign</div>
+                    </a>
+                </div> {% endcomment %}
+                {% comment %} <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-download text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Export Data</div>
+                    </a>
+                </div> {% endcomment %}
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-bell text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Send Alert</div>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-gear text-primary mb-2" style="font-size: 20px;"></i>
+                        <div class="fw-medium small">Settings</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- System Status -->
-        <!-- <div class="card-admin">
+        {% comment %} <div class="card-admin">
             <div class="card-header-admin">
                 <i class="bi bi-activity me-2"></i>System Status
             </div>
@@ -247,7 +341,7 @@
                     <span class="badge bg-warning">Limited</span>
                 </div>
             </div>
-        </div> -->
+        </div> {% endcomment %}
     </div>
 </div>
 

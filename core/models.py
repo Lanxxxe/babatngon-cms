@@ -19,7 +19,6 @@ class User(models.Model):
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
 
-
 class StaffAdmin(models.Model):
     # Account Information
     username = models.CharField(max_length=50, unique=True)
@@ -29,6 +28,7 @@ class StaffAdmin(models.Model):
         ('admin', 'Admin'),
         ('staff', 'Staff')
     ])
+    
     department = models.CharField(max_length=100)
     position = models.CharField(max_length=100)
     
@@ -78,7 +78,6 @@ class StaffAdmin(models.Model):
 
     def __str__(self):
         return f"{self.username} ({self.get_full_name()})"
-
 
 # Backward compatibility alias
 Admin = StaffAdmin

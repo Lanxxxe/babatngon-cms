@@ -1,0 +1,441 @@
+{% extends 'base_staff.html' %}
+
+{% block title %}My Profile - Staff Portal{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}Manage your account information and settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Information -->
+    <div class="col-lg-8">
+        <!-- Personal Information Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-person me-2"></i>Personal Information
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <form method="post" action="{% url 'staff_update_profile' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ current_staff.first_name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="middle_name" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middle_name" name="middle_name" 
+                                       value="{{ current_staff.middle_name|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ current_staff.last_name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="suffix" class="form-label">Suffix</label>
+                                <input type="text" class="form-control" id="suffix" name="suffix" 
+                                       value="{{ current_staff.suffix|default:'' }}" placeholder="Jr., Sr., III, etc.">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ current_staff.email }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-admin-primary">
+                            <i class="bi bi-check-circle me-1"></i>Update Personal Info
+                        </button>
+                        <button type="reset" class="btn btn-admin-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Work Information Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-briefcase me-2"></i>Work Information
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <form method="post" action="{% url 'staff_update_profile' %}">
+                    {% csrf_token %}
+                    <!-- Hidden personal info fields to maintain data -->
+                    <input type="hidden" name="first_name" value="{{ current_staff.first_name }}">
+                    <input type="hidden" name="middle_name" value="{{ current_staff.middle_name|default:'' }}">
+                    <input type="hidden" name="last_name" value="{{ current_staff.last_name }}">
+                    <input type="hidden" name="suffix" value="{{ current_staff.suffix|default:'' }}">
+                    <input type="hidden" name="email" value="{{ current_staff.email }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="department" name="department" 
+                                       value="{{ current_staff.department }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="position" name="position" 
+                                       value="{{ current_staff.position }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <input type="text" class="form-control" value="{{ current_staff.role|title }}" readonly>
+                                <small class="text-muted">Role cannot be changed. Contact administrator if needed.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Account Status</label>
+                                <div>
+                                    {% if current_staff.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update Work Info
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Settings Card -->
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-shield-lock me-2"></i>Security Settings
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <!-- Change Password Section -->
+                <div class="mb-4">
+                    <h6 class="text-muted mb-3">Change Password</h6>
+                    <form method="post" action="{% url 'staff_change_password' %}" id="passwordForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('current_password')">
+                                            <i class="bi bi-eye" id="current_password_icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_password" name="new_password" 
+                                               minlength="8" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('new_password')">
+                                            <i class="bi bi-eye" id="new_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Minimum 8 characters</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                               minlength="8" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirm_password')">
+                                            <i class="bi bi-eye" id="confirm_password_icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-admin-warning">
+                            <i class="bi bi-shield-check me-1"></i>Change Password
+                        </button>
+                    </form>
+                </div>
+
+                <hr>
+
+                <!-- Change Username Section -->
+                <div class="mb-0">
+                    <h6 class="text-muted mb-3">Change Username</h6>
+                    <form method="post" action="{% url 'staff_update_username' %}" id="usernameForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">New Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="{{ current_staff.username }}" pattern="[a-zA-Z0-9]+" 
+                                           minlength="3" required>
+                                    <small class="text-muted">Letters and numbers only, minimum 3 characters</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password_confirm" name="password" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password_confirm')">
+                                            <i class="bi bi-eye" id="password_confirm_icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-admin-warning">
+                            <i class="bi bi-person-check me-1"></i>Update Username
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Summary Sidebar -->
+    <div class="col-lg-4">
+        <!-- Profile Summary Card -->
+        <div class="card-admin mb-3 sticky-top" style="top: 20px;">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-badge me-2"></i>Profile Summary
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <div class="text-center mb-3">
+                    <div class="user-avatar-admin mx-auto mb-2" style="width: 60px; height: 60px; font-size: 24px;">
+                        {{ current_staff.first_name|first }}{{ current_staff.last_name|first }}
+                    </div>
+                    <h6 class="mb-1">{{ current_staff.get_full_name }}</h6>
+                    <p class="text-muted small mb-0">@{{ current_staff.username }}</p>
+                </div>
+
+                <div class="profile-info">
+                    <div class="mb-2">
+                        <small class="text-muted">Department</small>
+                        <div class="fw-medium">{{ current_staff.department }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Position</small>
+                        <div class="fw-medium">{{ current_staff.position }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Role</small>
+                        <div>
+                            <span class="badge bg-primary">{{ current_staff.role|title }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Email</small>
+                        <div class="fw-medium">{{ current_staff.email }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Status</small>
+                        <div>
+                            {% if current_staff.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <small class="text-muted">Member Since</small>
+                        <div class="fw-medium">{{ current_staff.created_at|date:"F Y" }}</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'staff_dashboard' %}" class="btn btn-admin-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                    {% comment %} <button class="btn btn-admin-primary btn-sm" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Print Profile
+                    </button> {% endcomment %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Activity Card -->
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Account Activity
+                </h6>
+            </div>
+            <div class="card-body-admin">
+                <div class="activity-item mb-2">
+                    <small class="text-muted">Account Created</small>
+                    <div class="fw-medium small">{{ current_staff.created_at|date:"F d, Y" }}</div>
+                </div>
+                <div class="activity-item mb-0">
+                    <small class="text-muted">Last Updated</small>
+                    <div class="fw-medium small">{{ current_staff.updated_at|date:"F d, Y" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(inputId + '_icon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+// Password validation
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordForm = document.getElementById('passwordForm');
+    const newPassword = document.getElementById('new_password');
+    const confirmPassword = document.getElementById('confirm_password');
+
+    function validatePasswords() {
+        if (newPassword.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+
+    newPassword.addEventListener('input', validatePasswords);
+    confirmPassword.addEventListener('input', validatePasswords);
+
+    // Form submission confirmation
+    passwordForm.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to change your password?')) {
+            e.preventDefault();
+        }
+    });
+
+    const usernameForm = document.getElementById('usernameForm');
+    usernameForm.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to change your username?')) {
+            e.preventDefault();
+        }
+    });
+
+    // Username validation
+    const usernameInput = document.getElementById('username');
+    usernameInput.addEventListener('input', function() {
+        const value = this.value;
+        const pattern = /^[a-zA-Z0-9]+$/;
+        
+        if (!pattern.test(value)) {
+            this.setCustomValidity('Username can only contain letters and numbers');
+        } else if (value.length < 3) {
+            this.setCustomValidity('Username must be at least 3 characters long');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+
+// Auto-save functionality (optional)
+function autoSave(formId) {
+    // This could be implemented to save draft changes
+    console.log('Auto-saving form:', formId);
+}
+
+// Form change detection
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('form');
+    
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        let hasChanges = false;
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                hasChanges = true;
+            });
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+        
+        form.addEventListener('submit', function() {
+            hasChanges = false;
+        });
+    });
+});
+</script>
+
+<style>
+.profile-info .mb-2 {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-info .mb-2:last-child {
+    border-bottom: none;
+}
+
+.activity-item {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+@media print {
+    .btn, .card-header-admin .dropdown {
+        display: none;
+    }
+    
+    .card-admin {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+}
+</style>
+
+{% endblock %}

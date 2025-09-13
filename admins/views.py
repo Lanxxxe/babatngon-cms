@@ -54,6 +54,7 @@ def admin_dashboard(request):
 
     # Get all complaints
     complaints = Complaint.objects.select_related('user').all().order_by('-created_at')
+    assistance = AssistanceRequest.objects.select_related('user').all().order_by('-created_at')
 
     # Metrics
     total_complaints = complaints.count()
@@ -62,11 +63,13 @@ def admin_dashboard(request):
     resolved_complaints = complaints.filter(status='resolved').count()
 
     # For recent complaints table (limit to 10 for dashboard)
-    recent_complaints = complaints[:10]
+    recent_complaints = complaints[:5]
+    recent_assistance = assistance[:5]
 
     context = {
         'complaints': complaints,
         'recent_complaints': recent_complaints,
+        'recent_assistance': recent_assistance,
         'total_complaints': total_complaints,
         'pending_complaints': pending_complaints,
         'in_progress_complaints': in_progress_complaints,
@@ -497,6 +500,78 @@ def admin_assistance(request):
     }
 
     return render(request, 'admin_assistance.html', data)
+
+
+def complaint_details(request, complaint_id):
+    """
+    Get complaint details for modal display.
+    """
+    
+    try:
+        complaint = Complaint.objects.select_related('user', 'assigned_to', 'assigned_by').get(id=complaint_id)
+        
+        # Format the complaint data
+        complaint_data = {
+            'id': complaint.id,
+            'title': complaint.title,
+            'category': complaint.category,
+            'priority': complaint.priority,
+            'status': complaint.status,
+            'description': complaint.description,
+            'created_at': complaint.created_at.strftime('%B %d, %Y at %I:%M %p') if complaint.created_at else None,
+            
+            # Resident information
+            'resident_name': f"{complaint.user.first_name} {complaint.user.last_name}" if complaint.user else None,
+            'resident_phone': getattr(complaint.user, 'phone', None),
+            'resident_email': complaint.user.email if complaint.user else None,
+            'resident_address': getattr(complaint.user, 'address', None),
+            
+            # Assignment information
+            'assigned_to': complaint.assigned_to.get_full_name() if complaint.assigned_to else None,
+            'assigned_by': complaint.assigned_by.get_full_name() if complaint.assigned_by else None,
+            'assigned_date': None,  # This field doesn't exist in the model
+            
+            # Resolution information
+            'resolved_by': None,  # This field doesn't exist in the model
+            'resolved_date': complaint.resolved_at.strftime('%B %d, %Y at %I:%M %p') if complaint.resolved_at else None,
+            'admin_remarks': complaint.admin_remarks or complaint.resolution_notes or None,
+            
+            # Location information
+            'latitude': float(complaint.latitude) if complaint.latitude else None,
+            'longitude': float(complaint.longitude) if complaint.longitude else None,
+            'address': complaint.address or complaint.location or complaint.location_description or None,
+            
+            # Attachments
+            'attachments': []
+        }
+        
+        # Get attachments if they exist
+        try:
+            attachments = complaint.attachments.all()
+            for attachment in attachments:
+                complaint_data['attachments'].append({
+                    'name': attachment.file.name.split('/')[-1] if attachment.file else 'Unknown',
+                    'url': attachment.file.url if attachment.file else '#',
+                    'size': f"{attachment.file.size // 1024} KB" if attachment.file and attachment.file.size else 'Unknown size'
+                })
+        except Exception:
+            pass  # No attachments or error accessing them
+        
+        return JsonResponse({
+            'success': True,
+            'complaint': complaint_data
+        })
+        
+    except Complaint.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Complaint not found'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
 
 
 def assistance_details(request, assistance_id):
