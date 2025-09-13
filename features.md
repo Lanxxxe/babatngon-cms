@@ -66,6 +66,10 @@
 	- [x] View
 	- [ ] Update
 
+#### Notification
+- Notification
+	- [x] Notify for new assigned cases
+
 ### ***For Admin***
 
 #### Handling Cases
@@ -96,4 +100,6 @@
 	- [x] View
 	- [ ] Update
 
-
+#### Notification
+- Notification
+	- [x] Notify for new filed cases
