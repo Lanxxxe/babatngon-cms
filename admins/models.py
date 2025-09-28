@@ -152,11 +152,10 @@ class Admin_Notification(models.Model):
         return f"{self.notification_type} - {self.title} (To: {self.recipient.username})"
     
     def mark_as_read(self):
-        """Mark notification as read with timestamp"""
+        """Mark notification as read"""
         if not self.is_read:
             self.is_read = True
-            self.read_at = timezone.now()
-            self.save(update_fields=['is_read', 'read_at'])
+            self.save(update_fields=['is_read'])
     
     def archive(self):
         """Archive the notification"""
@@ -253,11 +252,10 @@ class Resident_Notification(models.Model):
         return f"{self.notification_type} - {self.title} (To: {self.recipient.email})"
     
     def mark_as_read(self):
-        """Mark notification as read with timestamp"""
+        """Mark notification as read"""
         if not self.is_read:
             self.is_read = True
-            self.read_at = timezone.now()
-            self.save(update_fields=['is_read', 'read_at'])
+            self.save(update_fields=['is_read'])
     
     def archive(self):
         """Archive the notification"""

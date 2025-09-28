@@ -796,9 +796,9 @@ def admin_notification(request):
     resident_page_number = request.GET.get('resident_page', 1)
     resident_page_obj = resident_paginator.get_page(resident_page_number)
     
-    # Get unique notification types for filters
-    admin_notification_types = Admin_Notification.objects.values_list('notification_type', flat=True).distinct()
-    resident_notification_types = Resident_Notification.objects.values_list('notification_type', flat=True).distinct()
+    # Get unique notification types for filters from model choices
+    admin_notification_types = [choice[0] for choice in Admin_Notification.NOTIFICATION_TYPES]
+    resident_notification_types = [choice[0] for choice in Resident_Notification.NOTIFICATION_TYPES]
     
     context = {
         'admin_notifications': admin_page_obj,

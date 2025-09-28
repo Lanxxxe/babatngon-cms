@@ -109,14 +109,27 @@
                     <span class="fw-semibold">Admin/Staff Notifications</span>
                     <small class="text-muted ms-2">Notifications sent to administrators and staff</small>
                 </div>
-                <div class="d-flex gap-1">
-                    <select class="form-select form-select-sm" id="adminTypeFilter" style="width: auto;" onchange="filterAdminNotifications()">
+                <div class="d-flex gap-1 w-25 ">
+                    <select class="form-select form-select-sm w-100" id="adminTypeFilter"  onchange="filterAdminNotifications()">
                         <option value="">All Types</option>
                         {% for type in admin_notification_types %}
-                            <option value="{{ type }}" {% if type == current_admin_type %}selected{% endif %}>{{ type|title }}</option>
+                            <option value="{{ type }}" {% if type == current_admin_type %}selected{% endif %}>
+                                {% if type == 'case_assignment' %}Case Assignment
+                                {% elif type == 'status_update' %}Status Update
+                                {% elif type == 'new_complaint' %}New Complaint
+                                {% elif type == 'new_assistance' %}New Assistance Request
+                                {% elif type == 'case_resolved' %}Case Resolved
+                                {% elif type == 'case_closed' %}Case Closed
+                                {% elif type == 'urgent_case' %}Urgent Case
+                                {% elif type == 'system_alert' %}System Alert
+                                {% elif type == 'reminder' %}Reminder
+                                {% elif type == 'other' %}Other
+                                {% else %}{{ type|title }}
+                                {% endif %}
+                            </option>
                         {% endfor %}
                     </select>
-                    <select class="form-select form-select-sm" id="adminStatusFilter" style="width: auto;" onchange="filterAdminNotifications()">
+                    <select class="form-select form-select-sm" id="adminStatusFilter"  onchange="filterAdminNotifications()">
                         <option value="">All Status</option>
                         <option value="unread" {% if current_admin_status == 'unread' %}selected{% endif %}>Unread</option>
                         <option value="read" {% if current_admin_status == 'read' %}selected{% endif %}>Read</option>
@@ -128,8 +141,7 @@
                 {% if admin_notifications %}
                     <div class="list-group list-group-flush">
                         {% for notification in admin_notifications %}
-                            <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 
-                                {% if notification.priority == 'urgent' %}border-danger{% elif notification.priority == 'high' %}border-warning{% elif notification.priority == 'normal' %}border-info{% else %}border-secondary{% endif %}">
+                            <div class="list-group-item d-flex justify-content-between align-items-start p-4">
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0 me-3">
                                         <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
@@ -246,7 +258,21 @@
                     <select class="form-select form-select-sm" id="residentTypeFilter" style="width: auto;" onchange="filterResidentNotifications()">
                         <option value="">All Types</option>
                         {% for type in resident_notification_types %}
-                            <option value="{{ type }}" {% if type == current_resident_type %}selected{% endif %}>{{ type|title }}</option>
+                            <option value="{{ type }}" {% if type == current_resident_type %}selected{% endif %}>
+                                {% if type == 'status_update' %}Status Update
+                                {% elif type == 'case_assigned' %}Case Assigned
+                                {% elif type == 'case_resolved' %}Case Resolved
+                                {% elif type == 'case_closed' %}Case Closed
+                                {% elif type == 'request_approved' %}Request Approved
+                                {% elif type == 'request_rejected' %}Request Rejected
+                                {% elif type == 'admin_response' %}Admin Response
+                                {% elif type == 'system_alert' %}System Alert
+                                {% elif type == 'announcement' %}Announcement
+                                {% elif type == 'reminder' %}Reminder
+                                {% elif type == 'other' %}Other
+                                {% else %}{{ type|title }}
+                                {% endif %}
+                            </option>
                         {% endfor %}
                     </select>
                     <select class="form-select form-select-sm" id="residentStatusFilter" style="width: auto;" onchange="filterResidentNotifications()">
@@ -261,8 +287,7 @@
                 {% if resident_notifications %}
                     <div class="list-group list-group-flush">
                         {% for notification in resident_notifications %}
-                            <div class="list-group-item d-flex justify-content-between align-items-start p-3 border-start border-4 
-                                {% if notification.priority == 'urgent' %}border-danger{% elif notification.priority == 'high' %}border-warning{% elif notification.priority == 'normal' %}border-success{% else %}border-secondary{% endif %}">
+                            <div class="list-group-item d-flex justify-content-between align-items-start p-4">
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0 me-3">
                                         <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
@@ -646,7 +671,17 @@
 
     // Notification actions
     function markAsRead(notificationType, id) {
-        if (confirm('Mark this notification as read?')) {
+        Swal.fire({
+            title: 'Mark as Read?',
+            text: 'Are you sure you want to mark this notification as read?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, mark as read',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
             // Send AJAX request to mark as read
             fetch(`/admin/notifications/mark-read/`, {
                 method: 'POST',
@@ -662,20 +697,50 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Notification marked as read',
+                        confirmButtonColor: '#28a745',
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Failed to mark notification as read');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to mark notification as read',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while marking notification as read',
+                    confirmButtonColor: '#dc3545'
+                });
             });
-        }
+            }
+        });
     }
 
     function markAllAsRead() {
-        if (confirm('Mark all notifications as read?')) {
+        Swal.fire({
+            title: 'Mark All as Read?',
+            text: 'Are you sure you want to mark all notifications as read?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, mark all as read',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
             // Send AJAX request to mark all as read
             fetch(`/admin/notifications/mark-all-read/`, {
                 method: 'POST',
@@ -687,16 +752,36 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'All notifications marked as read',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Failed to mark all notifications as read');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to mark all notifications as read',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while marking all notifications as read',
+                    confirmButtonColor: '#dc3545'
+                });
             });
-        }
+            }
+        });
     }
 
     function viewDetails(notificationType, id) {
@@ -705,7 +790,17 @@
     }
 
     function archiveNotification(notificationType, id) {
-        if (confirm('Archive this notification?')) {
+        Swal.fire({
+            title: 'Archive Notification?',
+            text: 'Are you sure you want to archive this notification?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
             // Send AJAX request to archive
             fetch(`/admin/notifications/archive/`, {
                 method: 'POST',
@@ -721,16 +816,36 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Archived!',
+                        text: 'Notification has been archived',
+                        confirmButtonColor: '#28a745',
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Failed to archive notification');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to archive notification',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while archiving notification',
+                    confirmButtonColor: '#dc3545'
+                });
             });
-        }
+            }
+        });
     }
 
     function approveUser(id) {
