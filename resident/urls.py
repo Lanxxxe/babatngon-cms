@@ -17,6 +17,7 @@ urlpatterns = [
     path('my-assistance/', views.my_assistance, name='my_assistance'),
     path('update-assistance/<int:pk>/', views.update_assistance, name='update_assistance'),
     path('delete-assistance/<int:pk>/', views.delete_assistance, name='delete_assistance'),
+    path('follow-up-assistance/<int:assistance_id>/', views.follow_up_assistance, name='follow_up_assistance'),
 
     # Community Forum
     path('community-forum/', views.community_forum, name='community_forum'),

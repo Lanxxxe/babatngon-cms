@@ -803,3 +803,73 @@ def follow_up_complaint(request, complaint_id):
     # If GET request, redirect to complaints page
     return redirect('my_complaints')
 
+
+def follow_up_assistance(request, assistance_id):
+    """Handle follow-up on an assistance request by creating admin notifications."""
+    if not request.session.get('id'):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
+        sweetify.error(request, 'You must be logged in.', timer=3000)
+        return redirect('homepage')
+    
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+    assistance = get_object_or_404(AssistanceRequest, id=assistance_id, user=user)
+    
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        urgency = request.POST.get('urgency', 'normal')
+        
+        if not message:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
+            sweetify.error(request, 'Follow-up message is required.', timer=3000)
+            return redirect('my_assistance')
+        
+        try:
+            from admins.models import Admin_Notification, Admin
+            
+            # Get all active admins to notify
+            active_admins = Admin.objects.filter(is_active=True)
+            
+            if not active_admins.exists():
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': 'No active administrators found.'})
+                sweetify.error(request, 'No active administrators available.', timer=3000)
+                return redirect('my_assistance')
+            
+            # Create notification for each active admin
+            notifications_created = 0
+            for admin in active_admins:
+                notification = Admin_Notification.objects.create(
+                    recipient=admin,
+                    sender=None,  # No sender since this is from a resident
+                    title=f'Follow-up on Assistance Request #{assistance.id}: {assistance.title}',
+                    message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
+                    notification_type='new_assistance',
+                    action_type='commented',
+                    priority=urgency,
+                    related_assistance=assistance,
+                    is_read=False
+                )
+                notifications_created += 1
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Follow-up sent successfully to {notifications_created} administrator(s)!'
+                })
+            
+            sweetify.success(request, f'Follow-up sent successfully to {notifications_created} administrator(s)!', timer=3000)
+            return redirect('my_assistance')
+            
+        except Exception as e:
+            print(f"Error creating assistance follow-up notification: {e}")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
+            sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)
+            return redirect('my_assistance')
+    
+    # If GET request, redirect to assistance page
+    return redirect('my_assistance')
+
