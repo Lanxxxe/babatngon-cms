@@ -25,6 +25,12 @@ class Complaint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        db_table = 'complaints'
+        verbose_name = 'Complaint'
+        verbose_name_plural = 'Complaints'
+
+
 # Assistance Requests Table
 class AssistanceRequest(models.Model):
 
@@ -44,19 +50,36 @@ class AssistanceRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        db_table = 'assistance_requests'
+        verbose_name = 'Assistance Request'
+        verbose_name_plural = 'Assistance Requests'
 
+
+# Complaint Attachments Table
 class ComplaintAttachment(models.Model):
     complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to='complaint_attachments/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'complaint_attachments'
+        verbose_name = 'Complaint Attachment'
+        verbose_name_plural = 'Complaint Attachments'
 
+# Assistance Attachments Table
 class AssistanceAttachment(models.Model):
     assistance = models.ForeignKey(AssistanceRequest, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to='assistance_attachments/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'assistance_attachments'
+        verbose_name = 'Assistance Attachment'
+        verbose_name_plural = 'Assistance Attachments'
 
+
+# Admin Notifications Table
 class Admin_Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('case_assignment', 'Case Assignment'),
@@ -110,8 +133,13 @@ class Admin_Notification(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     
+
     class Meta:
+        db_table = 'admin_notifications'
+        verbose_name = 'Admin Notification'
+        verbose_name_plural = 'Admin Notifications'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['recipient', 'is_read']),
@@ -211,6 +239,9 @@ class Resident_Notification(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        db_table = 'resident_notifications'
+        verbose_name = 'Resident Notification'
+        verbose_name_plural = 'Resident Notifications'
         indexes = [
             models.Index(fields=['recipient', 'is_read']),
             models.Index(fields=['notification_type']),
