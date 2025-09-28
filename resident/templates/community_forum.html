@@ -1,0 +1,903 @@
+{% extends 'base_resident.html' %}
+{% load static %}
+
+{% block title %}Community Forum{% endblock %}
+
+{% block internal_css %}
+<style>
+    .post-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e3e6f0;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .post-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .post-header {
+        padding: 1.25rem 1.25rem 0;
+    }
+
+    .post-body {
+        padding: 0 1.25rem 1rem;
+    }
+
+    .post-footer {
+        padding: 0.75rem 1.25rem;
+        background-color: #f8f9fc;
+        border-top: 1px solid #e3e6f0;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .author-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .category-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+
+    .reaction-btn {
+        border: none;
+        background: none;
+        padding: 0.25rem 0.5rem;
+        border-radius: 15px;
+        color: #6c757d;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        margin-right: 0.25rem;
+    }
+
+    .reaction-btn:hover {
+        background-color: #f8f9fc;
+        color: #495057;
+    }
+
+    .reaction-btn.active {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .comment-section {
+        background-color: #f8f9fc;
+        border-top: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+    }
+
+    .comment-item {
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid #e3e6f0;
+    }
+
+    .comment-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .create-post-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .create-post-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e3e6f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 12px;
+        border: none;
+    }
+
+    .search-input {
+        border-radius: 25px;
+        border: 1px solid #e3e6f0;
+        padding: 0.5rem 1rem;
+    }
+
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+
+
+    .modal-header.gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .post-image {
+        border-radius: 8px;
+        max-height: 300px;
+        object-fit: cover;
+        width: 100%;
+        margin: 0.75rem 0;
+    }
+
+    .pinned-badge {
+        background: linear-gradient(45deg, #ffd700, #ffed4a);
+        color: #8b5a00;
+        font-weight: 600;
+    }
+
+    .load-comments-btn {
+        color: #667eea;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .load-comments-btn:hover {
+        color: #5a6fd8;
+        text-decoration: underline;
+    }
+
+    .pagination .page-link {
+        color: #667eea;
+        border-color: #e3e6f0;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+Community Forum
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Create Post Card -->
+            <div class="card create-post-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="author-avatar me-3">
+                            {{ current_user.first_name.0|default:"" }}{{ current_user.last_name.0|default:"" }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">Share with your community</h5>
+                            <p class="mb-0 opacity-90">What's happening in the barangay today?</p>
+                        </div>
+                        <button class="btn btn-modern-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="bi bi-plus-circle me-2"></i>Create Post
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts -->
+            <div id="posts-container">
+                {% for post in posts %}
+                <div class="post-card" data-post-id="{{ post.id }}">
+                    <!-- Post Header -->
+                    <div class="post-header">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="author-avatar me-3">
+                                    {{ post.author.first_name.0|default:"" }}{{ post.author.last_name.0|default:"" }}
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ post.author.get_full_name|default:post.author.first_name|add:" "|add:post.author.last_name }}</h6>
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <span>{{ post.created_at|date:"M d, Y \a\t g:i A" }}</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="category-badge bg-primary bg-opacity-10 text-primary">
+                                            {{ post.get_category_display }}
+                                        </span>
+                                        {% if post.is_pinned %}
+                                        <span class="mx-2">•</span>
+                                        <span class="badge pinned-badge">
+                                            <i class="bi bi-pin-angle-fill me-1"></i>Pinned
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if post.author.id == current_user.id %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="editPost({{ post.id }})">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </a></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deletePost({{ post.id }})">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Post Body -->
+                    <div class="post-body">
+                        <h5 class="fw-bold mb-2">{{ post.title }}</h5>
+                        <p class="mb-2">{{ post.content|linebreaks }}</p>
+                        
+                        {% if post.image %}
+                        <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+                        {% endif %}
+                    </div>
+
+                    <!-- Post Footer -->
+                    <div class="post-footer">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <!-- Reactions -->
+                                <button class="reaction-btn" onclick="toggleReaction({{ post.id }}, 'like')">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>
+                                    <span class="like-count">{{ post.get_like_count }}</span>
+                                </button>
+                                <button class="reaction-btn" onclick="toggleReaction({{ post.id }}, 'love')">
+                                    <i class="bi bi-heart me-1"></i>
+                                    <span class="love-count">{{ post.get_love_count }}</span>
+                                </button>
+                                <button class="reaction-btn" onclick="toggleReaction({{ post.id }}, 'support')">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>
+                                    <span class="support-count">{{ post.get_support_count }}</span>
+                                </button>
+                            </div>
+                            
+                            <div class="d-flex align-items-center text-muted small">
+                                <span class="me-3">
+                                    <i class="bi bi-chat me-1"></i>
+                                    <span class="comment-count">{{ post.get_total_comments }}</span> comments
+                                </span>
+                                <a href="#" class="load-comments-btn" onclick="toggleComments({{ post.id }})">
+                                    View Comments
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Comments Section (Initially Hidden) -->
+                        <div class="comment-section" id="comments-{{ post.id }}" style="display: none;">
+                            <div class="comments-list" id="comments-list-{{ post.id }}">
+                                <!-- Comments will be loaded here -->
+                            </div>
+                            
+                            <!-- Add Comment Form -->
+                            <div class="add-comment-form mt-3">
+                                <div class="d-flex">
+                                    <div class="comment-avatar me-2">
+                                        {{ current_user.first_name.0|default:"" }}{{ current_user.last_name.0|default:"" }}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <textarea class="form-control" rows="2" placeholder="Write a comment..." 
+                                                id="comment-input-{{ post.id }}"></textarea>
+                                        <div class="mt-2 text-end">
+                                            <button class="btn btn-modern-primary btn-sm" onclick="addComment({{ post.id }})">
+                                                <i class="bi bi-send me-1"></i>Comment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="bi bi-chat-square-text"></i>
+                    <h5>No posts yet</h5>
+                    <p>Be the first to share something with your community!</p>
+                    <button class="btn btn-modern-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                        <i class="bi bi-plus-circle me-2"></i>Create First Post
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if posts.has_other_pages %}
+            <nav aria-label="Posts pagination">
+                <ul class="pagination justify-content-center">
+                    {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in posts.paginator.page_range %}
+                    {% if posts.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Search and Filters -->
+            <div class="card filter-card mb-4">
+                <div class="card-header-modern">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>Search & Filter
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="mb-3">
+                        <div class="mb-3">
+                            <input type="text" class="form-control search-input" name="search" 
+                                   placeholder="Search posts..." value="{{ search_query }}">
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-select" name="category">
+                                <option value="">All Categories</option>
+                                {% for value, display in categories %}
+                                <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>
+                                    {{ display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-modern-secondary btn-sm w-100">
+                            <i class="bi bi-search me-1"></i>Apply Filters
+                        </button>
+                        {% if current_category or search_query %}
+                        <a href="{% url 'community_forum' %}" class="btn btn-modern-secondary btn-sm w-100 mt-2">
+                            <i class="bi bi-x-circle me-1"></i>Clear Filters
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- Forum Stats -->
+            <div class="card stats-card mb-4">
+                <div class="card-body text-center">
+                    <h6 class="mb-3">
+                        <i class="bi bi-bar-chart me-2"></i>Forum Statistics
+                    </h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border-end border-light border-opacity-25">
+                                <h4 class="fw-bold mb-0">{{ total_posts }}</h4>
+                                <small class="opacity-90">Total Posts</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="fw-bold mb-0">{{ my_posts }}</h4>
+                            <small class="opacity-90">My Posts</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card filter-card">
+                <div class="card-header-modern">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-modern-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="bi bi-plus-circle me-2"></i>Create New Post
+                        </button>
+                        <a href="{% url 'my_complaints' %}" class="btn btn-modern-secondary">
+                            <i class="bi bi-list-ul me-2"></i>My Complaints
+                        </a>
+                        <a href="{% url 'my_assistance' %}" class="btn btn-modern-secondary">
+                            <i class="bi bi-life-preserver me-2"></i>My Assistance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header gradient-bg">
+                <h5 class="modal-title" id="createPostModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Post
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createPostForm" method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="postTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="postTitle" name="title" required 
+                               placeholder="What's your post about?">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postCategory" class="form-label">Category</label>
+                        <select class="form-select" id="postCategory" name="category">
+                            {% for value, display in categories %}
+                            <option value="{{ value }}" {% if value == 'discussions' %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postContent" class="form-label">Content <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="postContent" name="content" rows="5" required
+                                  placeholder="Share your thoughts with the community..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postImage" class="form-label">Image (optional)</label>
+                        <input type="file" class="form-control" id="postImage" name="image" accept="image/*">
+                        <div class="form-text">You can upload an image to accompany your post.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-modern-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Post
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header gradient-bg">
+                <h5 class="modal-title" id="editPostModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Post
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editPostForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="editPostId" name="post_id">
+                    
+                    <div class="mb-3">
+                        <label for="editPostTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editPostTitle" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostCategory" class="form-label">Category</label>
+                        <select class="form-select" id="editPostCategory" name="category">
+                            {% for value, display in categories %}
+                            <option value="{{ value }}">{{ display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostContent" class="form-label">Content <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editPostContent" name="content" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostImage" class="form-label">Update Image (optional)</label>
+                        <input type="file" class="form-control" id="editPostImage" name="image" accept="image/*">
+                        <div class="form-text">Leave empty to keep current image.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-modern-primary btn-sm">
+                        <i class="bi bi-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block internal_js %}
+<script>
+// CSRF token for AJAX requests
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+// Create post form submission
+document.getElementById('createPostForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Posting...';
+    submitBtn.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh page
+            bootstrap.Modal.getInstance(document.getElementById('createPostModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'Error creating post');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating post. Please try again.');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Toggle reactions
+function toggleReaction(postId, reactionType) {
+    const formData = new FormData();
+    formData.append('reaction_type', reactionType);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`/resident/post/${postId}/react/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update reaction counts
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            postCard.querySelector('.like-count').textContent = data.like_count;
+            postCard.querySelector('.love-count').textContent = data.love_count;
+            postCard.querySelector('.support-count').textContent = data.support_count;
+            
+            // Update button states (you can enhance this to show active state)
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Toggle comments visibility and load comments
+function toggleComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    const commentsList = document.getElementById(`comments-list-${postId}`);
+    
+    if (commentsSection.style.display === 'none') {
+        // Load comments if not already loaded
+        if (commentsList.children.length === 0) {
+            loadComments(postId);
+        }
+        commentsSection.style.display = 'block';
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+// Load comments for a post
+function loadComments(postId) {
+    fetch(`/resident/post/${postId}/comments/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const commentsList = document.getElementById(`comments-list-${postId}`);
+            commentsList.innerHTML = '';
+            
+            data.comments.forEach(comment => {
+                const commentHtml = `
+                    <div class="comment-item" data-comment-id="${comment.id}">
+                        <div class="d-flex">
+                            <div class="comment-avatar me-2">
+                                ${comment.author_initials}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="mb-1 fw-bold">${comment.author_name}</h6>
+                                    <small class="text-muted">${comment.created_at}</small>
+                                </div>
+                                <p class="mb-0">${comment.content}</p>
+                                ${comment.can_delete ? `
+                                    <button class="btn btn-modern-secondary btn-sm mt-2" onclick="deleteComment(${comment.id}, ${postId})">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                commentsList.insertAdjacentHTML('beforeend', commentHtml);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading comments:', error);
+    });
+}
+
+// Add comment
+function addComment(postId) {
+    const textarea = document.getElementById(`comment-input-${postId}`);
+    const content = textarea.value.trim();
+    
+    if (!content) {
+        alert('Please enter a comment');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`/resident/post/${postId}/comment/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Clear textarea
+            textarea.value = '';
+            
+            // Add new comment to the list
+            const commentsList = document.getElementById(`comments-list-${postId}`);
+            const commentHtml = `
+                <div class="comment-item" data-comment-id="${data.comment.id}">
+                    <div class="d-flex">
+                        <div class="comment-avatar me-2">
+                            ${data.comment.author_initials}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="mb-1 fw-bold">${data.comment.author_name}</h6>
+                                <small class="text-muted">${data.comment.created_at}</small>
+                            </div>
+                            <p class="mb-0">${data.comment.content}</p>
+                            <button class="btn btn-modern-secondary btn-sm mt-2" onclick="deleteComment(${data.comment.id}, ${postId})">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            commentsList.insertAdjacentHTML('beforeend', commentHtml);
+            
+            // Update comment count
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            postCard.querySelector('.comment-count').textContent = data.total_comments;
+        } else {
+            alert(data.message || 'Error adding comment');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding comment. Please try again.');
+    });
+}
+
+// Delete comment
+function deleteComment(commentId, postId) {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`/resident/comment/${commentId}/delete/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove comment from DOM
+            const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+            if (commentElement) {
+                commentElement.remove();
+            }
+            
+            // Update comment count
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            postCard.querySelector('.comment-count').textContent = data.total_comments;
+        } else {
+            alert(data.message || 'Error deleting comment');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting comment. Please try again.');
+    });
+}
+
+// Edit post
+function editPost(postId) {
+    fetch(`/resident/post/${postId}/edit/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fill the edit form
+            document.getElementById('editPostId').value = data.post.id;
+            document.getElementById('editPostTitle').value = data.post.title;
+            document.getElementById('editPostContent').value = data.post.content;
+            document.getElementById('editPostCategory').value = data.post.category;
+            
+            // Set form action
+            document.getElementById('editPostForm').action = `/resident/post/${postId}/edit/`;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editPostModal')).show();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Edit post form submission
+document.getElementById('editPostForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh page
+            bootstrap.Modal.getInstance(document.getElementById('editPostModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'Error updating post');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating post. Please try again.');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Delete post
+function deletePost(postId) {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`/resident/post/${postId}/delete/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove post from DOM
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postCard) {
+                postCard.remove();
+            }
+        } else {
+            alert(data.message || 'Error deleting post');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting post. Please try again.');
+    });
+}
+</script>
+{% endblock %}

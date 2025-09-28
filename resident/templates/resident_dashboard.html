@@ -12,7 +12,7 @@
         <div class="card-modern p-4">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h2 class="fw-bold mb-2">Welcome back, {{ user.full_name }} {{ user.id }} ! 👋</h2>
+                    <h2 class="fw-bold mb-2">Welcome back, {{ user.get_full_name|default:user.first_name|add:" "|add:user.last_name }} {{ user.id }} ! 👋</h2>
                     <p class="mb-3 opacity-90">
                         Here's an overview of your complaints and community activity. 
                         Ready to make a difference today?
@@ -321,7 +321,7 @@
                     <a href="{% url 'file_complaint' %}" class="btn btn-modern-primary">
                         <i class="bi bi-plus-circle me-2"></i>File New Complaint
                     </a>
-                    <a href="" class="btn btn-modern-secondary">
+                    <a href="{% url 'my_complaints' %}" class="btn btn-modern-secondary">
                         <i class="bi bi-list-ul me-2"></i>View My Complaints
                     </a>
                     <a href="" class="btn btn-modern-secondary">
@@ -342,7 +342,7 @@
                 <div class="user-avatar-admin mb-3" style="width: 80px; height: 80px; margin: 0 auto; font-size: 1.5rem;">
                     {{ user.first_name.0|default:"" }}
                 </div>
-                <h6 class="fw-bold mb-1">{{ user.get_full_name|default:user.full_name }}</h6>
+                <h6 class="fw-bold mb-1">{{ user.get_full_name|default:user.first_name|add:" "|add:user.last_name }}</h6>
                 <p class="text-muted small mb-3">{{ user.email }}</p>
                 
                 <div class="row text-center mb-3">
