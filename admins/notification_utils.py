@@ -1,31 +1,30 @@
 from django.utils import timezone
-from .models import Admin_Notification, Resident_Notification, Complaint, AssistanceRequest
+from .models import Notification, Complaint, AssistanceRequest
 from core.models import Admin, User
 
 
-def create_admin_notification(recipient, title, message, notification_type='other', 
-                             action_type='created', priority='normal', sender=None, 
-                             related_complaint=None, related_assistance=None):
+def create_notification(recipient, title, message, notification_type='other', 
+                       action_type='created', priority='normal', sender=None, 
+                       related_complaint=None, related_assistance=None):
     """
-    Create a notification for admin/staff members.
+    Create a notification using the unified notification system.
     
     Args:
-        recipient (Admin): The admin/staff member to receive the notification
+        recipient: The recipient (Admin, User, or Staff)
         title (str): Notification title
         message (str): Notification message
         notification_type (str): Type of notification (see NOTIFICATION_TYPES)
         action_type (str): Type of action that triggered notification
         priority (str): Priority level of notification
-        sender (Admin, optional): Who sent/triggered the notification
+        sender: Who sent/triggered the notification (optional)
         related_complaint (Complaint, optional): Related complaint object
         related_assistance (AssistanceRequest, optional): Related assistance request
-        metadata (dict, optional): Additional data
     
     Returns:
-        Admin_Notification: Created notification object
+        Notification: Created notification object
     """
     try:
-        notification = Admin_Notification.objects.create(
+        return Notification.create_notification(
             recipient=recipient,
             sender=sender,
             title=title,
@@ -36,50 +35,48 @@ def create_admin_notification(recipient, title, message, notification_type='othe
             related_complaint=related_complaint,
             related_assistance=related_assistance,
         )
-        return notification
     except Exception as e:
-        print(f"Error creating admin notification: {str(e)}")
+        print(f"Error creating notification: {str(e)}")
         return None
+
+
+# Backward compatibility functions
+def create_admin_notification(recipient, title, message, notification_type='other', 
+                             action_type='created', priority='normal', sender=None, 
+                             related_complaint=None, related_assistance=None):
+    """
+    Backward compatibility function for admin notifications.
+    """
+    return create_notification(
+        recipient=recipient,
+        sender=sender,
+        title=title,
+        message=message,
+        notification_type=notification_type,
+        action_type=action_type,
+        priority=priority,
+        related_complaint=related_complaint,
+        related_assistance=related_assistance,
+    )
 
 
 def create_resident_notification(recipient, title, message, notification_type='other',
                                 action_type='created', priority='normal', sender=None,
                                 related_complaint=None, related_assistance=None):
     """
-    Create a notification for residents.
-    
-    Args:
-        recipient (User): The resident to receive the notification
-        title (str): Notification title
-        message (str): Notification message
-        notification_type (str): Type of notification (see NOTIFICATION_TYPES)
-        action_type (str): Type of action that triggered notification
-        priority (str): Priority level of notification
-        sender (Admin, optional): Admin who triggered the notification
-        related_complaint (Complaint, optional): Related complaint object
-        related_assistance (AssistanceRequest, optional): Related assistance request
-        metadata (dict, optional): Additional data
-    
-    Returns:
-        Resident_Notification: Created notification object
+    Backward compatibility function for resident notifications.
     """
-    try:
-        notification = Resident_Notification.objects.create(
-            recipient=recipient,
-            sender=sender,
-            title=title,
-            message=message,
-            notification_type=notification_type,
-            action_type=action_type,
-            priority=priority,
-            related_complaint=related_complaint,
-            related_assistance=related_assistance,
-
-        )
-        return notification
-    except Exception as e:
-        print(f"Error creating resident notification: {str(e)}")
-        return None
+    return create_notification(
+        recipient=recipient,
+        sender=sender,
+        title=title,
+        message=message,
+        notification_type=notification_type,
+        action_type=action_type,
+        priority=priority,
+        related_complaint=related_complaint,
+        related_assistance=related_assistance,
+    )
 
 
 def notify_case_assignment(case, assigned_staff, assigned_by):
@@ -92,7 +89,7 @@ def notify_case_assignment(case, assigned_staff, assigned_by):
         assigned_by (Admin): Admin who made the assignment
     
     Returns:
-        Admin_Notification: Created notification object
+        Notification: Created notification object
     """
     case_type = 'complaint' if isinstance(case, Complaint) else 'assistance request'
     case_priority = getattr(case, 'priority', getattr(case, 'urgency', 'normal'))
@@ -118,7 +115,7 @@ def notify_case_assignment(case, assigned_staff, assigned_by):
     else:
         kwargs['related_assistance'] = case
     
-    return create_admin_notification(**kwargs)
+    return create_notification(**kwargs)
 
 
 def notify_status_change(case, new_status, changed_by, old_status=None):
@@ -132,7 +129,7 @@ def notify_status_change(case, new_status, changed_by, old_status=None):
         old_status (str, optional): Previous status of the case
     
     Returns:
-        Resident_Notification: Created notification object
+        Notification: Created notification object
     """
     case_type = 'complaint' if isinstance(case, Complaint) else 'assistance request'
     
@@ -165,7 +162,7 @@ def notify_status_change(case, new_status, changed_by, old_status=None):
     else:
         kwargs['related_assistance'] = case
     
-    return create_resident_notification(**kwargs)
+    return create_notification(**kwargs)
 
 
 def notify_new_case_filed(case, admins_to_notify=None):
@@ -184,7 +181,7 @@ def notify_new_case_filed(case, admins_to_notify=None):
     
     if not admins_to_notify:
         # Notify all active admins
-        admins_to_notify = Admin.objects.filter(is_active=True, role='admin')
+        admins_to_notify = Admin.objects.filter(is_active=True)
     
     title = f"New {case_type.title()} Filed"
     message = f"A new {case_type} has been filed by {case.user.first_name} {case.user.last_name}: {case.title}"
@@ -192,27 +189,17 @@ def notify_new_case_filed(case, admins_to_notify=None):
     # Determine notification priority
     notification_priority = 'urgent' if case_priority in ['urgent', 'critical'] else 'high' if case_priority == 'high' else 'normal'
     
-    notifications = []
-    for admin in admins_to_notify:
-        kwargs = {
-            'recipient': admin,
-            'title': title,
-            'message': message,
-            'notification_type': f'new_{case_type.replace(" ", "_")}',
-            'action_type': 'created',
-            'priority': notification_priority,
-        }
-        
-        if isinstance(case, Complaint):
-            kwargs['related_complaint'] = case
-        else:
-            kwargs['related_assistance'] = case
-        
-        notification = create_admin_notification(**kwargs)
-        if notification:
-            notifications.append(notification)
-    
-    return notifications
+    # Use the unified notification system's notify_admins method
+    return Notification.notify_admins(
+        sender=case.user,
+        title=title,
+        message=message,
+        notification_type=f'new_{case_type.replace(" ", "_")}',
+        action_type='created',
+        priority=notification_priority,
+        related_complaint=case if isinstance(case, Complaint) else None,
+        related_assistance=case if isinstance(case, AssistanceRequest) else None,
+    )
 
 
 def notify_case_resolved(case, resolved_by):
@@ -224,7 +211,7 @@ def notify_case_resolved(case, resolved_by):
         resolved_by (Admin): Staff member who resolved the case
     
     Returns:
-        Resident_Notification: Created notification object
+        Notification: Created notification object
     """
     case_type = 'complaint' if isinstance(case, Complaint) else 'assistance request'
     
@@ -250,7 +237,7 @@ def notify_case_resolved(case, resolved_by):
     else:
         kwargs['related_assistance'] = case
     
-    return create_resident_notification(**kwargs)
+    return create_notification(**kwargs)
 
 
 def notify_urgent_case(case, staff_members=None):
@@ -293,7 +280,7 @@ def notify_urgent_case(case, staff_members=None):
         else:
             kwargs['related_assistance'] = case
         
-        notification = create_admin_notification(**kwargs)
+        notification = create_notification(**kwargs)
         if notification:
             notifications.append(notification)
     
@@ -352,8 +339,8 @@ def notify_case_reassignment(case, new_staff, old_staff, reassigned_by):
         new_staff_kwargs['related_assistance'] = case
         old_staff_kwargs['related_assistance'] = case
     
-    notification_new = create_admin_notification(**new_staff_kwargs)
-    notification_old = create_admin_notification(**old_staff_kwargs)
+    notification_new = create_notification(**new_staff_kwargs)
+    notification_old = create_notification(**old_staff_kwargs)
     
     return (notification_new, notification_old)
 
@@ -393,7 +380,7 @@ def notify_case_commented(case, commenter, comment_text):
     else:
         resident_kwargs['related_assistance'] = case
     
-    resident_notification = create_resident_notification(**resident_kwargs)
+    resident_notification = create_notification(**resident_kwargs)
     if resident_notification:
         notifications.append(resident_notification)
     
@@ -417,7 +404,7 @@ def notify_case_commented(case, commenter, comment_text):
         else:
             staff_kwargs['related_assistance'] = case
         
-        staff_notification = create_admin_notification(**staff_kwargs)
+        staff_notification = create_notification(**staff_kwargs)
         if staff_notification:
             notifications.append(staff_notification)
     
@@ -438,10 +425,17 @@ def mark_all_as_read(user, notification_type=None):
         int: Number of notifications marked as read
     """
     try:
-        if isinstance(user, Admin):
-            notifications = Admin_Notification.objects.filter(recipient=user, is_read=False)
-        else:
-            notifications = Resident_Notification.objects.filter(recipient=user, is_read=False)
+        from django.contrib.contenttypes.models import ContentType
+        
+        # Get the content type for the user
+        user_content_type = ContentType.objects.get_for_model(user)
+        
+        # Filter notifications for this user
+        notifications = Notification.objects.filter(
+            recipient_content_type=user_content_type,
+            recipient_object_id=user.id,
+            is_read=False
+        )
         
         if notification_type:
             notifications = notifications.filter(notification_type=notification_type)
@@ -469,10 +463,17 @@ def get_unread_count(user, notification_type=None):
         int: Number of unread notifications
     """
     try:
-        if isinstance(user, Admin):
-            notifications = Admin_Notification.objects.filter(recipient=user, is_read=False)
-        else:
-            notifications = Resident_Notification.objects.filter(recipient=user, is_read=False)
+        from django.contrib.contenttypes.models import ContentType
+        
+        # Get the content type for the user
+        user_content_type = ContentType.objects.get_for_model(user)
+        
+        # Filter notifications for this user
+        notifications = Notification.objects.filter(
+            recipient_content_type=user_content_type,
+            recipient_object_id=user.id,
+            is_read=False
+        )
         
         if notification_type:
             notifications = notifications.filter(notification_type=notification_type)
@@ -496,33 +497,22 @@ def cleanup_old_notifications(days=30):
     try:
         cutoff_date = timezone.now() - timezone.timedelta(days=days)
         
-        # Archive old admin notifications
-        admin_notifications = Admin_Notification.objects.filter(
+        # Archive old notifications
+        notifications = Notification.objects.filter(
             created_at__lt=cutoff_date,
             is_archived=False
         )
-        admin_count = 0
-        for notification in admin_notifications:
-            notification.archive()
-            admin_count += 1
         
-        # Archive old resident notifications
-        resident_notifications = Resident_Notification.objects.filter(
-            created_at__lt=cutoff_date,
-            is_archived=False
-        )
-        resident_count = 0
-        for notification in resident_notifications:
+        count = 0
+        for notification in notifications:
             notification.archive()
-            resident_count += 1
+            count += 1
         
         return {
-            'admin_notifications_archived': admin_count,
-            'resident_notifications_archived': resident_count
+            'notifications_archived': count
         }
     except Exception as e:
         print(f"Error cleaning up notifications: {str(e)}")
         return {
-            'admin_notifications_archived': 0,
-            'resident_notifications_archived': 0
+            'notifications_archived': 0
         }

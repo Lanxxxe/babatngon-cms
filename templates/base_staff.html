@@ -85,6 +85,17 @@
                         <!-- <span class="nav-badge">8</span> -->
                     </a>
                 </div>
+                <div class="nav-item-admin">
+                    <a href="{% url 'staff_notifications' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'staff_notifications' or request.resolver_match.url_name == 'staff_notification_details' %}active{% endif %}">
+                        <div class="nav-icon-admin">
+                            <i class="bi bi-bell"></i>
+                        </div>
+                        <span class="nav-text-admin">Notifications</span>
+                        {% if staff_unread_notifications > 0 %}
+                            <span class="nav-badge">{{ staff_unread_notifications }}</span>
+                        {% endif %}
+                    </a>
+                </div>
             </div>
 
             <!-- <div class="nav-section-admin">

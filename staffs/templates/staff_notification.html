@@ -1,0 +1,459 @@
+{% extends 'base_staff.html' %}
+{% load static %}
+
+{% block title %}Notifications - Staff Portal{% endblock %}
+{% block page_title %}Notification Center{% endblock %}
+{% block page_subtitle %}Manage your notifications and communication{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<!-- Notification Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ total_notifications }}</div>
+                    <div class="stat-label">Total Notifications</div>
+                    <div class="stat-change">This month</div>
+                </div>
+                <i class="bi bi-bell text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ unread_notifications }}</div>
+                    <div class="stat-label">Unread</div>
+                    <div class="stat-change">Requires attention</div>
+                </div>
+                <i class="bi bi-bell-fill text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ resolved_notifications }}</div>
+                    <div class="stat-label">Read</div>
+                    <div class="stat-change">Completed</div>
+                </div>
+                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ urgent_notifications }}</div>
+                    <div class="stat-label">Urgent</div>
+                    <div class="stat-change">High priority</div>
+                </div>
+                <i class="bi bi-exclamation-triangle text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Staff Notifications -->
+    <div class="col-12">
+        <div class="card-admin">
+            <div class="card-header-admin d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-semibold">My Notifications</span>
+                    <small class="text-muted ms-2">Notifications sent to you</small>
+                </div>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-admin-secondary btn-sm" onclick="markAllAsRead()">
+                        <i class="bi bi-check-all me-1"></i>Mark All Read
+                    </button>
+                    <div class="d-flex gap-1">
+                        <select class="form-select form-select-sm" id="typeFilter" onchange="filterNotifications()">
+                            <option value="">All Types</option>
+                            {% for type in notification_types %}
+                                <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
+                                    {% if type == 'case_assignment' %}Case Assignment
+                                    {% elif type == 'status_update' %}Status Update
+                                    {% elif type == 'new_complaint' %}New Complaint
+                                    {% elif type == 'new_assistance' %}New Assistance Request
+                                    {% elif type == 'case_resolved' %}Case Resolved
+                                    {% elif type == 'case_closed' %}Case Closed
+                                    {% elif type == 'urgent_case' %}Urgent Case
+                                    {% elif type == 'system_alert' %}System Alert
+                                    {% elif type == 'reminder' %}Reminder
+                                    {% elif type == 'other' %}Other
+                                    {% else %}{{ type|title }}
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-select form-select-sm" id="statusFilter" onchange="filterNotifications()">
+                            <option value="">All Status</option>
+                            <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
+                            <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
+                            <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body-admin p-0">
+                {% if notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for notification in notifications %}
+                            <div class="list-group-item d-flex justify-content-between align-items-start p-4 {% if not notification.is_read %}border-start border-primary border-3{% endif %}">
+                                <div class="d-flex align-items-start w-100">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
+                                            {% if notification.notification_type == 'case_assignment' %}
+                                                <i class="bi bi-person-check {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'status_update' %}
+                                                <i class="bi bi-arrow-repeat {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'new_complaint' %}
+                                                <i class="bi bi-exclamation-triangle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'new_assistance' %}
+                                                <i class="bi bi-hand-thumbs-up {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% elif notification.notification_type == 'case_resolved' %}
+                                                <i class="bi bi-check-circle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% else %}
+                                                <i class="bi bi-bell {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
+                                            {% if not notification.is_read %}
+                                                <span class="badge bg-primary ms-2 small">New</span>
+                                            {% endif %}
+                                            <span class="badge bg-secondary ms-2 small">{{ notification.get_notification_type_display }}</span>
+                                            {% if notification.priority == 'urgent' %}
+                                                <span class="badge bg-danger ms-2 small">URGENT</span>
+                                            {% elif notification.priority == 'high' %}
+                                                <span class="badge bg-warning ms-2 small">HIGH</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="mb-1 text-muted small">{{ notification.message|truncatechars:120 }}</p>
+                                        <small class="text-muted">
+                                            {% if notification.sender %}
+                                                <i class="bi bi-person me-1"></i>From: {{ notification.sender.get_full_name }}
+                                            {% endif %}
+                                            <i class="bi bi-clock ms-2 me-1"></i>{{ notification.created_at|timesince }} ago
+                                            {% if notification.related_complaint %}
+                                                <i class="bi bi-link ms-2 me-1"></i>Related to Complaint #{{ notification.related_complaint.id }}
+                                            {% elif notification.related_assistance %}
+                                                <i class="bi bi-link ms-2 me-1"></i>Related to Assistance #{{ notification.related_assistance.id }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 flex-shrink-0">
+                                    {% if not notification.is_read %}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead({{ notification.id }})" title="Mark as Read">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ notification.id }})" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    {% if not notification.is_archived %}
+                                        <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification({{ notification.id }})" title="Archive">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 48px;"></i>
+                        <p class="text-muted mt-2">
+                            {% if current_status == 'unread' %}
+                                No unread notifications found
+                            {% elif current_status == 'archived' %}
+                                No archived notifications found
+                            {% elif current_type %}
+                                No {{ current_type|title }} notifications found
+                            {% else %}
+                                No notifications found
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+            {% if page_obj.has_other_pages %}
+                <div class="card-footer bg-light py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} notifications</small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Previous</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Previous</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Next</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Filtering functions
+    function filterNotifications() {
+        const typeFilter = document.getElementById('typeFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        const params = new URLSearchParams(window.location.search);
+        
+        // Update or remove filters
+        if (typeFilter) {
+            params.set('type', typeFilter);
+        } else {
+            params.delete('type');
+        }
+        
+        if (statusFilter) {
+            params.set('status', statusFilter);
+        } else {
+            params.delete('status');
+        }
+        
+        // Reset pagination
+        params.delete('page');
+        
+        // Redirect with new filters
+        window.location.search = params.toString();
+    }
+
+    // Notification actions
+    function markAsRead(id) {
+        Swal.fire({
+            title: 'Mark as Read?',
+            text: 'Are you sure you want to mark this notification as read?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, mark as read',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+            // Send AJAX request to mark as read
+            fetch(`/staff/notifications/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    'notification_id': id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Notification marked as read',
+                        confirmButtonColor: '#28a745',
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.error || 'Failed to mark notification as read',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while marking notification as read',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        Swal.fire({
+            title: 'Mark All as Read?',
+            text: 'Are you sure you want to mark all notifications as read?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, mark all as read',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+            // Send AJAX request to mark all as read
+            fetch(`/staff/notifications/mark-all-read/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'All notifications marked as read',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.error || 'Failed to mark all notifications as read',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while marking all notifications as read',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+            }
+        });
+    }
+
+    function viewDetails(id) {
+        // Open modal or redirect to details page
+        window.location.href = `/staff/notifications/${id}/details/`;
+    }
+
+    function archiveNotification(id) {
+        Swal.fire({
+            title: 'Archive Notification?',
+            text: 'Are you sure you want to archive this notification?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+            // Send AJAX request to archive
+            fetch(`/staff/notifications/archive/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    'notification_id': id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Archived!',
+                        text: 'Notification has been archived',
+                        confirmButtonColor: '#28a745',
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.error || 'Failed to archive notification',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while archiving notification',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+            }
+        });
+    }
+</script>
+{% endblock %}

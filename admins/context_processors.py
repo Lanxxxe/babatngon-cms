@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.contenttypes.models import ContentType
 from core.models import Admin
-from .models import Admin_Notification
+from .models import Notification
 
 
 def admin_notifications(request):
@@ -15,9 +16,13 @@ def admin_notifications(request):
             # Get the admin instance for the current user
             admin = Admin.objects.get(user=request.user)
             
-            # Get unread notification count for this admin
-            unread_count = Admin_Notification.objects.filter(
-                recipient=admin,
+            # Get content type for Admin model
+            admin_ct = ContentType.objects.get_for_model(Admin)
+            
+            # Get unread notification count for this admin using unified notification system
+            unread_count = Notification.objects.filter(
+                recipient_content_type=admin_ct,
+                recipient_object_id=admin.id,
                 is_read=False,
                 is_archived=False
             ).count()

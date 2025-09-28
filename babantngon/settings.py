@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'resident.context_processors.get_current_user',
                 'admins.context_processors.admin_notifications',
+                'staffs.context_processors.staff_notifications_context',
             ],
         },
     },

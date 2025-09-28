@@ -3,10 +3,169 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
-from admins.models import Complaint, AssistanceRequest
-from core.models import Admin
+from django.contrib.contenttypes.models import ContentType
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
+from admins.models import Complaint, AssistanceRequest, Notification
+from core.models import Admin, User
 from django.db.models import Count
-import sweetify
+import sweetify, json
+
+def _create_status_update_notification(case, case_type, old_status, new_status, staff):
+    """
+    Create a notification for the complainant when case status is updated.
+    """
+    try:
+        # Get content types
+        user_content_type = ContentType.objects.get_for_model(User)
+        admin_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Create status update message
+        status_display = new_status.replace('_', ' ').title()
+        old_status_display = old_status.replace('_', ' ').title()
+        
+        if case_type == 'complaint':
+            title = f"Complaint #{case.id} Status Update"
+            message = f"Your complaint '{case.title}' status has been updated from '{old_status_display}' to '{status_display}' by staff member {staff.get_full_name()}."
+            
+            # Determine notification type and priority based on new status
+            if new_status == 'resolved':
+                notification_type = 'case_resolved'
+                priority = 'high'
+                message += " Your complaint has been resolved. Please review the resolution details."
+            elif new_status == 'closed':
+                notification_type = 'case_closed'
+                priority = 'normal'
+                message += " Your complaint has been closed."
+            elif new_status == 'in_progress':
+                notification_type = 'status_update'
+                priority = 'normal'
+                message += " Work is now in progress on your complaint."
+            else:
+                notification_type = 'status_update'
+                priority = 'normal'
+        
+        else:  # assistance request
+            title = f"Assistance Request #{case.id} Status Update"
+            message = f"Your assistance request '{case.title}' status has been updated from '{old_status_display}' to '{status_display}' by staff member {staff.get_full_name()}."
+            
+            # Determine notification type and priority based on new status
+            if new_status == 'completed':
+                notification_type = 'case_resolved'
+                priority = 'high'
+                message += " Your assistance request has been completed. Please review the completion details."
+            elif new_status == 'approved':
+                notification_type = 'request_approved'
+                priority = 'high'
+                message += " Your assistance request has been approved and will be processed."
+            elif new_status == 'rejected':
+                notification_type = 'request_rejected'
+                priority = 'high'
+                message += " Unfortunately, your assistance request has been rejected. Please check the remarks for more details."
+            elif new_status == 'in_progress':
+                notification_type = 'status_update'
+                priority = 'normal'
+                message += " Work is now in progress on your assistance request."
+            else:
+                notification_type = 'status_update'
+                priority = 'normal'
+        
+        # Create the notification
+        notification = Notification.objects.create(
+            recipient_content_type=user_content_type,
+            recipient_object_id=case.user.id,
+            sender_content_type=admin_content_type,
+            sender_object_id=staff.id,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            priority=priority,
+            related_complaint=case if case_type == 'complaint' else None,
+            related_assistance=case if case_type == 'assistance' else None,
+        )
+        
+        return notification
+        
+    except Exception as e:
+        # Log error but don't break the status update process
+        print(f"Error creating status update notification: {str(e)}")
+        return None
+
+def _create_remarks_notification(case, case_type, remarks, staff):
+    """
+    Create a notification for the complainant when staff adds remarks to their case.
+    """
+    try:
+        # Get content types
+        user_content_type = ContentType.objects.get_for_model(User)
+        admin_content_type = ContentType.objects.get_for_model(Admin)
+        
+        if case_type == 'complaint':
+            title = f"New Remarks on Complaint #{case.id}"
+            message = f"Staff member {staff.get_full_name()} has added remarks to your complaint '{case.title}': {remarks}"
+        else:  # assistance request
+            title = f"New Remarks on Assistance Request #{case.id}"
+            message = f"Staff member {staff.get_full_name()} has added remarks to your assistance request '{case.title}': {remarks}"
+        
+        # Create the notification
+        notification = Notification.objects.create(
+            recipient_content_type=user_content_type,
+            recipient_object_id=case.user.id,
+            sender_content_type=admin_content_type,
+            sender_object_id=staff.id,
+            title=title,
+            message=message,
+            notification_type='admin_response',
+            priority='normal',
+            related_complaint=case if case_type == 'complaint' else None,
+            related_assistance=case if case_type == 'assistance' else None,
+        )
+        
+        return notification
+        
+    except Exception as e:
+        # Log error but don't break the remarks process
+        print(f"Error creating remarks notification: {str(e)}")
+        return None
+
+def _create_notes_notification(case, case_type, notes, staff):
+    """
+    Create a notification for the complainant when staff adds resolution/completion notes.
+    """
+    try:
+        # Get content types
+        user_content_type = ContentType.objects.get_for_model(User)
+        admin_content_type = ContentType.objects.get_for_model(Admin)
+        
+        if case_type == 'complaint':
+            title = f"Resolution Notes Added to Complaint #{case.id}"
+            message = f"Resolution notes have been added to your complaint '{case.title}' by staff member {staff.get_full_name()}: {notes}"
+            notification_type = 'case_resolved'
+        else:  # assistance request
+            title = f"Completion Notes Added to Assistance Request #{case.id}"
+            message = f"Completion notes have been added to your assistance request '{case.title}' by staff member {staff.get_full_name()}: {notes}"
+            notification_type = 'case_resolved'
+        
+        # Create the notification
+        notification = Notification.objects.create(
+            recipient_content_type=user_content_type,
+            recipient_object_id=case.user.id,
+            sender_content_type=admin_content_type,
+            sender_object_id=staff.id,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            priority='high',  # High priority since this is usually final resolution
+            related_complaint=case if case_type == 'complaint' else None,
+            related_assistance=case if case_type == 'assistance' else None,
+        )
+        
+        return notification
+        
+    except Exception as e:
+        # Log error but don't break the notes process
+        print(f"Error creating notes notification: {str(e)}")
+        return None
 
 # Create your views here.
 def staff_dashboard(request):
@@ -249,7 +408,7 @@ def staff_update_case_status(request, case_type, case_id):
             sweetify.error(request, 'Status is required.')
             return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
-        # Get the case and update status
+        # Get the case and store old status for comparison
         if case_type == 'complaint':
             case = get_object_or_404(Complaint, id=case_id, assigned_to=current_staff)
             valid_statuses = ['pending', 'in_progress', 'resolved', 'closed']
@@ -258,10 +417,11 @@ def staff_update_case_status(request, case_type, case_id):
                 sweetify.error(request, 'Invalid status for complaint.')
                 return redirect('staff_view_case', case_type=case_type, case_id=case_id)
             
+            old_status = case.status
             case.status = new_status
             
             # Set resolved_at timestamp if status is resolved
-            if new_status == 'resolved' and case.status != 'resolved':
+            if new_status == 'resolved' and old_status != 'resolved':
                 case.resolved_at = timezone.now()
             
         elif case_type == 'assistance':
@@ -272,13 +432,18 @@ def staff_update_case_status(request, case_type, case_id):
                 sweetify.error(request, 'Invalid status for assistance request.')
                 return redirect('staff_view_case', case_type=case_type, case_id=case_id)
             
+            old_status = case.status
             case.status = new_status
             
             # Set completed_at timestamp if status is completed
-            if new_status == 'completed' and case.status != 'completed':
+            if new_status == 'completed' and old_status != 'completed':
                 case.completed_at = timezone.now()
         
         case.save()
+        
+        # Create notification for the complainant if status changed
+        if old_status != new_status:
+            _create_status_update_notification(case, case_type, old_status, new_status, current_staff)
         
         sweetify.success(request, f'{case_type.title()} status updated to {new_status.replace("_", " ").title()} successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
@@ -330,6 +495,9 @@ def staff_add_remarks(request, case_type, case_id):
         
         case.save()
         
+        # Create notification for the complainant about new remarks
+        _create_remarks_notification(case, case_type, remarks, current_staff)
+        
         sweetify.success(request, 'Remarks added successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
@@ -374,6 +542,9 @@ def staff_add_notes(request, case_type, case_id):
             return redirect('staff_dashboard')
         
         case.save()
+        
+        # Create notification for the complainant about resolution/completion notes
+        _create_notes_notification(case, case_type, notes, current_staff)
         
         sweetify.success(request, f'{note_type} updated successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
@@ -574,3 +745,247 @@ def staff_update_username(request):
     except Exception as e:
         sweetify.error(request, f'Error updating username: {str(e)}')
         return redirect('staff_profile')
+
+
+def staff_notifications(request):
+    """
+    Display all notifications for the current staff member.
+    """
+    staff_id = request.session.get('admin_id')
+    
+    if not staff_id:
+        return redirect('admin_login')
+    
+    try:
+        current_staff = Admin.objects.get(id=staff_id)
+        
+        # Get content type for staff
+        staff_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Get all notifications for this staff member
+        notifications = Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id
+        ).select_related(
+            'sender_content_type',
+            'related_complaint',
+            'related_assistance'
+        ).order_by('-created_at')
+        
+        # Get filter parameters
+        current_type = request.GET.get('type', '')
+        current_status = request.GET.get('status', '')
+        
+        # Apply filters
+        if current_type:
+            notifications = notifications.filter(notification_type=current_type)
+        
+        if current_status == 'read':
+            notifications = notifications.filter(is_read=True)
+        elif current_status == 'unread':
+            notifications = notifications.filter(is_read=False)
+        elif current_status == 'archived':
+            notifications = notifications.filter(is_archived=True)
+        else:
+            # By default, don't show archived notifications
+            notifications = notifications.filter(is_archived=False)
+        
+        # Get unique notification types for filter dropdown
+        notification_types = notifications.values_list('notification_type', flat=True).distinct()
+        
+        # Pagination
+        paginator = Paginator(notifications, 15)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Calculate stats
+        total_notifications = Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id,
+            is_archived=False
+        ).count()
+        
+        unread_notifications = Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id,
+            is_read=False,
+            is_archived=False
+        ).count()
+        
+        urgent_notifications = Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id,
+            priority='urgent',
+            is_archived=False
+        ).count()
+        
+        resolved_notifications = total_notifications - unread_notifications
+        
+        context = {
+            'current_staff': current_staff,
+            'notifications': page_obj,
+            'page_obj': page_obj,
+            'notification_types': notification_types,
+            'current_type': current_type,
+            'current_status': current_status,
+            
+            # Stats for dashboard cards
+            'total_notifications': total_notifications,
+            'unread_notifications': unread_notifications,
+            'resolved_notifications': resolved_notifications,
+            'urgent_notifications': urgent_notifications,
+        }
+        
+        return render(request, 'staff_notification.html', context)
+        
+    except Admin.DoesNotExist:
+        return redirect('admin_login')
+    except Exception as e:
+        sweetify.error(request, f'Error loading notifications: {str(e)}')
+        return redirect('staff_dashboard')
+
+
+@require_POST
+def staff_mark_notification_read(request):
+    """
+    Mark a specific staff notification as read.
+    """
+    staff_id = request.session.get('admin_id')
+    
+    if not staff_id:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'})
+    
+    try:
+        current_staff = Admin.objects.get(id=staff_id)
+        data = json.loads(request.body)
+        notification_id = data.get('notification_id')
+        
+        # Get content type for staff
+        staff_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Get the notification and verify it belongs to this staff member
+        notification = Notification.objects.get(
+            id=notification_id,
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id
+        )
+        
+        notification.mark_as_read()
+        return JsonResponse({'success': True})
+        
+    except Admin.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Staff not found'})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST
+def staff_mark_all_notifications_read(request):
+    """
+    Mark all staff notifications as read.
+    """
+    staff_id = request.session.get('admin_id')
+    
+    if not staff_id:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'})
+    
+    try:
+        current_staff = Admin.objects.get(id=staff_id)
+        
+        # Get content type for staff
+        staff_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Mark all unread notifications for this staff member as read
+        Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id,
+            is_read=False
+        ).update(is_read=True)
+        
+        return JsonResponse({'success': True})
+        
+    except Admin.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Staff not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_POST
+def staff_archive_notification(request):
+    """
+    Archive a specific staff notification.
+    """
+    staff_id = request.session.get('admin_id')
+    
+    if not staff_id:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'})
+    
+    try:
+        current_staff = Admin.objects.get(id=staff_id)
+        data = json.loads(request.body)
+        notification_id = data.get('notification_id')
+        
+        # Get content type for staff
+        staff_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Get the notification and verify it belongs to this staff member
+        notification = Notification.objects.get(
+            id=notification_id,
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id
+        )
+        
+        notification.archive()
+        return JsonResponse({'success': True})
+        
+    except Admin.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Staff not found'})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def staff_notification_details(request, notification_id):
+    """
+    Get staff notification details for modal or page display.
+    """
+    staff_id = request.session.get('admin_id')
+    
+    if not staff_id:
+        return redirect('admin_login')
+    
+    try:
+        current_staff = Admin.objects.get(id=staff_id)
+        
+        # Get content type for staff
+        staff_content_type = ContentType.objects.get_for_model(Admin)
+        
+        # Get the notification and verify it belongs to this staff member
+        notification = Notification.objects.get(
+            id=notification_id,
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id
+        )
+        
+        # Mark as read when viewed
+        if not notification.is_read:
+            notification.mark_as_read()
+        
+        context = {
+            'notification': notification,
+            'current_staff': current_staff,
+        }
+        
+        return render(request, 'notification_details.html', context)
+        
+    except Admin.DoesNotExist:
+        return redirect('admin_login')
+    except Notification.DoesNotExist:
+        sweetify.error(request, 'Notification not found', timer=3000)
+        return redirect('staff_notifications')
+    except Exception as e:
+        sweetify.error(request, f'Error loading notification: {str(e)}', timer=3000)
+        return redirect('staff_notifications')

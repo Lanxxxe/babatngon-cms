@@ -757,32 +757,20 @@ def follow_up_complaint(request, complaint_id):
             return redirect('my_complaints')
         
         try:
-            from admins.models import Admin_Notification, Admin
+            from admins.models import Notification
+            from core.models import Admin
             
-            # Get all active admins to notify
-            active_admins = Admin.objects.filter(is_active=True)
-            
-            if not active_admins.exists():
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'success': False, 'message': 'No active administrators found.'})
-                sweetify.error(request, 'No active administrators available.', timer=3000)
-                return redirect('my_complaints')
-            
-            # Create notification for each active admin
-            notifications_created = 0
-            for admin in active_admins:
-                notification = Admin_Notification.objects.create(
-                    recipient=admin,
-                    sender=None,  # No sender since this is from a resident
-                    title=f'Follow-up on Complaint #{complaint.id}: {complaint.title}',
-                    message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nComplaint Details:\n- Title: {complaint.title}\n- Category: {complaint.category}\n- Status: {complaint.status.replace("_", " ").title()}\n- Priority: {complaint.priority.title()}\n- Filed: {complaint.created_at.strftime("%B %d, %Y at %I:%M %p")}',
-                    notification_type='status_update',
-                    action_type='commented',
-                    priority=urgency,
-                    related_complaint=complaint,
-                    is_read=False
-                )
-                notifications_created += 1
+            # Use the unified notification system to notify all admins
+            notifications = Notification.notify_admins(
+                sender=user,
+                title=f'Follow-up on Complaint #{complaint.id}: {complaint.title}',
+                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nComplaint Details:\n- Title: {complaint.title}\n- Category: {complaint.category}\n- Status: {complaint.status.replace("_", " ").title()}\n- Priority: {complaint.priority.title()}\n- Filed: {complaint.created_at.strftime("%B %d, %Y at %I:%M %p")}',
+                notification_type='status_update',
+                action_type='commented',
+                priority=urgency,
+                related_complaint=complaint
+            )
+            notifications_created = len(notifications)
             
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -827,32 +815,20 @@ def follow_up_assistance(request, assistance_id):
             return redirect('my_assistance')
         
         try:
-            from admins.models import Admin_Notification, Admin
+            from admins.models import Notification
+            from core.models import Admin
             
-            # Get all active admins to notify
-            active_admins = Admin.objects.filter(is_active=True)
-            
-            if not active_admins.exists():
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'success': False, 'message': 'No active administrators found.'})
-                sweetify.error(request, 'No active administrators available.', timer=3000)
-                return redirect('my_assistance')
-            
-            # Create notification for each active admin
-            notifications_created = 0
-            for admin in active_admins:
-                notification = Admin_Notification.objects.create(
-                    recipient=admin,
-                    sender=None,  # No sender since this is from a resident
-                    title=f'Follow-up on Assistance Request #{assistance.id}: {assistance.title}',
-                    message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
-                    notification_type='new_assistance',
-                    action_type='commented',
-                    priority=urgency,
-                    related_assistance=assistance,
-                    is_read=False
-                )
-                notifications_created += 1
+            # Use the unified notification system to notify all admins
+            notifications = Notification.notify_admins(
+                sender=user,
+                title=f'Follow-up on Assistance Request #{assistance.id}: {assistance.title}',
+                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
+                notification_type='new_assistance',
+                action_type='commented',
+                priority=urgency,
+                related_assistance=assistance
+            )
+            notifications_created = len(notifications)
             
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({

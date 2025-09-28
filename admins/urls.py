@@ -18,7 +18,7 @@ urlpatterns = [
     path('notifications/mark-read/', mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', mark_all_notifications_read, name='mark_all_notifications_read'),
     path('notifications/archive/', archive_notification, name='archive_notification'),
-    path('notifications/<str:notification_type>/<int:notification_id>/details/', notification_details, name='notification_details'),
+    path('notifications/<int:notification_id>/details/', notification_details, name='notification_details'),
 
     # Accounts Management
     path('accounts/', accounts, name='accounts'),

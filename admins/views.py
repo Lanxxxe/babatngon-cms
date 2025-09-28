@@ -1,4 +1,4 @@
-from core.models import Admin
+from core.models import Admin, StaffAdmin
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q
@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
-from .models import Complaint, AssistanceRequest, Admin_Notification, Resident_Notification
+from .models import Complaint, AssistanceRequest, Notification
 from core.models import Admin, User
 from django.contrib.auth.hashers import check_password
 import sweetify, json
@@ -740,71 +740,62 @@ def admin_resident(request):
 
 def admin_notification(request):
     """
-    Display notifications for admin and staff, separated by source.
+    Display notifications for admin dashboard - showing only admin notifications.
     """
+    from django.contrib.contenttypes.models import ContentType
+    
     # Get filter parameters
-    admin_type_filter = request.GET.get('admin_type', '').strip()
-    admin_status_filter = request.GET.get('admin_status', '').strip()
-    resident_type_filter = request.GET.get('resident_type', '').strip()
-    resident_status_filter = request.GET.get('resident_status', '').strip()
+    type_filter = request.GET.get('type', '').strip()
+    status_filter = request.GET.get('status', '').strip()
     
-    # Get admin/staff notifications
-    admin_notifications = Admin_Notification.objects.select_related(
-        'recipient', 'sender', 'related_complaint', 'related_assistance'
-    ).all().order_by('-created_at')
+    # Get content type for Admin model
+    admin_ct = ContentType.objects.get_for_model(Admin)
     
-    # Apply admin notification filters
-    if admin_type_filter:
-        admin_notifications = admin_notifications.filter(notification_type=admin_type_filter)
-    if admin_status_filter:
-        if admin_status_filter == 'unread':
+    # Get only admin notifications
+    admin_notifications = Notification.objects.select_related(
+        'recipient_content_type', 'sender_content_type',
+        'related_complaint', 'related_assistance'
+    ).filter(
+        recipient_content_type=admin_ct
+    ).order_by('-created_at')
+    
+    # Apply filters
+    if type_filter:
+        admin_notifications = admin_notifications.filter(notification_type=type_filter)
+        
+    if status_filter:
+        if status_filter == 'unread':
             admin_notifications = admin_notifications.filter(is_read=False)
-        elif admin_status_filter == 'read':
+        elif status_filter == 'read':
             admin_notifications = admin_notifications.filter(is_read=True)
-        elif admin_status_filter == 'archived':
+        elif status_filter == 'archived':
             admin_notifications = admin_notifications.filter(is_archived=True)
     
-    # Get resident notifications
-    resident_notifications = Resident_Notification.objects.select_related(
-        'recipient', 'sender', 'related_complaint', 'related_assistance'
-    ).all().order_by('-created_at')
+    # Calculate stats (only for admin notifications)
+    total_notifications = Notification.objects.filter(recipient_content_type=admin_ct).count()
+    pending_cases = Notification.objects.filter(recipient_content_type=admin_ct, is_read=False).count()
+    resolved_notifications = Notification.objects.filter(
+        recipient_content_type=admin_ct
+    ).filter(
+        Q(notification_type='case_resolved') | 
+        Q(related_complaint__status='resolved') | 
+        Q(related_assistance__status='completed')
+    ).count()
+    urgent_notifications = Notification.objects.filter(
+        recipient_content_type=admin_ct, priority='urgent'
+    ).count()
     
-    # Apply resident notification filters
-    if resident_type_filter:
-        resident_notifications = resident_notifications.filter(notification_type=resident_type_filter)
-    if resident_status_filter:
-        if resident_status_filter == 'unread':
-            resident_notifications = resident_notifications.filter(is_read=False)
-        elif resident_status_filter == 'read':
-            resident_notifications = resident_notifications.filter(is_read=True)
-        elif resident_status_filter == 'archived':
-            resident_notifications = resident_notifications.filter(is_archived=True)
+    # Pagination
+    paginator = Paginator(admin_notifications, 15)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
     
-    # Calculate stats
-    total_notifications = admin_notifications.count() + resident_notifications.count()
-    pending_cases = admin_notifications.filter(is_read=False).count() + resident_notifications.filter(is_read=False).count()
-    resolved_notifications = admin_notifications.filter(Q(notification_type='case_resolved') | Q(related_complaint__status='resolved') | Q(related_assistance__status='completed')).count()
-    urgent_notifications = admin_notifications.filter(priority='urgent').count() + resident_notifications.filter(priority='urgent').count()
-    
-    # Pagination for admin notifications
-    admin_paginator = Paginator(admin_notifications, 10)
-    admin_page_number = request.GET.get('admin_page', 1)
-    admin_page_obj = admin_paginator.get_page(admin_page_number)
-    
-    # Pagination for resident notifications
-    resident_paginator = Paginator(resident_notifications, 10)
-    resident_page_number = request.GET.get('resident_page', 1)
-    resident_page_obj = resident_paginator.get_page(resident_page_number)
-    
-    # Get unique notification types for filters from model choices
-    admin_notification_types = [choice[0] for choice in Admin_Notification.NOTIFICATION_TYPES]
-    resident_notification_types = [choice[0] for choice in Resident_Notification.NOTIFICATION_TYPES]
+    # Get notification types from model choices
+    notification_types = [choice[0] for choice in Notification.NOTIFICATION_TYPES]
     
     context = {
-        'admin_notifications': admin_page_obj,
-        'resident_notifications': resident_page_obj,
-        'admin_page_obj': admin_page_obj,
-        'resident_page_obj': resident_page_obj,
+        'admin_notifications': page_obj,
+        'admin_page_obj': page_obj,
         
         # Stats for cards
         'total_notifications': total_notifications,
@@ -813,14 +804,11 @@ def admin_notification(request):
         'urgent_notifications': urgent_notifications,
         
         # Filter options
-        'admin_notification_types': admin_notification_types,
-        'resident_notification_types': resident_notification_types,
+        'admin_notification_types': notification_types,
         
         # Current filter values
-        'current_admin_type': admin_type_filter,
-        'current_admin_status': admin_status_filter,
-        'current_resident_type': resident_type_filter,
-        'current_resident_status': resident_status_filter,
+        'current_type': type_filter,
+        'current_status': status_filter,
     }
     
     return render(request, 'admin_notification.html', context)
@@ -833,16 +821,9 @@ def mark_notification_read(request):
     """
     try:
         data = json.loads(request.body)
-        notification_type = data.get('notification_type')
         notification_id = data.get('notification_id')
         
-        from .models import Admin_Notification, Resident_Notification
-        
-        if notification_type == 'admin':
-            notification = Admin_Notification.objects.get(id=notification_id)
-        else:
-            notification = Resident_Notification.objects.get(id=notification_id)
-        
+        notification = Notification.objects.get(id=notification_id)
         notification.mark_as_read()
         return JsonResponse({'success': True})
         
@@ -853,13 +834,16 @@ def mark_notification_read(request):
 @require_POST
 def mark_all_notifications_read(request):
     """
-    Mark all notifications as read.
+    Mark all admin notifications as read.
     """
     try:
-
-        Admin_Notification.objects.filter(is_read=False).update(is_read=True)
-        Resident_Notification.objects.filter(is_read=False).update(is_read=True)
+        from django.contrib.contenttypes.models import ContentType
+        admin_content_type = ContentType.objects.get_for_model(StaffAdmin)
         
+        Notification.objects.filter(
+            is_read=False,
+            recipient_content_type=admin_content_type
+        ).update(is_read=True)
         return JsonResponse({'success': True})
         
     except Exception as e:
@@ -873,16 +857,9 @@ def archive_notification(request):
     """
     try:
         data = json.loads(request.body)
-        notification_type = data.get('notification_type')
         notification_id = data.get('notification_id')
         
-        from .models import Admin_Notification, Resident_Notification
-        
-        if notification_type == 'admin':
-            notification = Admin_Notification.objects.get(id=notification_id)
-        else:
-            notification = Resident_Notification.objects.get(id=notification_id)
-        
+        notification = Notification.objects.get(id=notification_id)
         notification.archive()
         return JsonResponse({'success': True})
         
@@ -890,20 +867,12 @@ def archive_notification(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-def notification_details(request, notification_type, notification_id):
+def notification_details(request, notification_id):
     """
     Get notification details for modal or page display.
     """
     try:
-
-        if notification_type == 'admin':
-            notification = Admin_Notification.objects.select_related(
-                'recipient', 'sender', 'related_complaint', 'related_assistance'
-            ).get(id=notification_id)
-        else:
-            notification = Resident_Notification.objects.select_related(
-                'recipient', 'sender', 'related_complaint', 'related_assistance'
-            ).get(id=notification_id)
+        notification = Notification.objects.get(id=notification_id)
         
         # Mark as read when viewed
         if not notification.is_read:
@@ -911,13 +880,16 @@ def notification_details(request, notification_type, notification_id):
         
         context = {
             'notification': notification,
-            'notification_type': notification_type
         }
         
         return render(request, 'notification_details.html', context)
         
+    except Notification.DoesNotExist:
+        sweetify.error(request, 'Notification not found', timer=3000)
+        return redirect('admin_notifications')
     except Exception as e:
-        sweetify.error(request, f'Notification not found: {str(e)}', timer=3000)
+        sweetify.error(request, f'Error loading notification: {str(e)}', timer=3000)
+        return redirect('admin_notifications')
         return redirect('admin_notifications')
 
 

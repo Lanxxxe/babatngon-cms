@@ -22,15 +22,15 @@
 	- [x] Remove
 
 - Community Forum
-	- [ ] Post
-	- [ ] Comment
+	- [x] Post
+	- [x] Comment
 
 - Notifications
 	- [ ] Receive Complaint Status
 	- [ ] Receive Assistance Status
 
 - [ ] Request Follow Up
-	- [ ] On filed complaint
+	- [x] On filed complaint
 	- [ ] On filed assistance request
 
 

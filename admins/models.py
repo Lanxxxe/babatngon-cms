@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from core.models import User, Admin
 
 
@@ -79,9 +81,20 @@ class AssistanceAttachment(models.Model):
         verbose_name_plural = 'Assistance Attachments'
 
 
-# Admin Notifications Table
-class Admin_Notification(models.Model):
+# Unified Notification System
+class Notification(models.Model):
+    """
+    Unified notification model that handles all types of notifications:
+    - Resident to Admin
+    - Resident to Staff  
+    - Admin to Staff
+    - Staff to Admin
+    - Admin to Resident
+    - Staff to Resident
+    """
+    
     NOTIFICATION_TYPES = [
+        # Case Management
         ('case_assignment', 'Case Assignment'),
         ('status_update', 'Status Update'), 
         ('new_complaint', 'New Complaint'),
@@ -89,7 +102,16 @@ class Admin_Notification(models.Model):
         ('case_resolved', 'Case Resolved'),
         ('case_closed', 'Case Closed'),
         ('urgent_case', 'Urgent Case'),
+        
+        # Administrative
+        ('case_assigned', 'Case Assigned'),
+        ('request_approved', 'Request Approved'),
+        ('request_rejected', 'Request Rejected'),
+        ('admin_response', 'Admin Response'),
+        
+        # System
         ('system_alert', 'System Alert'),
+        ('announcement', 'Announcement'),
         ('reminder', 'Reminder'),
         ('other', 'Other'),
     ]
@@ -104,108 +126,8 @@ class Admin_Notification(models.Model):
         ('reassigned', 'Reassigned'),
         ('commented', 'Commented'),
         ('escalated', 'Escalated'),
-    ]
-    
-    PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('normal', 'Normal'),
-        ('high', 'High'),
-        ('urgent', 'Urgent'),
-    ]
-    
-    recipient = models.ForeignKey(Admin, on_delete=models.CASCADE, related_name='received_notifications')
-    sender = models.ForeignKey(Admin, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES, default='other')
-    action_type = models.CharField(max_length=20, choices=ACTION_TYPES, default='created')
-    priority = models.CharField(max_length=10, choices=PRIORITY_LEVELS, default='normal')
-    
-    # Related case information
-    related_complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
-    related_assistance = models.ForeignKey(AssistanceRequest, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
-    
-    # Notification state
-    is_read = models.BooleanField(default=False)
-    is_archived = models.BooleanField(default=False)
-    archived_at = models.DateTimeField(null=True, blank=True)
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    
-
-    class Meta:
-        db_table = 'admin_notifications'
-        verbose_name = 'Admin Notification'
-        verbose_name_plural = 'Admin Notifications'
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['recipient', 'is_read']),
-            models.Index(fields=['notification_type']),
-            models.Index(fields=['priority']),
-            models.Index(fields=['created_at']),
-        ]
-    
-    def __str__(self):
-        return f"{self.notification_type} - {self.title} (To: {self.recipient.username})"
-    
-    def mark_as_read(self):
-        """Mark notification as read"""
-        if not self.is_read:
-            self.is_read = True
-            self.save(update_fields=['is_read'])
-    
-    def archive(self):
-        """Archive the notification"""
-        if not self.is_archived:
-            self.is_archived = True
-            self.archived_at = timezone.now()
-            self.save(update_fields=['is_archived', 'archived_at'])
-    
-    def get_related_case(self):
-        """Get the related case (complaint or assistance request)"""
-        if self.related_complaint:
-            return self.related_complaint
-        elif self.related_assistance:
-            return self.related_assistance
-        return None
-    
-    def get_case_type(self):
-        """Get the type of related case"""
-        if self.related_complaint:
-            return 'complaint'
-        elif self.related_assistance:
-            return 'assistance'
-        return None
-
-
-class Resident_Notification(models.Model):
-    NOTIFICATION_TYPES = [
-        ('status_update', 'Status Update'),
-        ('case_assigned', 'Case Assigned'),
-        ('case_resolved', 'Case Resolved'),
-        ('case_closed', 'Case Closed'),
-        ('request_approved', 'Request Approved'),
-        ('request_rejected', 'Request Rejected'),
-        ('admin_response', 'Admin Response'),
-        ('system_alert', 'System Alert'),
-        ('announcement', 'Announcement'),
-        ('reminder', 'Reminder'),
-        ('other', 'Other'),
-    ]
-    
-    ACTION_TYPES = [
-        ('status_changed', 'Status Changed'),
-        ('assigned', 'Assigned'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
-        ('resolved', 'Resolved'),
-        ('closed', 'Closed'),
-        ('commented', 'Commented'),
-        ('updated', 'Updated'),
-        ('created', 'Created'),
     ]
     
     PRIORITY_LEVELS = [
@@ -215,8 +137,21 @@ class Resident_Notification(models.Model):
         ('urgent', 'Urgent'),
     ]
     
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications')
-    sender = models.ForeignKey(Admin, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_resident_notifications')
+    # Generic recipient - can be Admin, User (Resident), or Staff
+    recipient_content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, related_name='notification_recipients'
+    )
+    recipient_object_id = models.PositiveIntegerField()
+    recipient = GenericForeignKey('recipient_content_type', 'recipient_object_id')
+    
+    # Generic sender - can be Admin, User (Resident), or Staff
+    sender_content_type = models.ForeignKey(
+        ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name='notification_senders'
+    )
+    sender_object_id = models.PositiveIntegerField(null=True, blank=True)
+    sender = GenericForeignKey('sender_content_type', 'sender_object_id')
+    
+    # Notification content
     title = models.CharField(max_length=200)
     message = models.TextField()
     notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES, default='other')
@@ -224,8 +159,12 @@ class Resident_Notification(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_LEVELS, default='normal')
     
     # Related case information
-    related_complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, null=True, blank=True, related_name='resident_notifications')
-    related_assistance = models.ForeignKey(AssistanceRequest, on_delete=models.CASCADE, null=True, blank=True, related_name='resident_notifications')
+    related_complaint = models.ForeignKey(
+        Complaint, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications'
+    )
+    related_assistance = models.ForeignKey(
+        AssistanceRequest, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications'
+    )
     
     # Notification state
     is_read = models.BooleanField(default=False)
@@ -237,19 +176,21 @@ class Resident_Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
+        db_table = 'notifications'
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
         ordering = ['-created_at']
-        db_table = 'resident_notifications'
-        verbose_name = 'Resident Notification'
-        verbose_name_plural = 'Resident Notifications'
         indexes = [
-            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['recipient_content_type', 'recipient_object_id', 'is_read']),
+            models.Index(fields=['sender_content_type', 'sender_object_id']),
             models.Index(fields=['notification_type']),
             models.Index(fields=['priority']),
             models.Index(fields=['created_at']),
         ]
     
     def __str__(self):
-        return f"{self.notification_type} - {self.title} (To: {self.recipient.email})"
+        recipient_name = getattr(self.recipient, 'get_full_name', lambda: getattr(self.recipient, 'username', str(self.recipient)))()
+        return f"{self.notification_type} - {self.title} (To: {recipient_name})"
     
     def mark_as_read(self):
         """Mark notification as read"""
@@ -279,3 +220,106 @@ class Resident_Notification(models.Model):
         elif self.related_assistance:
             return 'assistance'
         return None
+    
+    def get_recipient_type(self):
+        """Get the type of recipient (admin, user, staff)"""
+        model_name = self.recipient_content_type.model.lower()
+        if 'admin' in model_name:
+            return 'admin'
+        elif 'user' in model_name:
+            return 'resident'
+        elif 'staff' in model_name:
+            return 'staff'
+        return 'unknown'
+    
+    def get_sender_type(self):
+        """Get the type of sender (admin, user, staff)"""
+        if not self.sender:
+            return None
+        model_name = self.sender_content_type.model.lower()
+        if 'admin' in model_name:
+            return 'admin'
+        elif 'user' in model_name:
+            return 'resident'
+        elif 'staff' in model_name:
+            return 'staff'
+        return 'unknown'
+    
+    @classmethod
+    def create_notification(cls, recipient, sender=None, title='', message='', 
+                          notification_type='other', action_type='created', 
+                          priority='normal', related_complaint=None, related_assistance=None):
+        """
+        Helper method to create notifications easily
+        
+        Usage:
+        # Resident to Admin
+        Notification.create_notification(
+            recipient=admin_user,
+            sender=resident_user,
+            title="New complaint filed",
+            message="A new complaint has been filed...",
+            notification_type='new_complaint'
+        )
+        
+        # Admin to Resident  
+        Notification.create_notification(
+            recipient=resident_user,
+            sender=admin_user,
+            title="Complaint status updated",
+            message="Your complaint has been updated...",
+            notification_type='status_update'
+        )
+        """
+        from django.contrib.contenttypes.models import ContentType
+        
+        # Get content types
+        recipient_ct = ContentType.objects.get_for_model(recipient)
+        sender_ct = ContentType.objects.get_for_model(sender) if sender else None
+        
+        return cls.objects.create(
+            recipient_content_type=recipient_ct,
+            recipient_object_id=recipient.id,
+            sender_content_type=sender_ct,
+            sender_object_id=sender.id if sender else None,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            action_type=action_type,
+            priority=priority,
+            related_complaint=related_complaint,
+            related_assistance=related_assistance
+        )
+    
+    @classmethod
+    def notify_admins(cls, sender=None, title='', message='', notification_type='other', 
+                     action_type='created', priority='normal', related_complaint=None, 
+                     related_assistance=None):
+        """
+        Helper method to notify all active admins
+        """
+        from core.models import Admin
+        
+        active_admins = Admin.objects.filter(is_active=True)
+        notifications = []
+        
+        for admin in active_admins:
+            notification = cls.create_notification(
+                recipient=admin,
+                sender=sender,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                action_type=action_type,
+                priority=priority,
+                related_complaint=related_complaint,
+                related_assistance=related_assistance
+            )
+            notifications.append(notification)
+        
+        return notifications
+
+
+
+    
+

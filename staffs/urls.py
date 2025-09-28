@@ -14,6 +14,13 @@ urlpatterns = [
     path('cases/<str:case_type>/<int:case_id>/add-remarks/', views.staff_add_remarks, name='staff_add_remarks'),
     path('cases/<str:case_type>/<int:case_id>/add-notes/', views.staff_add_notes, name='staff_add_notes'),
     
+    # Notification views
+    path('notifications/', views.staff_notifications, name='staff_notifications'),
+    path('notifications/<int:notification_id>/details/', views.staff_notification_details, name='staff_notification_details'),
+    path('notifications/mark-read/', views.staff_mark_notification_read, name='staff_mark_notification_read'),
+    path('notifications/mark-all-read/', views.staff_mark_all_notifications_read, name='staff_mark_all_notifications_read'),
+    path('notifications/archive/', views.staff_archive_notification, name='staff_archive_notification'),
+    
     # Profile management views
     path('profile/', views.staff_profile, name='staff_profile'),
     path('profile/update/', views.staff_update_profile, name='staff_update_profile'),
