@@ -1,5 +1,6 @@
 from core.models import Admin, StaffAdmin
 from django.contrib.auth.hashers import make_password
+from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q
 from django.contrib import messages
@@ -230,7 +231,6 @@ def admin_analytics(request):
         }
 
     return render(request, 'admin_analytics.html', context)
-
 
 def admin_complaints(request):
     
@@ -742,7 +742,6 @@ def admin_notification(request):
     """
     Display notifications for admin dashboard - showing only admin notifications.
     """
-    from django.contrib.contenttypes.models import ContentType
     
     # Get filter parameters
     type_filter = request.GET.get('type', '').strip()
@@ -891,7 +890,6 @@ def notification_details(request, notification_id):
         sweetify.error(request, f'Error loading notification: {str(e)}', timer=3000)
         return redirect('admin_notifications')
         return redirect('admin_notifications')
-
 
 
 # Accounts management view

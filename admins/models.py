@@ -271,8 +271,7 @@ class Notification(models.Model):
             notification_type='status_update'
         )
         """
-        from django.contrib.contenttypes.models import ContentType
-        
+
         # Get content types
         recipient_ct = ContentType.objects.get_for_model(recipient)
         sender_ct = ContentType.objects.get_for_model(sender) if sender else None
@@ -298,7 +297,6 @@ class Notification(models.Model):
         """
         Helper method to notify all active admins
         """
-        from core.models import Admin
         
         active_admins = Admin.objects.filter(is_active=True)
         notifications = []
