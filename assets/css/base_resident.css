@@ -183,7 +183,7 @@ body {
 /* Top Navigation */
 .topbar {
     background: var(--bg-secondary);
-    height: 70px;
+    height: 89px;
     display: flex;
     align-items: center;
     justify-content: space-between;
