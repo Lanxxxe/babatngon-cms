@@ -482,765 +482,764 @@ My Complaints
 {% endblock %}
 
 {% block internal_js %}
+    <script>
+        let viewMap = null;
+        let editMap = null;
+        let editLocationMarker = null;
 
-<script>
-    let viewMap = null;
-    let editMap = null;
-    let editLocationMarker = null;
+        // Default coordinates for Babatngon, Leyte
+        const defaultLat = 11.4227;
+        const defaultLng = 124.8454;
 
-    // Default coordinates for Babatngon, Leyte
-    const defaultLat = 11.4227;
-    const defaultLng = 124.8454;
-
-    function viewComplaint(id) {
-        fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-        .then(response => response.json())
-        .then(data => {
-            // Fill basic information
-            document.getElementById('view-title').textContent = data.title;
-            document.getElementById('view-description').textContent = data.description;
-            document.getElementById('view-category').textContent = data.category;
-            
-            // Format priority with badge
-            const priorityElement = document.getElementById('view-priority');
-            const priorityClass = getPriorityClass(data.priority);
-            priorityElement.innerHTML = `<span class="badge ${priorityClass}">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>`;
-            
-            // Format status with badge
-            const statusElement = document.getElementById('view-status');
-            const statusClass = getStatusClass(data.status);
-            statusElement.innerHTML = `<span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`;
-            
-            document.getElementById('view-created').textContent = data.created_at;
-            document.getElementById('view-location').textContent = data.location || 'Not specified';
-            document.getElementById('view-address').textContent = data.address || 'Not specified';
-            
-            // Handle coordinates and map
-            const mapSection = document.getElementById('map-section');
-            const coordinatesElement = document.getElementById('view-coordinates');
-            
-            if (data.latitude && data.longitude) {
-                coordinatesElement.innerHTML = `${parseFloat(data.latitude).toFixed(6)}, ${parseFloat(data.longitude).toFixed(6)}`;
-                mapSection.style.display = 'block';
-                
-                // Initialize map after modal is shown
-                setTimeout(() => {
-                    if (viewMap) {
-                        viewMap.remove();
-                    }
-                    viewMap = L.map('view-complaint-map').setView([data.latitude, data.longitude], 16);
-                    
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors',
-                        maxZoom: 19
-                    }).addTo(viewMap);
-                    
-                    // Add marker for complaint location
-                    L.marker([data.latitude, data.longitude])
-                        .addTo(viewMap)
-                        .bindPopup(`
-                            <div class="text-center">
-                                <strong>${data.title}</strong><br>
-                                <small>${data.address || 'Location not specified'}</small>
-                            </div>
-                        `)
-                        .openPopup();
-                }, 300);
-            } else {
-                coordinatesElement.textContent = 'Not specified';
-                mapSection.style.display = 'none';
+        // Add event listener for file input change
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('edit-attachments');
+            if (fileInput) {
+                fileInput.addEventListener('change', previewNewFiles);
             }
-            
-            // Handle attachments
-            const attachmentsContainer = document.getElementById('view-attachments');
-            if (data.attachments && data.attachments.length > 0) {
-                let attachmentsHtml = '<div class="row g-2">';
-                data.attachments.forEach(function(attachment, index) {
-                    const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
-                    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
-                    const icon = getFileIcon(fileExtension);
+
+            const editCategorySelect = document.getElementById('edit-category');
+            if (editCategorySelect) {
+                editCategorySelect.addEventListener('change', handleEditCategoryChange);
+            }
+        });
+
+        function viewComplaint(id) {
+            fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(response => response.json())
+            .then(data => {
+                // Fill basic information
+                document.getElementById('view-title').textContent = data.title;
+                document.getElementById('view-description').textContent = data.description;
+                document.getElementById('view-category').textContent = data.category;
+                
+                // Format priority with badge
+                const priorityElement = document.getElementById('view-priority');
+                const priorityClass = getPriorityClass(data.priority);
+                priorityElement.innerHTML = `<span class="badge ${priorityClass}">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>`;
+                
+                // Format status with badge
+                const statusElement = document.getElementById('view-status');
+                const statusClass = getStatusClass(data.status);
+                statusElement.innerHTML = `<span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`;
+                
+                document.getElementById('view-created').textContent = data.created_at;
+                document.getElementById('view-location').textContent = data.location || 'Not specified';
+                document.getElementById('view-address').textContent = data.address || 'Not specified';
+                
+                // Handle coordinates and map
+                const mapSection = document.getElementById('map-section');
+                const coordinatesElement = document.getElementById('view-coordinates');
+                
+                if (data.latitude && data.longitude) {
+                    coordinatesElement.innerHTML = `${parseFloat(data.latitude).toFixed(6)}, ${parseFloat(data.longitude).toFixed(6)}`;
+                    mapSection.style.display = 'block';
                     
-                    attachmentsHtml += `
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card attachment-card h-100">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="attachment-icon me-3">
-                                        
-                                            <i class="bi ${icon} fs-4 text-primary"></i>
+                    // Initialize map after modal is shown
+                    setTimeout(() => {
+                        if (viewMap) {
+                            viewMap.remove();
+                        }
+                        viewMap = L.map('view-complaint-map').setView([data.latitude, data.longitude], 16);
+                        
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19
+                        }).addTo(viewMap);
+                        
+                        // Add marker for complaint location
+                        L.marker([data.latitude, data.longitude])
+                            .addTo(viewMap)
+                            .bindPopup(`
+                                <div class="text-center">
+                                    <strong>${data.title}</strong><br>
+                                    <small>${data.address || 'Location not specified'}</small>
+                                </div>
+                            `)
+                            .openPopup();
+                    }, 300);
+                } else {
+                    coordinatesElement.textContent = 'Not specified';
+                    mapSection.style.display = 'none';
+                }
+                
+                // Handle attachments
+                const attachmentsContainer = document.getElementById('view-attachments');
+                if (data.attachments && data.attachments.length > 0) {
+                    let attachmentsHtml = '<div class="row g-2">';
+                    data.attachments.forEach(function(attachment, index) {
+                        const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
+                        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
+                        const icon = getFileIcon(fileExtension);
+                        
+                        attachmentsHtml += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card attachment-card h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="attachment-icon me-3">
+                                            
+                                                <i class="bi ${icon} fs-4 text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
+                                                    ${attachment.file_name}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    Uploaded: ${attachment.uploaded_at}
+                                                </small>
+                                            </div>
                                         </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
-                                                ${attachment.file_name}
-                                            </h6>
-                                            <small class="text-muted">
-                                                Uploaded: ${attachment.uploaded_at}
-                                            </small>
+                                        <div class="mt-2">
+                                            <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                            ${isImage ? `<button class="btn btn-sm btn-outline-info ms-1" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
+                                                <i class="bi bi-eye me-1"></i>Preview
+                                            </button>` : ''}
                                         </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-download me-1"></i>Download
-                                        </a>
-                                        ${isImage ? `<button class="btn btn-sm btn-outline-info ms-1" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
-                                            <i class="bi bi-eye me-1"></i>Preview
-                                        </button>` : ''}
                                     </div>
                                 </div>
+                            </div>
+                        `;
+                    });
+                    attachmentsHtml += '</div>';
+                    attachmentsContainer.innerHTML = attachmentsHtml;
+                } else {
+                    attachmentsContainer.innerHTML = '<p class="text-muted mb-0">No attachments uploaded for this complaint.</p>';
+                }
+                
+                // Show modal
+                var modal = new bootstrap.Modal(document.getElementById('viewComplaintModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching complaint details:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error loading complaint details. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+
+        function editComplaint(id) {
+            fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(response => response.json())
+            .then(data => {
+                // Fill form fields
+                document.getElementById('edit-id').value = data.id;
+                document.getElementById('edit-title').value = data.title;
+                document.getElementById('edit-description').value = data.description;
+                document.getElementById('edit-category').value = data.category;
+                document.getElementById('edit-priority').value = data.priority;
+                document.getElementById('edit-location').value = data.location || '';
+                document.getElementById('edit-address').value = data.address || '';
+                
+                // Handle coordinates
+                if (data.latitude && data.longitude) {
+                    document.getElementById('edit-latitude').value = data.latitude;
+                    document.getElementById('edit-longitude').value = data.longitude;
+                    document.getElementById('edit-coordinates-display').innerHTML = 
+                        `<i class="bi bi-geo-alt-fill text-success me-1"></i>Lat: ${parseFloat(data.latitude).toFixed(6)}, Lng: ${parseFloat(data.longitude).toFixed(6)}`;
+                } else {
+                    document.getElementById('edit-latitude').value = '';
+                    document.getElementById('edit-longitude').value = '';
+                    document.getElementById('edit-coordinates-display').textContent = 'No location pinned';
+                }
+                
+                // Handle "Others" category
+                handleEditCategoryChange();
+                
+                // Handle existing attachments
+                displayEditAttachments(data.attachments || []);
+                
+                // Set form action
+                document.getElementById('editComplaintForm').action = "{% url 'update_complaint' 0 %}".replace('0', id);
+                
+                // Show modal
+                var modal = new bootstrap.Modal(document.getElementById('editComplaintModal'));
+                modal.show();
+                
+                // Initialize edit map after modal is shown
+                setTimeout(() => {
+                    initializeEditMap(data.latitude, data.longitude);
+                }, 300);
+            })
+            .catch(error => {
+                console.error('Error fetching complaint details:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error loading complaint details. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+
+        function initializeEditMap(lat, lng) {
+            // Clean up existing map
+            if (editMap) {
+                editMap.remove();
+            }
+            
+            // Set initial coordinates
+            const initialLat = lat || defaultLat;
+            const initialLng = lng || defaultLng;
+            
+            // Initialize the edit map
+            editMap = L.map('edit-complaint-map').setView([initialLat, initialLng], lat ? 16 : 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(editMap);
+            
+            // Add existing marker if coordinates exist
+            if (lat && lng) {
+                editLocationMarker = L.marker([lat, lng], {
+                    draggable: true,
+                    title: 'Complaint Location'
+                }).addTo(editMap);
+                
+                editLocationMarker.bindPopup(`
+                    <div class="text-center">
+                        <strong>Current Location</strong><br>
+                        <small>You can drag this marker to update</small>
+                    </div>
+                `);
+                
+                // Handle marker drag
+                editLocationMarker.on('dragend', function(e) {
+                    const newLat = e.target.getLatLng().lat;
+                    const newLng = e.target.getLatLng().lng;
+                    updateEditLocationData(newLat, newLng);
+                });
+            }
+            
+            // Add click event to map for setting new location
+            editMap.on('click', function(e) {
+                const clickLat = e.latlng.lat;
+                const clickLng = e.latlng.lng;
+                
+                // Remove existing marker if any
+                if (editLocationMarker) {
+                    editMap.removeLayer(editLocationMarker);
+                }
+                
+                // Add new marker
+                editLocationMarker = L.marker([clickLat, clickLng], {
+                    draggable: true,
+                    title: 'Complaint Location'
+                }).addTo(editMap);
+                
+                // Update location data
+                updateEditLocationData(clickLat, clickLng);
+                
+                // Handle marker drag
+                editLocationMarker.on('dragend', function(e) {
+                    const newLat = e.target.getLatLng().lat;
+                    const newLng = e.target.getLatLng().lng;
+                    updateEditLocationData(newLat, newLng);
+                });
+                
+                // Add popup to marker
+                editLocationMarker.bindPopup(`
+                    <div class="text-center">
+                        <strong>Updated Location</strong><br>
+                        <small>Lat: ${clickLat.toFixed(6)}<br>Lng: ${clickLng.toFixed(6)}</small><br>
+                        <em>You can drag this marker to adjust</em>
+                    </div>
+                `).openPopup();
+            });
+            
+            // Try to get user's current location if no existing coordinates
+            if (!lat && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        
+                        // Center map on user's location
+                        editMap.setView([userLat, userLng], 16);
+                        
+                        // Add a blue circle to show user's approximate location
+                        L.circle([userLat, userLng], {
+                            color: '#007bff',
+                            fillColor: '#007bff',
+                            fillOpacity: 0.1,
+                            radius: 100
+                        }).addTo(editMap).bindPopup('Your approximate location');
+                    },
+                    function(error) {
+                        console.log('Geolocation error:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 600000
+                    }
+                );
+            }
+        }
+
+        function updateEditLocationData(lat, lng) {
+            // Update hidden inputs
+            document.getElementById('edit-latitude').value = lat;
+            document.getElementById('edit-longitude').value = lng;
+            
+            // Update display
+            document.getElementById('edit-coordinates-display').innerHTML = 
+                `<i class="bi bi-geo-alt-fill text-success me-1"></i>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            
+            // Perform reverse geocoding to get address
+            reverseGeocodeEdit(lat, lng);
+        }
+
+        // Function to perform reverse geocoding for edit form
+        function reverseGeocodeEdit(lat, lng) {
+            const addressField = document.getElementById('edit-address');
+            
+            // Show loading state
+            const originalValue = addressField.value;
+            addressField.value = 'Loading address...';
+            addressField.style.color = '#6c757d';
+            
+            // Use Nominatim API for reverse geocoding
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        const address = formatAddress(data);
+                        addressField.value = address;
+                        addressField.style.color = '#212529';
+                    } else {
+                        addressField.value = originalValue || 'Address not found for this location';
+                        addressField.style.color = '#dc3545';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching address:', error);
+                    addressField.value = originalValue || 'Unable to fetch address';
+                    addressField.style.color = '#dc3545';
+                });
+        }
+
+        // Function to format the address from Nominatim response
+        function formatAddress(data) {
+            const address = data.address || {};
+            const parts = [];
+            
+            if (address.house_number) parts.push(address.house_number);
+            if (address.road) parts.push(address.road);
+            if (address.neighbourhood) parts.push(address.neighbourhood);
+            if (address.suburb) parts.push(address.suburb);
+            if (address.village) parts.push(address.village);
+            if (address.town) parts.push(address.town);
+            if (address.city) parts.push(address.city);
+            if (address.municipality) parts.push(address.municipality);
+            if (address.county) parts.push(address.county);
+            if (address.state) parts.push(address.state);
+            if (address.postcode) parts.push(address.postcode);
+            if (address.country) parts.push(address.country);
+            
+            if (parts.length === 0) {
+                return data.display_name;
+            }
+            
+            return parts.join(', ');
+        }
+
+        // Function to get appropriate file icon based on extension
+        function getFileIcon(extension) {
+            const ext = extension.toLowerCase();
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) {
+                return 'bi-file-earmark-image';
+            } else if (['pdf'].includes(ext)) {
+                return 'bi-file-earmark-pdf';
+            } else if (['doc', 'docx'].includes(ext)) {
+                return 'bi-file-earmark-word';
+            } else if (['xls', 'xlsx'].includes(ext)) {
+                return 'bi-file-earmark-excel';
+            } else if (['ppt', 'pptx'].includes(ext)) {
+                return 'bi-file-earmark-ppt';
+            } else if (['txt'].includes(ext)) {
+                return 'bi-file-earmark-text';
+            } else if (['zip', 'rar', '7z'].includes(ext)) {
+                return 'bi-file-earmark-zip';
+            } else if (['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(ext)) {
+                return 'bi-file-earmark-play';
+            } else if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
+                return 'bi-file-earmark-music';
+            } else {
+                return 'bi-file-earmark';
+            }
+        }
+
+        // Function to preview images
+        function previewImage(imageUrl, fileName) {
+            const previewModal = new bootstrap.Modal(document.createElement('div'));
+            const modalHtml = `
+                <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-image me-2"></i>${fileName}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center p-0">
+                                <img src="${imageUrl}" class="img-fluid" alt="${fileName}" style="max-height: 70vh; width: auto;">
+                            </div>
+                            <div class="modal-footer">
+                                <a href="${imageUrl}" target="_blank" class="btn btn-primary">
+                                    <i class="bi bi-download me-1"></i>Download Full Size
+                                </a>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing preview modal if any
+            const existingModal = document.getElementById('imagePreviewModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add new modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+            modal.show();
+            
+            // Clean up modal when hidden
+            document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        // Function to display existing attachments in edit modal
+        function displayEditAttachments(attachments) {
+            const container = document.getElementById('edit-existing-attachments');
+            
+            if (attachments.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No attachments currently uploaded for this complaint.</p>';
+                return;
+            }
+            
+            let attachmentsHtml = '<div class="row g-2">';
+            attachments.forEach(function(attachment) {
+                const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
+                const icon = getFileIcon(fileExtension);
+                
+                attachmentsHtml += `
+                    <div class="col-md-6" id="attachment-${attachment.id}">
+                        <div class="card attachment-card h-100">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="attachment-icon me-3">
+                                        <img src="${attachment.file_url}" class="img-fluid" alt="${attachment.file_name}"">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
+                                            ${attachment.file_name}
+                                        </h6>
+                                        <small class="text-muted">
+                                            Uploaded: ${attachment.uploaded_at}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 d-flex gap-1">
+                                    <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </a>
+                                    <!-- ${isImage ? `<button type="button" class="btn btn-sm btn-outline-info" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
+                                        <i class="bi bi-eye me-1"></i>Preview
+                                    </button>` : ''} -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAttachment(${attachment.id})">
+                                        <i class="bi bi-trash me-1"></i>Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            attachmentsHtml += '</div>';
+            
+            container.innerHTML = attachmentsHtml;
+        }
+
+        // Function to preview new file selections
+        function previewNewFiles() {
+            const fileInput = document.getElementById('edit-attachments');
+            const previewContainer = document.getElementById('edit-new-files-preview');
+            
+            if (fileInput.files.length === 0) {
+                previewContainer.innerHTML = '';
+                return;
+            }
+            
+            let previewHtml = '<div class="mt-3"><h6><i class="bi bi-plus-circle me-1"></i>New Files to Upload:</h6><div class="row g-2">';
+            
+            Array.from(fileInput.files).forEach((file, index) => {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                const icon = getFileIcon(fileExtension);
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+                
+                previewHtml += `
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="attachment-icon me-3">
+                                        <i class="bi ${icon} fs-5 text-success"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title mb-1 text-truncate" title="${file.name}">
+                                            ${file.name}
+                                        </h6>
+                                        <small class="text-muted">
+                                            Size: ${fileSize} MB
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-upload me-1"></i>Ready to upload
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            previewHtml += '</div></div>';
+            previewContainer.innerHTML = previewHtml;
+        }
+
+        // Function to remove attachment
+        function removeAttachment(attachmentId) {
+            Swal.fire({
+                title: 'Remove Attachment?',
+                text: 'Are you sure you want to remove this attachment?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                // Hide the attachment card
+                const attachmentCard = document.getElementById(`attachment-${attachmentId}`);
+                if (attachmentCard) {
+                    attachmentCard.style.display = 'none';
+                    
+                    // Add hidden input to mark for deletion
+                    const form = document.getElementById('editComplaintForm');
+                    const deleteInput = document.createElement('input');
+                    deleteInput.type = 'hidden';
+                    deleteInput.name = 'delete_attachments';
+                    deleteInput.value = attachmentId;
+                    form.appendChild(deleteInput);
+                    
+                    // Show success message
+                    const successAlert = document.createElement('div');
+                    successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                    successAlert.innerHTML = `
+                        <i class="bi bi-check-circle me-1"></i>
+                        Attachment marked for removal. It will be deleted when you save the complaint.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    attachmentCard.parentNode.insertBefore(successAlert, attachmentCard);
+                    
+                    // Auto-dismiss alert after 3 seconds
+                    setTimeout(() => {
+                            if (successAlert && successAlert.parentNode) {
+                                successAlert.remove();
+                            }
+                        }, 3000);
+                    }
+                }
+            });
+        }
+
+
+        // Handle "Others" category selection in edit form
+        function handleEditCategoryChange() {
+            const categorySelect = document.getElementById('edit-category');
+            const otherCategoryContainer = document.getElementById('edit-other-category-container');
+            const otherCategoryInput = document.getElementById('edit-other-category');
+            
+            if (categorySelect.value === 'Others') {
+                otherCategoryContainer.style.display = 'block';
+                otherCategoryInput.setAttribute('required', 'required');
+            } else {
+                otherCategoryContainer.style.display = 'none';
+                otherCategoryInput.removeAttribute('required');
+                otherCategoryInput.value = '';
+            }
+        }
+
+
+        function getPriorityClass(priority) {
+            switch(priority) {
+                case 'low': return 'bg-success';
+                case 'medium': return 'bg-warning';
+                case 'high': return 'bg-orange';
+                case 'urgent': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'bg-warning';
+                case 'in_progress': return 'bg-info';
+                case 'resolved': return 'bg-success';
+                case 'closed': return 'bg-secondary';
+                default: return 'bg-secondary';
+            }
+        }
+
+        // Clean up maps when modals are hidden
+        document.getElementById('viewComplaintModal').addEventListener('hidden.bs.modal', function () {
+            if (viewMap) {
+                viewMap.remove();
+                viewMap = null;
+            }
+        });
+
+        document.getElementById('editComplaintModal').addEventListener('hidden.bs.modal', function () {
+            if (editMap) {
+                editMap.remove();
+                editMap = null;
+                editLocationMarker = null;
+            }
+        });
+
+        // Follow-up functionality
+        function followUpComplaint(complaintId) {
+            // Fetch complaint details first
+            fetch("{% url 'update_complaint' 0 %}".replace('0', complaintId), {
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    // Populate complaint info
+                    document.getElementById('followUpComplaintId').value = complaintId;
+                    
+                    const complaintDetails = document.getElementById('complaintDetails');
+                    const statusClass = getStatusClass(data.status);
+                    const priorityClass = getPriorityClass(data.priority);
+                    
+                    complaintDetails.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Title:</strong> ${data.title}<br>
+                                <strong>Category:</strong> ${data.category}<br>
+                                <strong>Filed:</strong> ${data.created_at}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Status:</strong> <span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span><br>
+                                <strong>Priority:</strong> <span class="badge ${priorityClass}">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>
                             </div>
                         </div>
                     `;
-                });
-                attachmentsHtml += '</div>';
-                attachmentsContainer.innerHTML = attachmentsHtml;
-            } else {
-                attachmentsContainer.innerHTML = '<p class="text-muted mb-0">No attachments uploaded for this complaint.</p>';
-            }
-            
-            // Show modal
-            var modal = new bootstrap.Modal(document.getElementById('viewComplaintModal'));
-            modal.show();
-        })
-        .catch(error => {
-            console.error('Error fetching complaint details:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error loading complaint details. Please try again.',
-                confirmButtonColor: '#dc3545'
-            });
-        });
-    }
-
-    function editComplaint(id) {
-        fetch("{% url 'update_complaint' 0 %}".replace('0', id), {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-        .then(response => response.json())
-        .then(data => {
-            // Fill form fields
-            document.getElementById('edit-id').value = data.id;
-            document.getElementById('edit-title').value = data.title;
-            document.getElementById('edit-description').value = data.description;
-            document.getElementById('edit-category').value = data.category;
-            document.getElementById('edit-priority').value = data.priority;
-            document.getElementById('edit-location').value = data.location || '';
-            document.getElementById('edit-address').value = data.address || '';
-            
-            // Handle coordinates
-            if (data.latitude && data.longitude) {
-                document.getElementById('edit-latitude').value = data.latitude;
-                document.getElementById('edit-longitude').value = data.longitude;
-                document.getElementById('edit-coordinates-display').innerHTML = 
-                    `<i class="bi bi-geo-alt-fill text-success me-1"></i>Lat: ${parseFloat(data.latitude).toFixed(6)}, Lng: ${parseFloat(data.longitude).toFixed(6)}`;
-            } else {
-                document.getElementById('edit-latitude').value = '';
-                document.getElementById('edit-longitude').value = '';
-                document.getElementById('edit-coordinates-display').textContent = 'No location pinned';
-            }
-            
-            // Handle "Others" category
-            handleEditCategoryChange();
-            
-            // Handle existing attachments
-            displayEditAttachments(data.attachments || []);
-            
-            // Set form action
-            document.getElementById('editComplaintForm').action = "{% url 'update_complaint' 0 %}".replace('0', id);
-            
-            // Show modal
-            var modal = new bootstrap.Modal(document.getElementById('editComplaintModal'));
-            modal.show();
-            
-            // Initialize edit map after modal is shown
-            setTimeout(() => {
-                initializeEditMap(data.latitude, data.longitude);
-            }, 300);
-        })
-        .catch(error => {
-            console.error('Error fetching complaint details:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error loading complaint details. Please try again.',
-                confirmButtonColor: '#dc3545'
-            });
-        });
-    }
-
-    function initializeEditMap(lat, lng) {
-        // Clean up existing map
-        if (editMap) {
-            editMap.remove();
-        }
-        
-        // Set initial coordinates
-        const initialLat = lat || defaultLat;
-        const initialLng = lng || defaultLng;
-        
-        // Initialize the edit map
-        editMap = L.map('edit-complaint-map').setView([initialLat, initialLng], lat ? 16 : 13);
-        
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(editMap);
-        
-        // Add existing marker if coordinates exist
-        if (lat && lng) {
-            editLocationMarker = L.marker([lat, lng], {
-                draggable: true,
-                title: 'Complaint Location'
-            }).addTo(editMap);
-            
-            editLocationMarker.bindPopup(`
-                <div class="text-center">
-                    <strong>Current Location</strong><br>
-                    <small>You can drag this marker to update</small>
-                </div>
-            `);
-            
-            // Handle marker drag
-            editLocationMarker.on('dragend', function(e) {
-                const newLat = e.target.getLatLng().lat;
-                const newLng = e.target.getLatLng().lng;
-                updateEditLocationData(newLat, newLng);
-            });
-        }
-        
-        // Add click event to map for setting new location
-        editMap.on('click', function(e) {
-            const clickLat = e.latlng.lat;
-            const clickLng = e.latlng.lng;
-            
-            // Remove existing marker if any
-            if (editLocationMarker) {
-                editMap.removeLayer(editLocationMarker);
-            }
-            
-            // Add new marker
-            editLocationMarker = L.marker([clickLat, clickLng], {
-                draggable: true,
-                title: 'Complaint Location'
-            }).addTo(editMap);
-            
-            // Update location data
-            updateEditLocationData(clickLat, clickLng);
-            
-            // Handle marker drag
-            editLocationMarker.on('dragend', function(e) {
-                const newLat = e.target.getLatLng().lat;
-                const newLng = e.target.getLatLng().lng;
-                updateEditLocationData(newLat, newLng);
-            });
-            
-            // Add popup to marker
-            editLocationMarker.bindPopup(`
-                <div class="text-center">
-                    <strong>Updated Location</strong><br>
-                    <small>Lat: ${clickLat.toFixed(6)}<br>Lng: ${clickLng.toFixed(6)}</small><br>
-                    <em>You can drag this marker to adjust</em>
-                </div>
-            `).openPopup();
-        });
-        
-        // Try to get user's current location if no existing coordinates
-        if (!lat && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
                     
-                    // Center map on user's location
-                    editMap.setView([userLat, userLng], 16);
+                    // Set form action
+                    document.getElementById('followUpForm').action = "{% url 'follow_up_complaint' 0 %}".replace('0', complaintId);
                     
-                    // Add a blue circle to show user's approximate location
-                    L.circle([userLat, userLng], {
-                        color: '#007bff',
-                        fillColor: '#007bff',
-                        fillOpacity: 0.1,
-                        radius: 100
-                    }).addTo(editMap).bindPopup('Your approximate location');
-                },
-                function(error) {
-                    console.log('Geolocation error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 600000
-                }
-            );
-        }
-    }
-
-    function updateEditLocationData(lat, lng) {
-        // Update hidden inputs
-        document.getElementById('edit-latitude').value = lat;
-        document.getElementById('edit-longitude').value = lng;
-        
-        // Update display
-        document.getElementById('edit-coordinates-display').innerHTML = 
-            `<i class="bi bi-geo-alt-fill text-success me-1"></i>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
-        
-        // Perform reverse geocoding to get address
-        reverseGeocodeEdit(lat, lng);
-    }
-
-    // Function to perform reverse geocoding for edit form
-    function reverseGeocodeEdit(lat, lng) {
-        const addressField = document.getElementById('edit-address');
-        
-        // Show loading state
-        const originalValue = addressField.value;
-        addressField.value = 'Loading address...';
-        addressField.style.color = '#6c757d';
-        
-        // Use Nominatim API for reverse geocoding
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-        
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.display_name) {
-                    const address = formatAddress(data);
-                    addressField.value = address;
-                    addressField.style.color = '#212529';
-                } else {
-                    addressField.value = originalValue || 'Address not found for this location';
-                    addressField.style.color = '#dc3545';
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('followUpModal'));
+                    modal.show();
                 }
             })
             .catch(error => {
-                console.error('Error fetching address:', error);
-                addressField.value = originalValue || 'Unable to fetch address';
-                addressField.style.color = '#dc3545';
-            });
-    }
-
-    // Function to format the address from Nominatim response
-    function formatAddress(data) {
-        const address = data.address || {};
-        const parts = [];
-        
-        if (address.house_number) parts.push(address.house_number);
-        if (address.road) parts.push(address.road);
-        if (address.neighbourhood) parts.push(address.neighbourhood);
-        if (address.suburb) parts.push(address.suburb);
-        if (address.village) parts.push(address.village);
-        if (address.town) parts.push(address.town);
-        if (address.city) parts.push(address.city);
-        if (address.municipality) parts.push(address.municipality);
-        if (address.county) parts.push(address.county);
-        if (address.state) parts.push(address.state);
-        if (address.postcode) parts.push(address.postcode);
-        if (address.country) parts.push(address.country);
-        
-        if (parts.length === 0) {
-            return data.display_name;
-        }
-        
-        return parts.join(', ');
-    }
-
-    // Function to get appropriate file icon based on extension
-    function getFileIcon(extension) {
-        const ext = extension.toLowerCase();
-        
-        if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) {
-            return 'bi-file-earmark-image';
-        } else if (['pdf'].includes(ext)) {
-            return 'bi-file-earmark-pdf';
-        } else if (['doc', 'docx'].includes(ext)) {
-            return 'bi-file-earmark-word';
-        } else if (['xls', 'xlsx'].includes(ext)) {
-            return 'bi-file-earmark-excel';
-        } else if (['ppt', 'pptx'].includes(ext)) {
-            return 'bi-file-earmark-ppt';
-        } else if (['txt'].includes(ext)) {
-            return 'bi-file-earmark-text';
-        } else if (['zip', 'rar', '7z'].includes(ext)) {
-            return 'bi-file-earmark-zip';
-        } else if (['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(ext)) {
-            return 'bi-file-earmark-play';
-        } else if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
-            return 'bi-file-earmark-music';
-        } else {
-            return 'bi-file-earmark';
-        }
-    }
-
-    // Function to preview images
-    function previewImage(imageUrl, fileName) {
-        const previewModal = new bootstrap.Modal(document.createElement('div'));
-        const modalHtml = `
-            <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="bi bi-image me-2"></i>${fileName}
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center p-0">
-                            <img src="${imageUrl}" class="img-fluid" alt="${fileName}" style="max-height: 70vh; width: auto;">
-                        </div>
-                        <div class="modal-footer">
-                            <a href="${imageUrl}" target="_blank" class="btn btn-primary">
-                                <i class="bi bi-download me-1"></i>Download Full Size
-                            </a>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remove existing preview modal if any
-        const existingModal = document.getElementById('imagePreviewModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Add new modal to body
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // Show the modal
-        const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
-        modal.show();
-        
-        // Clean up modal when hidden
-        document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
-            this.remove();
-        });
-    }
-
-    // Function to display existing attachments in edit modal
-    function displayEditAttachments(attachments) {
-        const container = document.getElementById('edit-existing-attachments');
-        
-        if (attachments.length === 0) {
-            container.innerHTML = '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No attachments currently uploaded for this complaint.</p>';
-            return;
-        }
-        
-        let attachmentsHtml = '<div class="row g-2">';
-        attachments.forEach(function(attachment) {
-            const fileExtension = attachment.file_name.split('.').pop().toLowerCase();
-            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension);
-            const icon = getFileIcon(fileExtension);
-            
-            attachmentsHtml += `
-                <div class="col-md-6" id="attachment-${attachment.id}">
-                    <div class="card attachment-card h-100">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="attachment-icon me-3">
-                                    <img src="${attachment.file_url}" class="img-fluid" alt="${attachment.file_name}"">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="card-title mb-1 text-truncate" title="${attachment.file_name}">
-                                        ${attachment.file_name}
-                                    </h6>
-                                    <small class="text-muted">
-                                        Uploaded: ${attachment.uploaded_at}
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="mt-2 d-flex gap-1">
-                                <a href="${attachment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </a>
-                                <!-- ${isImage ? `<button type="button" class="btn btn-sm btn-outline-info" onclick="previewImage('${attachment.file_url}', '${attachment.file_name}')">
-                                    <i class="bi bi-eye me-1"></i>Preview
-                                </button>` : ''} -->
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAttachment(${attachment.id})">
-                                    <i class="bi bi-trash me-1"></i>Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        attachmentsHtml += '</div>';
-        
-        container.innerHTML = attachmentsHtml;
-    }
-
-    // Function to preview new file selections
-    function previewNewFiles() {
-        const fileInput = document.getElementById('edit-attachments');
-        const previewContainer = document.getElementById('edit-new-files-preview');
-        
-        if (fileInput.files.length === 0) {
-            previewContainer.innerHTML = '';
-            return;
-        }
-        
-        let previewHtml = '<div class="mt-3"><h6><i class="bi bi-plus-circle me-1"></i>New Files to Upload:</h6><div class="row g-2">';
-        
-        Array.from(fileInput.files).forEach((file, index) => {
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            const icon = getFileIcon(fileExtension);
-            const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
-            
-            previewHtml += `
-                <div class="col-md-6">
-                    <div class="card border-success">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="attachment-icon me-3">
-                                    <i class="bi ${icon} fs-5 text-success"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="card-title mb-1 text-truncate" title="${file.name}">
-                                        ${file.name}
-                                    </h6>
-                                    <small class="text-muted">
-                                        Size: ${fileSize} MB
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <span class="badge bg-success">
-                                    <i class="bi bi-upload me-1"></i>Ready to upload
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        previewHtml += '</div></div>';
-        previewContainer.innerHTML = previewHtml;
-    }
-
-    // Add event listener for file input change
-    document.addEventListener('DOMContentLoaded', function() {
-        const fileInput = document.getElementById('edit-attachments');
-        if (fileInput) {
-            fileInput.addEventListener('change', previewNewFiles);
-        }
-    });
-
-    // Function to remove attachment
-    function removeAttachment(attachmentId) {
-        Swal.fire({
-            title: 'Remove Attachment?',
-            text: 'Are you sure you want to remove this attachment?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, remove it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-            // Hide the attachment card
-            const attachmentCard = document.getElementById(`attachment-${attachmentId}`);
-            if (attachmentCard) {
-                attachmentCard.style.display = 'none';
-                
-                // Add hidden input to mark for deletion
-                const form = document.getElementById('editComplaintForm');
-                const deleteInput = document.createElement('input');
-                deleteInput.type = 'hidden';
-                deleteInput.name = 'delete_attachments';
-                deleteInput.value = attachmentId;
-                form.appendChild(deleteInput);
-                
-                // Show success message
-                const successAlert = document.createElement('div');
-                successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
-                successAlert.innerHTML = `
-                    <i class="bi bi-check-circle me-1"></i>
-                    Attachment marked for removal. It will be deleted when you save the complaint.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                attachmentCard.parentNode.insertBefore(successAlert, attachmentCard);
-                
-                // Auto-dismiss alert after 3 seconds
-                setTimeout(() => {
-                    if (successAlert && successAlert.parentNode) {
-                        successAlert.remove();
-                    }
-                }, 3000);
-            }
-        });
-    }
-    }
-
-    // Handle "Others" category selection in edit form
-    function handleEditCategoryChange() {
-        const categorySelect = document.getElementById('edit-category');
-        const otherCategoryContainer = document.getElementById('edit-other-category-container');
-        const otherCategoryInput = document.getElementById('edit-other-category');
-        
-        if (categorySelect.value === 'Others') {
-            otherCategoryContainer.style.display = 'block';
-            otherCategoryInput.setAttribute('required', 'required');
-        } else {
-            otherCategoryContainer.style.display = 'none';
-            otherCategoryInput.removeAttribute('required');
-            otherCategoryInput.value = '';
-        }
-    }
-
-    // Add event listener for category change in edit form
-    document.addEventListener('DOMContentLoaded', function() {
-        const editCategorySelect = document.getElementById('edit-category');
-        if (editCategorySelect) {
-            editCategorySelect.addEventListener('change', handleEditCategoryChange);
-        }
-    });
-
-    function getPriorityClass(priority) {
-        switch(priority) {
-            case 'low': return 'bg-success';
-            case 'medium': return 'bg-warning';
-            case 'high': return 'bg-orange';
-            case 'urgent': return 'bg-danger';
-            default: return 'bg-secondary';
-        }
-    }
-
-    function getStatusClass(status) {
-        switch(status) {
-            case 'pending': return 'bg-warning';
-            case 'in_progress': return 'bg-info';
-            case 'resolved': return 'bg-success';
-            case 'closed': return 'bg-secondary';
-            default: return 'bg-secondary';
-        }
-    }
-
-    // Clean up maps when modals are hidden
-    document.getElementById('viewComplaintModal').addEventListener('hidden.bs.modal', function () {
-        if (viewMap) {
-            viewMap.remove();
-            viewMap = null;
-        }
-    });
-
-    document.getElementById('editComplaintModal').addEventListener('hidden.bs.modal', function () {
-    if (editMap) {
-        editMap.remove();
-        editMap = null;
-        editLocationMarker = null;
-    }
-});
-
-// Follow-up functionality
-function followUpComplaint(complaintId) {
-    // Fetch complaint details first
-    fetch("{% url 'update_complaint' 0 %}".replace('0', complaintId), {
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data) {
-            // Populate complaint info
-            document.getElementById('followUpComplaintId').value = complaintId;
-            
-            const complaintDetails = document.getElementById('complaintDetails');
-            const statusClass = getStatusClass(data.status);
-            const priorityClass = getPriorityClass(data.priority);
-            
-            complaintDetails.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Title:</strong> ${data.title}<br>
-                        <strong>Category:</strong> ${data.category}<br>
-                        <strong>Filed:</strong> ${data.created_at}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Status:</strong> <span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span><br>
-                        <strong>Priority:</strong> <span class="badge ${priorityClass}">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>
-                    </div>
-                </div>
-            `;
-            
-            // Set form action
-            document.getElementById('followUpForm').action = "{% url 'follow_up_complaint' 0 %}".replace('0', complaintId);
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('followUpModal'));
-            modal.show();
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching complaint details:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error loading complaint details. Please try again.',
-            confirmButtonColor: '#dc3545'
-        });
-    });
-}
-
-// Handle follow-up form submission
-document.getElementById('followUpForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Sending...';
-    submitBtn.disabled = true;
-    
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Close modal and show success message
-            bootstrap.Modal.getInstance(document.getElementById('followUpModal')).hide();
-            
-            // Show success message with SweetAlert2
-            Swal.fire({
-                icon: 'success',
-                title: 'Follow-up Sent!',
-                text: 'Your message has been forwarded to the administrators.',
-                confirmButtonColor: '#28a745',
-                timer: 3000,
-                timerProgressBar: true
-            });
-            
-            // Clear form
-            this.reset();
-            
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Error sending follow-up',
-                confirmButtonColor: '#dc3545'
+                console.error('Error fetching complaint details:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error loading complaint details. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
             });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error sending follow-up. Please try again.',
-            confirmButtonColor: '#dc3545'
+
+        // Handle follow-up form submission
+        document.getElementById('followUpForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Sending...';
+            submitBtn.disabled = true;
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal and show success message
+                    bootstrap.Modal.getInstance(document.getElementById('followUpModal')).hide();
+                    
+                    // Show success message with SweetAlert2
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Follow-up Sent!',
+                        text: 'Your message has been forwarded to the administrators.',
+                        confirmButtonColor: '#28a745',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    
+                    // Clear form
+                    this.reset();
+                    
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Error sending follow-up',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error sending follow-up. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
         });
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    });
-});
-</script>
+
+    </script>
 
 {% endblock %}

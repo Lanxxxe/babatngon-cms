@@ -1,10 +1,7 @@
-from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
-from admins.notification_utils import notify_new_case_filed
-from core.models import User
-from .models import ForumPost, PostReaction, PostComment, CommentReaction
-from . import file_upload_view
+from core.models import User, Admin
 from django.shortcuts import render
 from django.contrib.auth import logout
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect, get_object_or_404
 from django.db import IntegrityError
 from django.http import JsonResponse
@@ -14,11 +11,17 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 import os, uuid, time
+
+
+from . import file_upload_view
+from .models import ForumPost, PostReaction, PostComment, CommentReaction
+from admins.notification_utils import notify_new_case_filed
+from admins.models import Complaint, AssistanceRequest, ComplaintAttachment, AssistanceAttachment
+from admins.models import Notification
 import sweetify
 
 
 
-# Create your views here.
 def resident_dashboard(request):
     if not request.session.get('id'):
         sweetify.error(request, 'You must be logged in to access the dashboard.', timer=3000)
@@ -55,6 +58,7 @@ def resident_dashboard(request):
     return render(request, 'resident_dashboard.html', context)
 
 
+# Complaint Views
 def file_complaint(request):
     if not request.session.get('id'):
         sweetify.error(request, 'You must be logged in to file a complaint.', timer=3000)
@@ -120,68 +124,6 @@ def file_complaint(request):
         sweetify.success(request, 'Complaint filed successfully!', persistent=True, timer=3000)
         return redirect('file_complaint')
     return render(request, 'file_complaint.html')
-
-
-def file_assistance(request):
-    if not request.session.get('id'):
-        sweetify.error(request, 'You must be logged in to request assistance.', persistent=True, timer=3000)
-        return redirect('homepage')
-    if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        description = request.POST.get('description', '').strip()
-        type_ = request.POST.get('type', '').strip()
-        other_assistance_type = request.POST.get('other_assistance_type', '').strip()
-        urgency = request.POST.get('urgency', 'low')
-        address = request.POST.get('address', '').strip()
-        latitude = request.POST.get('latitude', '').strip()
-        longitude = request.POST.get('longitude', '').strip()
-        user_id = request.session.get('id')
-        user = User.objects.filter(id=user_id).first()
-        
-        # Validate required fields
-        if not all([title, description, type_]):
-            sweetify.error(request, 'Please fill in all required fields.', persistent=True, timer=3000)
-            return render(request, 'file_assistance.html')
-        
-        # If "Others" is selected, validate that other_assistance_type is provided
-        if type_ == 'Others' and not other_assistance_type:
-            sweetify.error(request, 'Please specify the other assistance type.', persistent=True, timer=3000)
-            return render(request, 'file_assistance.html')
-        
-        # Use the specified other assistance type if "Others" is selected
-        final_type = other_assistance_type if type_ == 'Others' else type_
-        
-        # Convert coordinates to float if provided, otherwise set to None
-        try:
-            lat_float = float(latitude) if latitude else None
-            lng_float = float(longitude) if longitude else None
-        except (ValueError, TypeError):
-            lat_float = None
-            lng_float = None
-        
-        assistance = AssistanceRequest.objects.create(
-            user=user,
-            title=title,
-            description=description,
-            type=final_type,
-            urgency=urgency,
-            address=address,
-            latitude=lat_float,
-            longitude=lng_float
-        )
-
-        try:
-            notify_new_case_filed(assistance)  # Notifies all active admins
-        except Exception as e:
-            print(f"Error notifying admins of new assistance request: {e}")
-            sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
-
-        # Handle multiple file uploads - let Django handle the file saving
-        for f in request.FILES.getlist('attachments'):
-            AssistanceAttachment.objects.create(assistance=assistance, file=f)
-        sweetify.success(request, 'Assistance request submitted!', persistent=True, timer=3000)
-        return redirect('file_assistance')
-    return render(request, 'file_assistance.html')
 
 
 def my_complaints(request):
@@ -274,6 +216,127 @@ def update_complaint(request, pk):
             'attachments': attachments,
         })
     return redirect('my_complaints')
+
+
+def follow_up_complaint(request, complaint_id):
+    """Handle follow-up on a complaint by creating admin notifications."""
+    if not request.session.get('id'):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
+        sweetify.error(request, 'You must be logged in.', timer=3000)
+        return redirect('homepage')
+    
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+    complaint = get_object_or_404(Complaint, id=complaint_id, user=user)
+    
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        urgency = request.POST.get('urgency', 'normal')
+        
+        if not message:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
+            sweetify.error(request, 'Follow-up message is required.', timer=3000)
+            return redirect('my_complaints')
+        
+        try:
+            from admins.models import Notification
+            from core.models import Admin
+            
+            # Use the unified notification system to notify all admins
+            notifications = Notification.notify_admins(
+                sender=user,
+                title=f'Follow-up on Complaint #{complaint.id}: {complaint.title}',
+                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nComplaint Details:\n- Title: {complaint.title}\n- Category: {complaint.category}\n- Status: {complaint.status.replace("_", " ").title()}\n- Priority: {complaint.priority.title()}\n- Filed: {complaint.created_at.strftime("%B %d, %Y at %I:%M %p")}',
+                notification_type='status_update',
+                action_type='commented',
+                priority=urgency,
+                related_complaint=complaint
+            )
+            notifications_created = len(notifications)
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Follow-up sent successfully to {notifications_created} administrator(s)!'
+                })
+            
+            sweetify.success(request, f'Follow-up sent successfully to {notifications_created} administrator(s)!', timer=3000)
+            return redirect('my_complaints')
+            
+        except Exception as e:
+            print(f"Error creating follow-up notification: {e}")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
+            sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)
+            return redirect('my_complaints')
+    
+    # If GET request, redirect to complaints page
+    return redirect('my_complaints')
+
+
+# Assistance Views
+def file_assistance(request):
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to request assistance.', persistent=True, timer=3000)
+        return redirect('homepage')
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        type_ = request.POST.get('type', '').strip()
+        other_assistance_type = request.POST.get('other_assistance_type', '').strip()
+        urgency = request.POST.get('urgency', 'low')
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        user_id = request.session.get('id')
+        user = User.objects.filter(id=user_id).first()
+        
+        # Validate required fields
+        if not all([title, description, type_]):
+            sweetify.error(request, 'Please fill in all required fields.', persistent=True, timer=3000)
+            return render(request, 'file_assistance.html')
+        
+        # If "Others" is selected, validate that other_assistance_type is provided
+        if type_ == 'Others' and not other_assistance_type:
+            sweetify.error(request, 'Please specify the other assistance type.', persistent=True, timer=3000)
+            return render(request, 'file_assistance.html')
+        
+        # Use the specified other assistance type if "Others" is selected
+        final_type = other_assistance_type if type_ == 'Others' else type_
+        
+        # Convert coordinates to float if provided, otherwise set to None
+        try:
+            lat_float = float(latitude) if latitude else None
+            lng_float = float(longitude) if longitude else None
+        except (ValueError, TypeError):
+            lat_float = None
+            lng_float = None
+        
+        assistance = AssistanceRequest.objects.create(
+            user=user,
+            title=title,
+            description=description,
+            type=final_type,
+            urgency=urgency,
+            address=address,
+            latitude=lat_float,
+            longitude=lng_float
+        )
+
+        try:
+            notify_new_case_filed(assistance)  # Notifies all active admins
+        except Exception as e:
+            print(f"Error notifying admins of new assistance request: {e}")
+            sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
+
+        # Handle multiple file uploads - let Django handle the file saving
+        for f in request.FILES.getlist('attachments'):
+            AssistanceAttachment.objects.create(assistance=assistance, file=f)
+        sweetify.success(request, 'Assistance request submitted!', persistent=True, timer=3000)
+        return redirect('file_assistance')
+    return render(request, 'file_assistance.html')
 
 
 def my_assistance(request):
@@ -376,6 +439,63 @@ def delete_assistance(request, pk):
     return redirect('my_assistance')
 
 
+def follow_up_assistance(request, assistance_id):
+    """Handle follow-up on an assistance request by creating admin notifications."""
+    if not request.session.get('id'):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
+        sweetify.error(request, 'You must be logged in.', timer=3000)
+        return redirect('homepage')
+    
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+    assistance = get_object_or_404(AssistanceRequest, id=assistance_id, user=user)
+    
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        urgency = request.POST.get('urgency', 'normal')
+        
+        if not message:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
+            sweetify.error(request, 'Follow-up message is required.', timer=3000)
+            return redirect('my_assistance')
+        
+        try:
+            
+            # Use the unified notification system to notify all admins
+            notifications = Notification.notify_admins(
+                sender=user,
+                title=f'Follow-up on Assistance Request #{assistance.id}: {assistance.title}',
+                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
+                notification_type='new_assistance',
+                action_type='commented',
+                priority=urgency,
+                related_assistance=assistance
+            )
+            notifications_created = len(notifications)
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Follow-up sent successfully to {notifications_created} administrator(s)!'
+                })
+            
+            sweetify.success(request, f'Follow-up sent successfully to {notifications_created} administrator(s)!', timer=3000)
+            return redirect('my_assistance')
+            
+        except Exception as e:
+            print(f"Error creating assistance follow-up notification: {e}")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
+            sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)
+            return redirect('my_assistance')
+    
+    # If GET request, redirect to assistance page
+    return redirect('my_assistance')
+
+
+# Profile Views
 def profile(request):
     """
     Resident profile page: view info, upload profile picture, update password.
@@ -417,12 +537,6 @@ def profile(request):
         'user': user,
     }
     return render(request, 'profile.html', context)
-
-
-def resident_logout(request):
-    logout(request)
-    sweetify.toast(request, 'You have been logged out successfully.', timer=3000)
-    return redirect('homepage')
 
 
 # Community Forum Views
@@ -734,118 +848,38 @@ def delete_comment(request, comment_id):
         return JsonResponse({'success': False, 'message': 'Error deleting comment.'})
 
 
-def follow_up_complaint(request, complaint_id):
-    """Handle follow-up on a complaint by creating admin notifications."""
+# Notifications View
+def notifications(request):
+    """Display resident notifications."""
     if not request.session.get('id'):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
-        sweetify.error(request, 'You must be logged in.', timer=3000)
+        sweetify.error(request, 'You must be logged in to view notifications.', timer=3000)
         return redirect('homepage')
     
+    if request.method == 'POST':
+        types = request.POST.get('notification_types', '')
+        status = request.POST.get('status', '')
     user_id = request.session.get('id')
     user = User.objects.filter(id=user_id).first()
-    complaint = get_object_or_404(Complaint, id=complaint_id, user=user)
-    
-    if request.method == 'POST':
-        message = request.POST.get('message', '').strip()
-        urgency = request.POST.get('urgency', 'normal')
-        
-        if not message:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
-            sweetify.error(request, 'Follow-up message is required.', timer=3000)
-            return redirect('my_complaints')
-        
-        try:
-            from admins.models import Notification
-            from core.models import Admin
-            
-            # Use the unified notification system to notify all admins
-            notifications = Notification.notify_admins(
-                sender=user,
-                title=f'Follow-up on Complaint #{complaint.id}: {complaint.title}',
-                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nComplaint Details:\n- Title: {complaint.title}\n- Category: {complaint.category}\n- Status: {complaint.status.replace("_", " ").title()}\n- Priority: {complaint.priority.title()}\n- Filed: {complaint.created_at.strftime("%B %d, %Y at %I:%M %p")}',
-                notification_type='status_update',
-                action_type='commented',
-                priority=urgency,
-                related_complaint=complaint
-            )
-            notifications_created = len(notifications)
-            
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True, 
-                    'message': f'Follow-up sent successfully to {notifications_created} administrator(s)!'
-                })
-            
-            sweetify.success(request, f'Follow-up sent successfully to {notifications_created} administrator(s)!', timer=3000)
-            return redirect('my_complaints')
-            
-        except Exception as e:
-            print(f"Error creating follow-up notification: {e}")
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
-            sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)
-            return redirect('my_complaints')
-    
-    # If GET request, redirect to complaints page
-    return redirect('my_complaints')
+
+    user_content_type = ContentType.objects.get_for_model(user)
+
+    notifications  = Notification.objects.filter(
+        recipient_content_type=user_content_type,
+        recipient_object_id=user.id
+    ).order_by('-created_at')
+
+    notification_types = [types[0] for types in Notification.NOTIFICATION_TYPES]
+
+    context = {
+        'notifications': notifications,
+        'notification_types': notification_types,
+    }
 
 
-def follow_up_assistance(request, assistance_id):
-    """Handle follow-up on an assistance request by creating admin notifications."""
-    if not request.session.get('id'):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
-        sweetify.error(request, 'You must be logged in.', timer=3000)
-        return redirect('homepage')
-    
-    user_id = request.session.get('id')
-    user = User.objects.filter(id=user_id).first()
-    assistance = get_object_or_404(AssistanceRequest, id=assistance_id, user=user)
-    
-    if request.method == 'POST':
-        message = request.POST.get('message', '').strip()
-        urgency = request.POST.get('urgency', 'normal')
-        
-        if not message:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
-            sweetify.error(request, 'Follow-up message is required.', timer=3000)
-            return redirect('my_assistance')
-        
-        try:
-            from admins.models import Notification
-            from core.models import Admin
-            
-            # Use the unified notification system to notify all admins
-            notifications = Notification.notify_admins(
-                sender=user,
-                title=f'Follow-up on Assistance Request #{assistance.id}: {assistance.title}',
-                message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
-                notification_type='new_assistance',
-                action_type='commented',
-                priority=urgency,
-                related_assistance=assistance
-            )
-            notifications_created = len(notifications)
-            
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True, 
-                    'message': f'Follow-up sent successfully to {notifications_created} administrator(s)!'
-                })
-            
-            sweetify.success(request, f'Follow-up sent successfully to {notifications_created} administrator(s)!', timer=3000)
-            return redirect('my_assistance')
-            
-        except Exception as e:
-            print(f"Error creating assistance follow-up notification: {e}")
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
-            sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)
-            return redirect('my_assistance')
-    
-    # If GET request, redirect to assistance page
-    return redirect('my_assistance')
+    return render(request, 'resident_notifications.html', context)
 
+# Logout View
+def resident_logout(request):
+    logout(request)
+    sweetify.toast(request, 'You have been logged out successfully.', timer=3000)
+    return redirect('homepage')

@@ -29,6 +29,9 @@ urlpatterns = [
     path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
     path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 
+    # Notifications
+    path('notifications/', views.notifications, name='notifications'),
+
     # Logout
     path('logout/', views.resident_logout, name='resident_logout'),
 

@@ -32,32 +32,32 @@
                         <div class="row mb-3">
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}" readonly>
+                                <input type="text" class="form-control" name="first_name" value="{{ user.first_name|default:'' }}">
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">Middle Name</label>
-                                <input type="text" class="form-control" name="middle_name" value="{{ user.middle_name }}" readonly>
+                                <input type="text" class="form-control" name="middle_name" value="{{ user.middle_name|default:'' }}">
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}" readonly>
+                                <input type="text" class="form-control" name="last_name" value="{{ user.last_name|default:'' }}">
                             </div>
 
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">Suffix</label>
-                                <input type="text" class="form-control" name="suffix" value="{{ user.suffix }}" readonly>
+                                <input type="text" class="form-control" name="suffix" value="{{ user.suffix|default:'' }}">
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" value="{{ user.email }}" readonly>
+                                <input type="email" class="form-control" name="email" value="{{ user.email|default:'' }}">
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label">Phone</label>
-                                <input type="text" class="form-control" name="phone" value="{{ user.phone|default:'' }}" readonly>
+                                <input type="text" class="form-control" name="phone" value="{{ user.phone|default:'' }}">
                             </div>
                         </div>
                         <div class="mb-3">
