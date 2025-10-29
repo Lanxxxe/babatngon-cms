@@ -31,7 +31,9 @@ urlpatterns = [
 
     # Notifications
     path('notifications/', views.notifications, name='notifications'),
-
+    path('notifications/details/<int:notification_id>/', views.resident_notification_details, name='resident_notification_details'),
+    path('notifications/mark-as-read/<int:notification_id>/', views.resident_mark_notification_read, name='mark_notification_as_read'),
+    path('notifications/archive/<int:notification_id>/', views.resident_archive_notification, name='mark_notification_as_archived'),
     # Logout
     path('logout/', views.resident_logout, name='resident_logout'),
 

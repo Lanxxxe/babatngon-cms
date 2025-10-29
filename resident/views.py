@@ -2,6 +2,7 @@ from core.models import User, Admin
 from django.shortcuts import render
 from django.contrib.auth import logout
 from django.contrib.contenttypes.models import ContentType
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 from django.db import IntegrityError
 from django.http import JsonResponse
@@ -574,8 +575,6 @@ def resident_change_password(request):
 
 
 
-
-
 # Community Forum Views
 def community_forum(request):
     """Display the community forum with posts and filtering options."""
@@ -888,32 +887,126 @@ def delete_comment(request, comment_id):
 # Notifications View
 def notifications(request):
     """Display resident notifications."""
+    
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+
     if not request.session.get('id'):
         sweetify.error(request, 'You must be logged in to view notifications.', timer=3000)
         return redirect('homepage')
-    
-    if request.method == 'POST':
-        types = request.POST.get('notification_types', '')
-        status = request.POST.get('status', '')
-    user_id = request.session.get('id')
-    user = User.objects.filter(id=user_id).first()
+ 
+    notif_type = request.GET.get('type', '')
+    notif_status = request.GET.get('status', '')
+    page_number = request.GET.get('page', 1)
+
 
     user_content_type = ContentType.objects.get_for_model(user)
 
     notifications  = Notification.objects.filter(
         recipient_content_type=user_content_type,
-        recipient_object_id=user.id
+        recipient_object_id=user.id,
     ).order_by('-created_at')
+
+    if notif_status == '':
+        notifications = notifications.filter(is_archived=False)
+
+    # Apply filters
+    if notif_type:
+        notifications = notifications.filter(notification_type__icontains=notif_type)
+
+    if notif_status:
+        if notif_status == 'unread':
+            notifications = notifications.filter(is_read=False)
+        elif notif_status == 'read':
+            notifications = notifications.filter(is_read=True)
+        elif notif_status == 'archived':
+            notifications = notifications.filter(is_archived=True)
+
+    paginator = Paginator(notifications, 5)  # 5 notifications per page
+    page_object = paginator.get_page(page_number)
 
     notification_types = [types[0] for types in Notification.NOTIFICATION_TYPES]
 
     context = {
-        'notifications': notifications,
+        'notifications': page_object,
         'notification_types': notification_types,
+        'current_type': notif_type,
+        'current_status': notif_status,
+        'page_obj': page_object,
     }
 
-
     return render(request, 'resident_notifications.html', context)
+
+
+def resident_notification_details(request, notification_id):
+    """Display details of a specific notification."""
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to view notifications.', timer=3000)
+        return redirect('homepage')
+
+    notification = get_object_or_404(
+        Notification,
+        id=notification_id,
+        recipient_content_type=ContentType.objects.get_for_model(user),
+        recipient_object_id=user.id
+    )
+
+    # Mark as read
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save()
+
+    context = {
+        'notification': notification,
+    }
+
+    return render(request, 'resident_notification_details.html', context)
+
+
+def resident_mark_notification_read(request, notification_id):
+    """Mark a notification as read."""
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to manage notifications.', timer=3000)
+        return redirect('homepage')
+
+    notification = get_object_or_404(
+        Notification,
+        id=notification_id,
+        recipient_content_type=ContentType.objects.get_for_model(user),
+        recipient_object_id=user.id
+    )
+
+    notification.is_read = True
+    notification.save()
+    sweetify.success(request, 'Notification marked as read.', timer=2000, persistent=True)
+    return redirect('notifications')
+
+def resident_archive_notification(request, notification_id):
+    """Archive a notification."""
+    user_id = request.session.get('id')
+    user = User.objects.filter(id=user_id).first()
+
+    if not request.session.get('id'):
+        sweetify.error(request, 'You must be logged in to manage notifications.', timer=3000, persistent=True)
+        return redirect('homepage')
+
+    notification = get_object_or_404(
+        Notification,
+        id=notification_id,
+        recipient_content_type=ContentType.objects.get_for_model(user),
+        recipient_object_id=user.id
+    )
+
+    notification.is_archived = True
+    notification.save()
+    sweetify.success(request, 'Notification archived.', timer=2000, persistent=True)
+    return redirect('notifications')
 
 # Logout View
 def resident_logout(request):

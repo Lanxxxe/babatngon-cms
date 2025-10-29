@@ -16,32 +16,37 @@ Notifications
                     <div>
                         <span class="fw-semibold">Notifications</span>
                     </div>
-                    <div class="d-flex gap-1 w-25 ">
-                        <select class="form-select form-select-sm w-100" id="adminTypeFilter"  onchange="filterAdminNotifications()">
-                            <option value="">All Types</option>
-                            {% for type in notification_types %}
-                                <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
-                                    {% if type == 'case_assignment' %}Case Assignment
-                                    {% elif type == 'status_update' %}Status Update
-                                    {% elif type == 'new_complaint' %}New Complaint
-                                    {% elif type == 'new_assistance' %}New Assistance Request
-                                    {% elif type == 'case_resolved' %}Case Resolved
-                                    {% elif type == 'case_closed' %}Case Closed
-                                    {% elif type == 'urgent_case' %}Urgent Case
-                                    {% elif type == 'system_alert' %}System Alert
-                                    {% elif type == 'reminder' %}Reminder
-                                    {% elif type == 'other' %}Other
-                                    {% else %}{{ type|title }}
-                                    {% endif %}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <select class="form-select form-select-sm" id="adminStatusFilter"  onchange="filterAdminNotifications()">
-                            <option value="">All Status</option>
-                            <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
-                            <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
-                            <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
-                        </select>
+                    <div class="d-flex gap-1 w-50 ">
+                        <form class="d-flex items-center justify-content-end gap-2 w-100" method="GET" id="filterForm">
+                            {% csrf_token %}
+                            <select class="form-select form-select-sm" name="type" id="typeFilter">
+                                <option value="">All Types</option>
+                                {% for type in notification_types %}
+                                    <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
+                                        {% if type == 'case_assignment' %}Case Assignment
+                                        {% elif type == 'status_update' %}Status Update
+                                        {% elif type == 'new_complaint' %}New Complaint
+                                        {% elif type == 'new_assistance' %}New Assistance Request
+                                        {% elif type == 'case_resolved' %}Case Resolved
+                                        {% elif type == 'case_closed' %}Case Closed
+                                        {% elif type == 'urgent_case' %}Urgent Case
+                                        {% elif type == 'system_alert' %}System Alert
+                                        {% elif type == 'reminder' %}Reminder
+                                        {% elif type == 'other' %}Other
+                                        {% else %}{{ type|title }}
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select form-select-sm" name="status" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
+                                <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
+                                <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                            </select>
+
+                            <button type="submit" class="btn btn-sm btn-primary btn-block w-50"><i class="bi bi-funnel"></i> Filter</button>
+                        </form>
                     </div>
                 </div>
                 <div class="card-body-admin p-0">
@@ -85,17 +90,17 @@ Notifications
                                     </div>
                                     <div class="d-flex gap-1">
                                         {% if not notification.is_read %}
-                                            <button class="btn btn-sm btn-outline-primary" onclick="markAsRead({{ notification.id }})" title="Mark as Read">
+                                            <a href="{% url 'mark_notification_as_read' notification.id %}" role="button" class="btn btn-sm btn-outline-primary" title="Mark as Read">
                                                 <i class="bi bi-check"></i>
-                                            </button>
+                                            </a>
                                         {% endif %}
-                                        <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ notification.id }})" title="View Details">
+                                        <a href="{% url 'resident_notification_details' notification.id %}" role="button" class="btn btn-sm btn-outline-info" title="View Details">
                                             <i class="bi bi-eye"></i>
-                                        </button>
+                                        </a>
                                         {% if not notification.is_archived %}
-                                            <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification({{ notification.id }})" title="Archive">
+                                            <a href="{% url 'mark_notification_as_archived' notification.id %}" role="button" class="btn btn-sm btn-outline-warning" title="Archive">
                                                 <i class="bi bi-archive"></i>
-                                            </button>
+                                            </a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -104,41 +109,41 @@ Notifications
                     {% else %}
                         <div class="text-center py-4">
                             <i class="bi bi-bell-slash text-muted" style="font-size: 48px;"></i>
-                            <p class="text-muted mt-2">No admin/staff notifications found</p>
+                            <p class="text-muted mt-2">No notifications found</p>
                         </div>
                     {% endif %}
                 </div>
-                {% if admin_page_obj.has_other_pages %}
+                {% if page_obj.has_other_pages %}
                     <div class="card-footer bg-light py-2">
                         <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">Showing {{ admin_page_obj.start_index }}-{{ admin_page_obj.end_index }} of {{ admin_page_obj.paginator.count }} notifications</small>
+                            <small class="text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} notifications</small>
                             <nav>
                                 <ul class="pagination pagination-sm mb-0">
-                                    {% if admin_page_obj.has_previous %}
+                                    {% if page_obj.has_previous %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ admin_page_obj.previous_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Previous</a>
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Previous</a>
                                         </li>
                                     {% else %}
                                         <li class="page-item disabled">
                                             <span class="page-link">Previous</span>
                                         </li>
                                     {% endif %}
-                                    
-                                    {% for num in admin_page_obj.paginator.page_range %}
-                                        {% if admin_page_obj.number == num %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
                                             <li class="page-item active">
                                                 <span class="page-link">{{ num }}</span>
                                             </li>
-                                        {% elif num > admin_page_obj.number|add:'-3' and num < admin_page_obj.number|add:'3' %}
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                             <li class="page-item">
                                                 <a class="page-link" href="?page={{ num }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">{{ num }}</a>
                                             </li>
                                         {% endif %}
                                     {% endfor %}
                                     
-                                    {% if admin_page_obj.has_next %}
+                                    {% if page_obj.has_next %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ admin_page_obj.next_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Next</a>
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Next</a>
                                         </li>
                                     {% else %}
                                         <li class="page-item disabled">
