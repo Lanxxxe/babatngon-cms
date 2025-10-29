@@ -37,4 +37,5 @@ urlpatterns = [
 
     # Profile
     path('profile/', views.profile, name='profile'),
+    path('change-password/', views.resident_change_password, name='resident_change_password'),
 ]
