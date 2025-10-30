@@ -28,6 +28,7 @@ def admin_login(request):
             if not check_password(password, admin.password):
                 sweetify.toast(request, 'Invalid username or password.', timer=3000, icon='error')
                 return redirect('admin_login')
+            
             # Set session for admin
             request.session['admin_id'] = admin.id
             request.session['admin_username'] = admin.username

@@ -9,175 +9,52 @@ from django.views.decorators.http import require_POST
 from admins.models import Complaint, AssistanceRequest, Notification
 from core.models import Admin, User
 from django.db.models import Count
+from .notification_views import create_notes_notification, create_remarks_notification, create_status_update_notification
 import sweetify, json
 
-def _create_status_update_notification(case, case_type, old_status, new_status, staff):
-    """
-    Create a notification for the complainant when case status is updated.
-    """
-    try:
-        # Get content types
-        user_content_type = ContentType.objects.get_for_model(User)
-        admin_content_type = ContentType.objects.get_for_model(Admin)
+
+# Staff Login
+def staff_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
         
-        # Create status update message
-        status_display = new_status.replace('_', ' ').title()
-        old_status_display = old_status.replace('_', ' ').title()
-        
-        if case_type == 'complaint':
-            title = f"Complaint #{case.id} Status Update"
-            message = f"Your complaint '{case.title}' status has been updated from '{old_status_display}' to '{status_display}' by staff member {staff.get_full_name()}."
+        try:
+            staff_member = Admin.objects.get(username=username)
             
-            # Determine notification type and priority based on new status
-            if new_status == 'resolved':
-                notification_type = 'case_resolved'
-                priority = 'high'
-                message += " Your complaint has been resolved. Please review the resolution details."
-            elif new_status == 'closed':
-                notification_type = 'case_closed'
-                priority = 'normal'
-                message += " Your complaint has been closed."
-            elif new_status == 'in_progress':
-                notification_type = 'status_update'
-                priority = 'normal'
-                message += " Work is now in progress on your complaint."
+            if check_password(password, staff_member.password):
+                # Set session variables
+                request.session['staff_id'] = staff_member.id
+                request.session['staff_username'] = staff_member.username
+                request.session['staff_fullname'] = staff_member.get_full_name()
+                request.session['role'] = staff_member.role
+                request.session['department'] = staff_member.department
+                request.session['position'] = staff_member.position
+                request.session['first_name'] = staff_member.first_name
+                request.session['last_name'] = staff_member.last_name
+
+                sweetify.success(request, 'Login successful!', icon='success', timer=1500, persistent="Okay")
+                return redirect('staff_dashboard')
             else:
-                notification_type = 'status_update'
-                priority = 'normal'
-        
-        else:  # assistance request
-            title = f"Assistance Request #{case.id} Status Update"
-            message = f"Your assistance request '{case.title}' status has been updated from '{old_status_display}' to '{status_display}' by staff member {staff.get_full_name()}."
-            
-            # Determine notification type and priority based on new status
-            if new_status == 'completed':
-                notification_type = 'case_resolved'
-                priority = 'high'
-                message += " Your assistance request has been completed. Please review the completion details."
-            elif new_status == 'approved':
-                notification_type = 'request_approved'
-                priority = 'high'
-                message += " Your assistance request has been approved and will be processed."
-            elif new_status == 'rejected':
-                notification_type = 'request_rejected'
-                priority = 'high'
-                message += " Unfortunately, your assistance request has been rejected. Please check the remarks for more details."
-            elif new_status == 'in_progress':
-                notification_type = 'status_update'
-                priority = 'normal'
-                message += " Work is now in progress on your assistance request."
-            else:
-                notification_type = 'status_update'
-                priority = 'normal'
-        
-        # Create the notification
-        notification = Notification.objects.create(
-            recipient_content_type=user_content_type,
-            recipient_object_id=case.user.id,
-            sender_content_type=admin_content_type,
-            sender_object_id=staff.id,
-            title=title,
-            message=message,
-            notification_type=notification_type,
-            priority=priority,
-            related_complaint=case if case_type == 'complaint' else None,
-            related_assistance=case if case_type == 'assistance' else None,
-        )
-        
-        return notification
-        
-    except Exception as e:
-        # Log error but don't break the status update process
-        print(f"Error creating status update notification: {str(e)}")
-        return None
+                sweetify.error(request, 'Invalid username or password.', icon='error', timer=1500, persistent="Okay")
+                return redirect('staff_login')
+        except Admin.DoesNotExist:
+            sweetify.error(request, 'Invalid username or password.', icon='error', timer=1500, persistent="Okay")
 
-def _create_remarks_notification(case, case_type, remarks, staff):
-    """
-    Create a notification for the complainant when staff adds remarks to their case.
-    """
-    try:
-        # Get content types
-        user_content_type = ContentType.objects.get_for_model(User)
-        admin_content_type = ContentType.objects.get_for_model(Admin)
-        
-        if case_type == 'complaint':
-            title = f"New Remarks on Complaint #{case.id}"
-            message = f"Staff member {staff.get_full_name()} has added remarks to your complaint '{case.title}': {remarks}"
-        else:  # assistance request
-            title = f"New Remarks on Assistance Request #{case.id}"
-            message = f"Staff member {staff.get_full_name()} has added remarks to your assistance request '{case.title}': {remarks}"
-        
-        # Create the notification
-        notification = Notification.objects.create(
-            recipient_content_type=user_content_type,
-            recipient_object_id=case.user.id,
-            sender_content_type=admin_content_type,
-            sender_object_id=staff.id,
-            title=title,
-            message=message,
-            notification_type='admin_response',
-            priority='normal',
-            related_complaint=case if case_type == 'complaint' else None,
-            related_assistance=case if case_type == 'assistance' else None,
-        )
-        
-        return notification
-        
-    except Exception as e:
-        # Log error but don't break the remarks process
-        print(f"Error creating remarks notification: {str(e)}")
-        return None
+    return render(request, 'staff_login.html')
 
-def _create_notes_notification(case, case_type, notes, staff):
-    """
-    Create a notification for the complainant when staff adds resolution/completion notes.
-    """
-    try:
-        # Get content types
-        user_content_type = ContentType.objects.get_for_model(User)
-        admin_content_type = ContentType.objects.get_for_model(Admin)
-        
-        if case_type == 'complaint':
-            title = f"Resolution Notes Added to Complaint #{case.id}"
-            message = f"Resolution notes have been added to your complaint '{case.title}' by staff member {staff.get_full_name()}: {notes}"
-            notification_type = 'case_resolved'
-        else:  # assistance request
-            title = f"Completion Notes Added to Assistance Request #{case.id}"
-            message = f"Completion notes have been added to your assistance request '{case.title}' by staff member {staff.get_full_name()}: {notes}"
-            notification_type = 'case_resolved'
-        
-        # Create the notification
-        notification = Notification.objects.create(
-            recipient_content_type=user_content_type,
-            recipient_object_id=case.user.id,
-            sender_content_type=admin_content_type,
-            sender_object_id=staff.id,
-            title=title,
-            message=message,
-            notification_type=notification_type,
-            priority='high',  # High priority since this is usually final resolution
-            related_complaint=case if case_type == 'complaint' else None,
-            related_assistance=case if case_type == 'assistance' else None,
-        )
-        
-        return notification
-        
-    except Exception as e:
-        # Log error but don't break the notes process
-        print(f"Error creating notes notification: {str(e)}")
-        return None
 
-# Create your views here.
+# Staff Dashboard
 def staff_dashboard(request):
     """
     Staff dashboard showing assigned complaints and assistance requests.
     """
     # Get current staff member from session
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
         # Redirect to login if no staff session
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -241,7 +118,7 @@ def staff_dashboard(request):
         
     except Admin.DoesNotExist:
         # If staff not found, redirect to login
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         # Fallback with empty data
         context = {
@@ -262,14 +139,15 @@ def staff_dashboard(request):
     return render(request, 'staff_dashboard.html', context)
 
 
+# Staff Complaints
 def staff_complaints(request):
     """
     Display all complaints assigned to the current staff member.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -297,19 +175,19 @@ def staff_complaints(request):
         }
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     return render(request, 'staff_complaints.html', context)
 
-
+# Staff Assistance
 def staff_assistance(request):
     """
     Display all assistance requests assigned to the current staff member.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -337,19 +215,20 @@ def staff_assistance(request):
         }
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     return render(request, 'staff_assistance.html', context)
 
 
+# Cases Details and Actions
 def staff_view_case(request, case_type, case_id):
     """
     Display detailed view of a specific complaint or assistance request.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -382,7 +261,7 @@ def staff_view_case(request, case_type, case_id):
         return render(request, 'staff_view_cases.html', context)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error loading case details: {str(e)}', persistent=True, timer=3000)
         return redirect('staff_dashboard')
@@ -395,10 +274,10 @@ def staff_update_case_status(request, case_type, case_id):
     if request.method != 'POST':
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -443,13 +322,13 @@ def staff_update_case_status(request, case_type, case_id):
         
         # Create notification for the complainant if status changed
         if old_status != new_status:
-            _create_status_update_notification(case, case_type, old_status, new_status, current_staff)
+            create_status_update_notification(case, case_type, old_status, new_status, current_staff)
         
         sweetify.success(request, f'{case_type.title()} status updated to {new_status.replace("_", " ").title()} successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error updating status: {str(e)}')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
@@ -462,10 +341,10 @@ def staff_add_remarks(request, case_type, case_id):
     if request.method != 'POST':
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -496,13 +375,13 @@ def staff_add_remarks(request, case_type, case_id):
         case.save()
         
         # Create notification for the complainant about new remarks
-        _create_remarks_notification(case, case_type, remarks, current_staff)
+        create_remarks_notification(case, case_type, remarks, current_staff)
         
         sweetify.success(request, 'Remarks added successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error adding remarks: {str(e)}')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
@@ -515,10 +394,10 @@ def staff_add_notes(request, case_type, case_id):
     if request.method != 'POST':
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -544,26 +423,26 @@ def staff_add_notes(request, case_type, case_id):
         case.save()
         
         # Create notification for the complainant about resolution/completion notes
-        _create_notes_notification(case, case_type, notes, current_staff)
+        create_notes_notification(case, case_type, notes, current_staff)
         
         sweetify.success(request, f'{note_type} updated successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error updating notes: {str(e)}')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
 
-
+# Staff Profile Management
 def staff_profile(request):
     """
     Display staff profile information.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -575,7 +454,7 @@ def staff_profile(request):
         return render(request, 'staff_profile.html', context)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error loading profile: {str(e)}')
         return redirect('staff_dashboard')
@@ -588,10 +467,10 @@ def staff_update_profile(request):
     if request.method != 'POST':
         return redirect('staff_profile')
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -630,7 +509,7 @@ def staff_update_profile(request):
         return redirect('staff_profile')
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error updating profile: {str(e)}')
         return redirect('staff_profile')
@@ -643,10 +522,10 @@ def staff_change_password(request):
     if request.method != 'POST':
         return redirect('staff_profile')
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -684,7 +563,7 @@ def staff_change_password(request):
         return redirect('staff_profile')
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error changing password: {str(e)}')
         return redirect('staff_profile')
@@ -697,10 +576,10 @@ def staff_update_username(request):
     if request.method != 'POST':
         return redirect('staff_profile')
     
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -741,20 +620,21 @@ def staff_update_username(request):
         return redirect('staff_profile')
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error updating username: {str(e)}')
         return redirect('staff_profile')
 
 
+# Staff Notification Management
 def staff_notifications(request):
     """
     Display all notifications for the current staff member.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -839,7 +719,7 @@ def staff_notifications(request):
         return render(request, 'staff_notification.html', context)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error loading notifications: {str(e)}')
         return redirect('staff_dashboard')
@@ -850,7 +730,7 @@ def staff_mark_notification_read(request):
     """
     Mark a specific staff notification as read.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
         return JsonResponse({'success': False, 'error': 'Not authenticated'})
@@ -886,7 +766,7 @@ def staff_mark_all_notifications_read(request):
     """
     Mark all staff notifications as read.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
         return JsonResponse({'success': False, 'error': 'Not authenticated'})
@@ -917,7 +797,7 @@ def staff_archive_notification(request):
     """
     Archive a specific staff notification.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
         return JsonResponse({'success': False, 'error': 'Not authenticated'})
@@ -952,10 +832,10 @@ def staff_notification_details(request, notification_id):
     """
     Get staff notification details for modal or page display.
     """
-    staff_id = request.session.get('admin_id')
+    staff_id = request.session.get('staff_id')
     
     if not staff_id:
-        return redirect('admin_login')
+        return redirect('staff_login')
     
     try:
         current_staff = Admin.objects.get(id=staff_id)
@@ -982,10 +862,18 @@ def staff_notification_details(request, notification_id):
         return render(request, 'notification_details.html', context)
         
     except Admin.DoesNotExist:
-        return redirect('admin_login')
+        return redirect('staff_login')
     except Notification.DoesNotExist:
         sweetify.error(request, 'Notification not found', timer=3000)
         return redirect('staff_notifications')
     except Exception as e:
         sweetify.error(request, f'Error loading notification: {str(e)}', timer=3000)
         return redirect('staff_notifications')
+    
+
+# Staff Logout
+def staff_logout(request):
+
+    request.session.flush()
+    sweetify.success(request, 'Logged out successfully.', icon='success', timer=1500, persistent="Okay")
+    return redirect('staff_login')

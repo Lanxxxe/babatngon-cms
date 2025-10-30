@@ -107,9 +107,6 @@
                                     <td><span class="fw-semibold text-primary">#{{ complaint.id }}</span></td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="user-avatar-admin me-2" style="width: 24px; height: 24px; font-size: 10px;">
-                                                {{ complaint.user.first_name|first }}{{ complaint.user.last_name|first }}
-                                            </div>
                                             <span class="fw-medium">{{ complaint.user.first_name }} {{ complaint.user.last_name }}</span>
                                         </div>
                                     </td>
@@ -165,39 +162,6 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <!-- <div class="quick-actions mb-3">
-            <h6 class="mb-3 fw-semibold">
-                <i class="bi bi-lightning me-2"></i>Quick Actions
-            </h6>
-            <div class="row g-2">
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-people text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Bulk Assign</div>
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-download text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Export Data</div>
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-bell text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Send Alert</div>
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-gear text-primary mb-2" style="font-size: 20px;"></i>
-                        <div class="fw-medium small">Settings</div>
-                    </a>
-                </div>
-            </div>
-        </div> -->
-
         <!-- Priority Complaints -->
         <div class="card-admin mb-3">
             <div class="card-header-admin text-danger">
@@ -237,31 +201,6 @@
                 {% endif %}
             </div>
         </div>
-
-        <!-- System Status -->
-        <!-- <div class="card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-activity me-2"></i>System Status
-            </div>
-            <div class="card-body-admin">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small">Server Status</span>
-                    <span class="badge bg-success">Online</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small">Database</span>
-                    <span class="badge bg-success">Connected</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small">Email Service</span>
-                    <span class="badge bg-success">Active</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="small">SMS Service</span>
-                    <span class="badge bg-warning">Limited</span>
-                </div>
-            </div>
-        </div> -->
     </div>
 </div>
 
