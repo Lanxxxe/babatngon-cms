@@ -13,10 +13,6 @@ from django.contrib.auth.hashers import check_password
 import sweetify, json
 
 def admin_login(request):
-    """
-    Admin/staff login page with authentication and security best practices.
-    """
- 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
@@ -233,6 +229,8 @@ def admin_analytics(request):
 
     return render(request, 'admin_analytics.html', context)
 
+
+# Admin Complaint Management
 def admin_complaints(request):
     
     # Start with unassigned complaints by default
@@ -400,6 +398,7 @@ def update_complaint_status(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+# Admin Assistance Management
 def admin_assistance(request):
     """
     Display all assistance requests for admin management.
@@ -661,7 +660,7 @@ def assign_assistance(request):
         current_admin = Admin.objects.get(id=current_admin_id) if current_admin_id else None
         
         assistance.assigned_to = staff
-
+        assistance.assigned_by = current_admin
         assistance.status = 'pending'
 
         if staff:

@@ -46,6 +46,7 @@ class AssistanceRequest(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
     longitude = models.DecimalField(max_digits=11, decimal_places=8, blank=True, null=True)
     assigned_to = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL)
+    assigned_by = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_assistances')
     admin_remarks = models.TextField(blank=True, null=True)
     completion_notes = models.TextField(blank=True, null=True)
     completed_at = models.DateTimeField(null=True, blank=True)
