@@ -245,7 +245,7 @@
     <!-- Actions Sidebar -->
     <div class="col-lg-4">
         <!-- Actions Card -->
-        <div class="card-admin mb-3 sticky-top" style="top: 20px;">
+        <div class="card-admin mb-3" style="top: 20px;">
             <div class="card-header-admin">
                 <h6 class="mb-0">
                     <i class="bi bi-gear me-2"></i>Actions
@@ -253,9 +253,9 @@
             </div>
             <div class="card-body-admin">
                 <!-- Status Update -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Update Status:</label>
-                    <form method="post" action="{% url 'staff_update_case_status' case_type case.id %}">
+                <form method="post" action="{% url 'staff_update_case_status' case_type case.id %}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Update Status:</label>
                         {% csrf_token %}
                         <div class="input-group input-group-sm mb-2">
                             <select name="status" class="form-select" id="statusSelect">
@@ -272,25 +272,22 @@
                                     <option value="rejected" {% if case.status == 'rejected' %}selected{% endif %}>Rejected</option>
                                 {% endif %}
                             </select>
-                            <button type="submit" class="btn btn-admin-primary">Update</button>
                         </div>
-                    </form>
-                </div>
+                    </div>
 
-                <!-- Add Remarks -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Add Remarks:</label>
-                    <form method="post" action="{% url 'staff_add_remarks' case_type case.id %}">
-                        {% csrf_token %}
+                    <!-- Add Remarks -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Add Remarks:</label>
                         <div class="mb-2">
                             <textarea name="remarks" class="form-control form-control-sm" rows="3" placeholder="Enter your remarks..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-admin-secondary btn-sm w-100">
-                            <i class="bi bi-chat-text me-1"></i>Add Remarks
-                        </button>
-                    </form>
-                </div>
+                    </div>
+                        
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-chat-text me-1"></i>Update Status
+                    </button>
 
+                </form>
                 <!-- Resolution/Completion Notes (for resolved/completed cases) -->
                 {% if case.status == 'resolved' or case.status == 'completed' %}
                 <div class="mb-3">
@@ -319,12 +316,6 @@
                        class="btn btn-admin-secondary btn-sm">
                         <i class="bi bi-arrow-left me-1"></i>Back to List
                     </a>
-                    {% comment %} <button class="btn btn-admin-primary btn-sm" onclick="window.print()">
-                        <i class="bi bi-printer me-1"></i>Print Details
-                    </button>
-                    <button class="btn btn-admin-secondary btn-sm" onclick="exportCaseData()">
-                        <i class="bi bi-download me-1"></i>Export Data
-                    </button> {% endcomment %}
                 </div>
             </div>
         </div>
@@ -389,42 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 {% endif %}
-
-// Export case data function
-function exportCaseData() {
-    // Create a simple text export of case data
-    var caseData = {
-        id: '{{ case.id }}',
-        type: '{{ case_type }}',
-        title: '{{ case.title|escapejs }}',
-        {% if case_type == 'complaint' %}
-        category: '{{ case.category|escapejs }}',
-        priority: '{{ case.priority|escapejs }}',
-        {% else %}
-        type: '{{ case.type|escapejs }}',
-        urgency: '{{ case.urgency|escapejs }}',
-        {% endif %}
-        status: '{{ case.status|escapejs }}',
-        resident: '{{ case.user.first_name|escapejs }} {{ case.user.last_name|escapejs }}',
-        email: '{{ case.user.email|escapejs }}',
-        description: '{{ case.description|escapejs }}',
-        created_at: '{{ case.created_at|date:"c" }}',
-        {% if case.latitude and case.longitude %}
-        coordinates: '{{ case.latitude }}, {{ case.longitude }}',
-        {% endif %}
-        {% if case.address %}
-        address: '{{ case.address|escapejs }}',
-        {% endif %}
-    };
-    
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(caseData, null, 2));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "{{ case_type }}_{{ case.id }}_details.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-}
 
 // Form submission with confirmation
 document.addEventListener('DOMContentLoaded', function() {

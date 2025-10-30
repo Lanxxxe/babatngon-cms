@@ -13,7 +13,6 @@ urlpatterns = [
     
     # Case action views
     path('cases/<str:case_type>/<int:case_id>/update-status/', views.staff_update_case_status, name='staff_update_case_status'),
-    path('cases/<str:case_type>/<int:case_id>/add-remarks/', views.staff_add_remarks, name='staff_add_remarks'),
     path('cases/<str:case_type>/<int:case_id>/add-notes/', views.staff_add_notes, name='staff_add_notes'),
     
     # Notification views

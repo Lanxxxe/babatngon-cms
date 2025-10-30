@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from admins.models import Complaint, AssistanceRequest, Notification
 from core.models import Admin, User
 from django.db.models import Count
-from .notification_views import create_notes_notification, create_remarks_notification, create_status_update_notification
+from .notification_views import create_notes_notification, create_status_update_notification
 import sweetify, json
 
 
@@ -141,9 +141,6 @@ def staff_dashboard(request):
 
 # Staff Complaints
 def staff_complaints(request):
-    """
-    Display all complaints assigned to the current staff member.
-    """
     staff_id = request.session.get('staff_id')
     
     if not staff_id:
@@ -154,7 +151,7 @@ def staff_complaints(request):
         
         # Get all complaints assigned to current staff member
         complaints = Complaint.objects.filter(
-            assigned_to=current_staff
+            assigned_to=current_staff,
         ).select_related('user').order_by('-created_at')
         
         # Apply filters if provided
@@ -163,10 +160,13 @@ def staff_complaints(request):
         
         if status_filter:
             complaints = complaints.filter(status=status_filter)
-        
+        else:
+            complaints = complaints.filter(status__in=['pending', 'in_progress'])
+
         if priority_filter:
             complaints = complaints.filter(priority=priority_filter)
         
+
         context = {
             'complaints': complaints,
             'current_staff': current_staff,
@@ -248,9 +248,6 @@ def staff_view_case(request, case_type, case_id):
             )
         else:
             sweetify.error(request, 'Invalid case type.', persistent=True, timer=3000)
-            return redirect('staff_dashboard')
-
-        print(case.assigned_by)
 
         context = {
             'case': case,
@@ -264,128 +261,87 @@ def staff_view_case(request, case_type, case_id):
         return redirect('staff_login')
     except Exception as e:
         sweetify.error(request, f'Error loading case details: {str(e)}', persistent=True, timer=3000)
-        return redirect('staff_dashboard')
+    
+    if case_type == 'complaint':
+        return redirect('staff_complaints')
+    elif case_type == 'assistance':
+        return redirect('staff_assistance')
 
 
 def staff_update_case_status(request, case_type, case_id):
     """
     Update the status of a complaint or assistance request.
     """
-    if request.method != 'POST':
-        return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-    
-    staff_id = request.session.get('staff_id')
-    
-    if not staff_id:
-        return redirect('staff_login')
-    
-    try:
-        current_staff = Admin.objects.get(id=staff_id)
-        new_status = request.POST.get('status')
+    if request.method == 'POST':
+        staff_id = request.session.get('staff_id')
+        if not staff_id:
+            sweetify.error(request, 'You must be logged in to perform this action.', icon='error', timer=3000, persistent="Okay ")
+            return redirect('staff_login')
         
-        if not new_status:
-            sweetify.error(request, 'Status is required.')
-            return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-        
-        # Get the case and store old status for comparison
-        if case_type == 'complaint':
-            case = get_object_or_404(Complaint, id=case_id, assigned_to=current_staff)
-            valid_statuses = ['pending', 'in_progress', 'resolved', 'closed']
+        try:
+            current_staff = Admin.objects.get(id=staff_id)
+            new_status = request.POST.get('status', '').strip()
+            remarks = request.POST.get('remarks', '').strip()
             
-            if new_status not in valid_statuses:
-                sweetify.error(request, 'Invalid status for complaint.')
+            if not new_status:
+                sweetify.error(request, 'Status is required.')
                 return redirect('staff_view_case', case_type=case_type, case_id=case_id)
             
-            old_status = case.status
-            case.status = new_status
+            # Get the case and store old status for comparison
+            if case_type == 'complaint':
+                case = get_object_or_404(Complaint, id=case_id, assigned_to=current_staff)
+                valid_statuses = ['pending', 'in_progress', 'resolved', 'closed']
+                
+                if new_status not in valid_statuses:
+                    sweetify.error(request, 'Invalid status for complaint.')
+                    return redirect('staff_view_case', case_type=case_type, case_id=case_id)
+                
+                old_status = case.status
+                case.status = new_status
+                
+                # Set resolved_at timestamp if status is resolved
+                if new_status == 'resolved':
+                    case.resolved_at = timezone.now()
+                
+            elif case_type == 'assistance':
+                case = get_object_or_404(AssistanceRequest, id=case_id, assigned_to=current_staff)
+                valid_statuses = ['pending', 'approved', 'in_progress', 'completed', 'rejected']
+                
+                if new_status not in valid_statuses:
+                    sweetify.error(request, 'Invalid status for assistance request.')
+                    return redirect('staff_view_case', case_type=case_type, case_id=case_id)
+                
+                old_status = case.status
+                case.status = new_status
+                
+                # Set completed_at timestamp if status is completed
+                if new_status == 'completed':
+                    case.completed_at = timezone.now()
             
-            # Set resolved_at timestamp if status is resolved
-            if new_status == 'resolved' and old_status != 'resolved':
-                case.resolved_at = timezone.now()
+            timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+            new_remark = f"[{timestamp}] {current_staff.first_name}: {remarks}"
+            if case.admin_remarks:
+                case.admin_remarks += f"\n\n{new_remark}"
+            else:
+                case.admin_remarks = new_remark
+            case.save()
             
-        elif case_type == 'assistance':
-            case = get_object_or_404(AssistanceRequest, id=case_id, assigned_to=current_staff)
-            valid_statuses = ['pending', 'approved', 'in_progress', 'completed', 'rejected']
+            # Create notification for the complainant if status changed
+            if old_status != new_status:
+                create_status_update_notification(case, case_type, old_status, new_status, new_remark, current_staff)
             
-            if new_status not in valid_statuses:
-                sweetify.error(request, 'Invalid status for assistance request.')
-                return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-            
-            old_status = case.status
-            case.status = new_status
-            
-            # Set completed_at timestamp if status is completed
-            if new_status == 'completed' and old_status != 'completed':
-                case.completed_at = timezone.now()
-        
-        case.save()
-        
-        # Create notification for the complainant if status changed
-        if old_status != new_status:
-            create_status_update_notification(case, case_type, old_status, new_status, current_staff)
-        
-        sweetify.success(request, f'{case_type.title()} status updated to {new_status.replace("_", " ").title()} successfully.')
-        return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-        
-    except Admin.DoesNotExist:
-        return redirect('staff_login')
-    except Exception as e:
-        sweetify.error(request, f'Error updating status: {str(e)}')
-        return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-
-
-def staff_add_remarks(request, case_type, case_id):
-    """
-    Add admin remarks to a complaint or assistance request.
-    """
-    if request.method != 'POST':
-        return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-    
-    staff_id = request.session.get('staff_id')
-    
-    if not staff_id:
-        return redirect('staff_login')
-    
-    try:
-        current_staff = Admin.objects.get(id=staff_id)
-        remarks = request.POST.get('remarks', '').strip()
-        
-        if not remarks:
-            sweetify.error(request, 'Remarks cannot be empty.')
+            sweetify.success(request, f'{case_type.title()} status updated to {new_status.replace("_", " ").title()} successfully.', icon='success', timer=3000, persistent="Okay")
             return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-        
-        # Get the case and add remarks
-        if case_type == 'complaint':
-            case = get_object_or_404(Complaint, id=case_id, assigned_to=current_staff)
-        elif case_type == 'assistance':
-            case = get_object_or_404(AssistanceRequest, id=case_id, assigned_to=current_staff)
-        else:
-            sweetify.error(request, 'Invalid case type.')
-            return redirect('staff_dashboard')
-        
-        # Append new remarks to existing remarks with timestamp
-        timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-        new_remark = f"[{timestamp}] {current_staff.first_name}: {remarks}"
-        
-        if case.admin_remarks:
-            case.admin_remarks += f"\n\n{new_remark}"
-        else:
-            case.admin_remarks = new_remark
-        
-        case.save()
-        
-        # Create notification for the complainant about new remarks
-        create_remarks_notification(case, case_type, remarks, current_staff)
-        
-        sweetify.success(request, 'Remarks added successfully.')
+            
+        except Admin.DoesNotExist:
+            return redirect('staff_login')
+        except Exception as e:
+            sweetify.error(request, f'Error updating status: {str(e)}')
+            return redirect('staff_view_case', case_type=case_type, case_id=case_id)
+    
+    else:
+        sweetify.error(request, 'Invalid request method.', icon='error', timer=3000, persistent="Okay ")
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-        
-    except Admin.DoesNotExist:
-        return redirect('staff_login')
-    except Exception as e:
-        sweetify.error(request, f'Error adding remarks: {str(e)}')
-        return redirect('staff_view_case', case_type=case_type, case_id=case_id)
-
 
 def staff_add_notes(request, case_type, case_id):
     """
