@@ -26,13 +26,16 @@
 	- [x] Comment
 
 - Notifications
-	- [ ] Receive Complaint Status
-	- [ ] Receive Assistance Status
+	- [x] Receive Complaint Status
+	- [x] Receive Assistance Status
 
-- [ ] Request Follow Up
+- Request Follow Up
 	- [x] On filed complaint
-	- [ ] On filed assistance request
+	- [x] On filed assistance request
 
+- Profile
+	- [x] View
+	- [x] Update
 
 #### Dashboard
 - Personal Dashboard
@@ -64,7 +67,7 @@
 #### Profile
 - Profile
 	- [x] View
-	- [ ] Update
+	- [x] Update
 
 #### Notification
 - Notification
@@ -103,3 +106,13 @@
 #### Notification
 - Notification
 	- [x] Notify for new filed cases
+
+
+#### Systems Recommendation
+- [x] Suffix Name
+- [x] Other -> Specify the category (enable to type)
+- [x] Location -> Pint my location (additional features) aside from typing
+- [ ] My complaints -> Proper Label Subject -> complaint, location, date & time
+- [ ] Reports -> # of complaints to specific person
+- [ ] AI -> Detect the priority
+- [ ] Clear, Big, Readable Figure/Images
