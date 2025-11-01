@@ -14,6 +14,7 @@ class User(models.Model):
     address = models.TextField(blank=True, null=True)
     password = models.CharField(max_length=255)
     is_verified = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='uploads/profile_pictures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
