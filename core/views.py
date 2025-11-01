@@ -14,26 +14,35 @@ def register(request):
         middle_name = request.POST.get('middle_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         suffix = request.POST.get('suffix', '').strip()
+        username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
         phone = request.POST.get('phone', '').strip()
+        barangay = request.POST.get('barangay', '').strip()
         address = request.POST.get('address', '').strip()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
         
         # Basic validation
-        if not all([first_name, last_name, email, phone, address, password1, password2]):
+        if not all([first_name, last_name, username, email, phone, address, password1, password2]):
             sweetify.error(request, 'All required fields must be filled.', timer=3000)
             return render(request, 'registration.html')
+        
         if password1 != password2:
             sweetify.error(request, 'Passwords do not match.', timer=3000)
             return render(request, 'registration.html')
         if len(password1) < 8:
             sweetify.error(request, 'Password must be at least 8 characters.', timer=3000)
             return render(request, 'registration.html')
+        
         # Check if email already exists
         if User.objects.filter(email=email).exists():
             sweetify.error(request, 'Email already registered.', timer=3000)
             return render(request, 'registration.html')
+        
+        if User.objects.filter(username=username).exists():
+            sweetify.error(request, 'Username already taken.', timer=3000)
+            return render(request, 'registration.html')
+        
         # Save user securely
         try:
             hashed_password = make_password(password1)
@@ -42,8 +51,10 @@ def register(request):
                 middle_name=middle_name,
                 last_name=last_name,
                 suffix=suffix,
+                username=username,
                 email=email,
                 phone=phone,
+                barangay=barangay,
                 address=address,
                 password=hashed_password
             )
@@ -62,19 +73,26 @@ def login(request):
     if request.method == 'POST':
         username_or_email = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
+
         user = None
 
         # Use ORM filtering to prevent SQL injection
         try:
             user = User.objects.filter(email=username_or_email).first()
             if not user:
-                user = User.objects.filter(first_name=username_or_email).first()  # fallback, adjust if you have username field
+                user = User.objects.filter(username=username_or_email).first()  # fallback, adjust if you have username field
         except Exception:
             user = None
+        
+        if user and not user.is_verified:
+
+            sweetify.warning(request, 'Account not verified. Please wait for admin approval.', timer=3000, persistent="Close")
+            
+            return render(request, 'login.html')
 
         if user and check_password(password, user.password):
             # Set session securely
-            request.session['id'] = user.id
+            request.session['resident_id'] = user.id
             request.session['role'] = 'resident'
             request.session['first_name'] = user.first_name
             request.session['middle_name'] = user.middle_name
