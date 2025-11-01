@@ -151,7 +151,7 @@ def assign_complaint(request):
         if updated_priority:
             complaint.priority = updated_priority
 
-        complaint.status = 'Assigned'
+        complaint.status = 'assigned'
 
         complaint.save()
         if staff:

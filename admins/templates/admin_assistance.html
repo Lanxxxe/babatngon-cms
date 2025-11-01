@@ -155,9 +155,6 @@
             </small>
         </div>
         <div class="d-flex gap-1">
-            {% comment %} <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
-                <i class="bi bi-grid-3x3-gap me-1"></i>Card View
-            </button> {% endcomment %}
             <button class="btn btn-admin-primary btn-sm">
                 <i class="bi bi-list-ul me-1"></i>Table View
             </button>
@@ -219,8 +216,9 @@
                             <td>
                                 <span class="badge 
                                     {% if assistance.status == 'pending' %}bg-warning
+                                    {% elif assistance.status == 'assigned' %}bg-primary
                                     {% elif assistance.status == 'approved' %}bg-info
-                                    {% elif assistance.status == 'in_progress' %}bg-info
+                                    {% elif assistance.status == 'in progress' %}bg-info
                                     {% elif assistance.status == 'completed' %}bg-success
                                     {% else %}bg-danger{% endif %}">
                                     {{ assistance.status|title }}
@@ -247,41 +245,9 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-admin-primary btn-sm" onclick="loadAssistanceDetails(this)" data-assistance-id="{{ assistance.id }}" title="View Details">
+                                    <a href="{% url 'assistance_details' assistance.id %}" role="button" class="btn btn-admin-primary btn-sm" title="View Details">
                                         <i class="bi bi-eye"></i>
-                                    </button>
-                                    <div class="dropdown">
-                                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><h6 class="dropdown-header">Assign To Staff</h6></li>
-                                            {% for staff in staff_members %}
-                                                <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, {{ staff.id }})">
-                                                    <i class="bi bi-person me-2"></i>{{ staff.first_name }} {{ staff.last_name }}
-                                                    {% if assistance.assigned_to and assistance.assigned_to.id == staff.id %}<i class="bi bi-check ms-2 text-success"></i>{% endif %}
-                                                </a></li>
-                                            {% endfor %}
-                                            <li><a class="dropdown-item" href="#" onclick="assignAssistance({{ assistance.id }}, null)">
-                                                <i class="bi bi-person-x me-2"></i>Unassign
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><h6 class="dropdown-header">Update Status</h6></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'approved')">
-                                                <i class="bi bi-check-circle me-2"></i>Mark Approved
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'in_progress')">
-                                                <i class="bi bi-play me-2"></i>Mark In Progress
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ assistance.id }}, 'completed')">
-                                                <i class="bi bi-check me-2"></i>Mark Completed
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteAssistance({{ assistance.id }})">
-                                                <i class="bi bi-trash me-2"></i>Delete
-                                            </a></li>
-                                        </ul>
-                                    </div>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -358,268 +324,11 @@
     </div>
 </div>
 
-<!-- Assistance Details Modal -->
-<div class="modal fade" id="assistanceDetailsModal" tabindex="-1" aria-labelledby="assistanceDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="assistanceDetailsModalLabel">
-                    <i class="bi bi-eye me-2"></i>Assistance Request Details - #<span id="assistanceId"></span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body px-4 py-3">
-                <div class="row">
-                    <!-- Request Information -->
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-info-circle me-1"></i>Request Information
-                        </h6>
-                        <dl class="row">
-                            <dt class="col-sm-4 text-end">Type:</dt>
-                            <dd class="col-sm-8" id="assistanceType">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Urgency:</dt>
-                            <dd class="col-sm-8" id="urgencyLevel">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Status:</dt>
-                            <dd class="col-sm-8" id="status">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Filed On:</dt>
-                            <dd class="col-sm-8" id="requestedDate">-</dd>
-                        </dl>
-                    </div>
-                    
-                    <!-- Resident Information -->
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-person me-1"></i>Resident Information
-                        </h6>
-                        <dl class="row">
-                            <dt class="col-sm-4 text-end">Name:</dt>
-                            <dd class="col-sm-8" id="residentName">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Email:</dt>
-                            <dd class="col-sm-8" id="residentEmail">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Phone:</dt>
-                            <dd class="col-sm-8" id="residentPhone">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Address:</dt>
-                            <dd class="col-sm-8" id="residentAddress">-</dd>
-                        </dl>
-                    </div>
-                </div>
-                
-                <!-- Description -->
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-file-text me-1"></i>Description
-                        </h6>
-                        <div class="bg-light p-3 rounded">
-                            <p class="mb-0" id="assistanceDescription">-</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Assignment Information -->
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-person-check me-1"></i>Assignment Information
-                        </h6>
-                        <dl class="row">
-                            <dt class="col-sm-4 text-end">Assigned To:</dt>
-                            <dd class="col-sm-8" id="assignedTo">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Assigned By:</dt>
-                            <dd class="col-sm-8" id="assignedBy">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Assigned Date:</dt>
-                            <dd class="col-sm-8" id="assignedDate">-</dd>
-                        </dl>
-                    </div>
-                    
-                    <!-- Completion Information -->
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-check-circle me-1"></i>Completion Information
-                        </h6>
-                        <dl class="row">
-                            <dt class="col-sm-4 text-end">Completed By:</dt>
-                            <dd class="col-sm-8" id="completedBy">-</dd>
-                            
-                            <dt class="col-sm-4 text-end">Completed Date:</dt>
-                            <dd class="col-sm-8" id="completedDate">-</dd>
-                        </dl>
-                    </div>
-                </div>
-                
-                <!-- Admin Notes -->
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-clipboard-check me-1"></i>Admin Notes
-                        </h6>
-                        <div class="bg-light p-3 rounded">
-                            <p class="mb-0" id="adminNotes">No notes available</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Map Section -->
-                <div class="row mt-3" id="assistanceMapContainer" style="display: none;">
-                    <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-geo-alt me-1"></i>Location
-                        </h6>
-                        <div class="map-container">
-                            <div id="assistanceMap" style="height: 300px; border: 1px solid #ddd; border-radius: 0.375rem;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Attachments Section -->
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                            <i class="bi bi-paperclip me-1"></i>Attachments
-                        </h6>
-                        <div id="attachmentsContainer">
-                            <p class="text-muted mb-0">Loading attachments...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
 
 <script>
-    let assistanceMap = null;
-
-    function loadAssistanceDetails(button) {
-        const assistanceId = button.getAttribute('data-assistance-id');
-        
-        fetch(`/admin/assistance/${assistanceId}/details/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const assistance = data.assistance;
-                    
-                    // Update modal content
-                    document.getElementById('assistanceId').textContent = assistance.id;
-                    document.getElementById('assistanceType').textContent = assistance.type || 'N/A';
-                    document.getElementById('assistanceDescription').textContent = assistance.description || 'N/A';
-                    document.getElementById('requestedDate').textContent = assistance.requested_date || 'N/A';
-                    document.getElementById('urgencyLevel').textContent = assistance.urgency_level || 'N/A';
-                    document.getElementById('status').textContent = assistance.status || 'N/A';
-                    
-                    // Update resident information
-                    document.getElementById('residentName').textContent = assistance.resident_name || 'N/A';
-                    document.getElementById('residentPhone').textContent = assistance.resident_phone || 'N/A';
-                    document.getElementById('residentEmail').textContent = assistance.resident_email || 'N/A';
-                    document.getElementById('residentAddress').textContent = assistance.resident_address || 'N/A';
-                    
-                    // Update assignment information
-                    document.getElementById('assignedTo').textContent = assistance.assigned_to || 'Not Assigned';
-                    document.getElementById('assignedBy').textContent = assistance.assigned_by || 'N/A';
-                    document.getElementById('assignedDate').textContent = assistance.assigned_date || 'N/A';
-                    
-                    // Update completion information
-                    document.getElementById('completedBy').textContent = assistance.completed_by || 'N/A';
-                    document.getElementById('completedDate').textContent = assistance.completed_date || 'N/A';
-                    document.getElementById('adminNotes').textContent = assistance.admin_notes || 'No notes available';
-                    
-                    // Handle attachments
-                    const attachmentsContainer = document.getElementById('attachmentsContainer');
-                    if (assistance.attachments && assistance.attachments.length > 0) {
-                        let attachmentsHtml = '';
-                        assistance.attachments.forEach(attachment => {
-                            attachmentsHtml += `
-                                <div class="col-md-4 mb-3">
-                                    <div class="card attachment-card h-100">
-                                        <div class="card-body text-center p-3">
-                                            <div class="attachment-icon mx-auto mb-2">
-                                                <i class="fas fa-file-alt text-primary"></i>
-                                            </div>
-                                            <h6 class="card-title mb-2">${attachment.name}</h6>
-                                            <small class="text-muted d-block mb-2">${attachment.size}</small>
-                                            <a href="${attachment.url}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                                <i class="fas fa-download me-1"></i>Download
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        attachmentsContainer.innerHTML = `
-                            <div class="row">
-                                ${attachmentsHtml}
-                            </div>
-                        `;
-                    } else {
-                        attachmentsContainer.innerHTML = '<p class="text-muted mb-0">No attachments available</p>';
-                    }
-                    
-                    // Handle map
-                    const mapContainer = document.getElementById('assistanceMapContainer');
-                    if (assistance.latitude && assistance.longitude) {
-                        mapContainer.style.display = 'block';
-                        
-                        // Initialize map when modal is shown
-                        setTimeout(() => {
-                            if (assistanceMap) {
-                                assistanceMap.remove();
-                            }
-                            
-                            assistanceMap = L.map('assistanceMap').setView([assistance.latitude, assistance.longitude], 15);
-                            
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            }).addTo(assistanceMap);
-                            
-                            const marker = L.marker([assistance.latitude, assistance.longitude]).addTo(assistanceMap);
-                            marker.bindPopup(`
-                                <strong>Assistance Location</strong><br>
-                                ${assistance.type}<br>
-                                <small>Requested by: ${assistance.resident_name}</small>
-                            `).openPopup();
-                        }, 300);
-                    } else {
-                        mapContainer.style.display = 'none';
-                    }
-                    
-                    // Show modal
-                    new bootstrap.Modal(document.getElementById('assistanceDetailsModal')).show();
-                } else {
-                    alert('Error loading assistance details: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error loading assistance details');
-            });
-    }
-
-    // Clean up map when modal is hidden
-    document.getElementById('assistanceDetailsModal').addEventListener('hidden.bs.modal', function () {
-        if (assistanceMap) {
-            assistanceMap.remove();
-            assistanceMap = null;
-        }
-    });
-
     // CSRF token for AJAX requests
     function getCookie(name) {
         let cookieValue = null;

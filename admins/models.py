@@ -27,7 +27,7 @@ class Complaint(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     category = models.CharField(max_length=50)
-    priority = models.CharField(max_length=20, default='low')
+    priority = models.CharField(max_length=20, default='low', choices=PRIORITY_LEVELS)
     status = models.CharField(max_length=20, default='pending', choices=COMPLAINT_STATUS_CHOICES)
     location_description = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
@@ -50,19 +50,37 @@ class Complaint(models.Model):
 
 # Assistance Requests Table
 class AssistanceRequest(models.Model):
+    ASSISTANCE_URGENCY_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]    
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    ASSISTANCE_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('assigned', 'Assigned'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+    
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)    
     title = models.CharField(max_length=200)
     description = models.TextField()
     type = models.CharField(max_length=50)
-    urgency = models.CharField(max_length=20, default='low')
-    status = models.CharField(max_length=20, default='pending')
+    urgency = models.CharField(max_length=20, default='low', choices=ASSISTANCE_URGENCY_LEVELS)
+    status = models.CharField(max_length=20, default='pending', choices=ASSISTANCE_STATUS_CHOICES)
     address = models.TextField(blank=True, null=True)
     latitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
     longitude = models.DecimalField(max_digits=11, decimal_places=8, blank=True, null=True)
     assigned_to = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL)
     assigned_by = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_assistances')
+    assigned_date = models.DateTimeField(null=True, blank=True)
     admin_remarks = models.TextField(blank=True, null=True)
+
+    completed_by = models.ForeignKey(Admin, null=True, blank=True, on_delete=models.SET_NULL, related_name='completed_assistances')
     completion_notes = models.TextField(blank=True, null=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

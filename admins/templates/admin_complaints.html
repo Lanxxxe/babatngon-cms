@@ -84,7 +84,7 @@
                                placeholder="Search by ID, resident, or subject..." value="{{ current_search }}">
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select class="form-select form-select-sm" id="statusFilter" name="status">
                         <option value="">All Status</option>
@@ -106,7 +106,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label for="priorityFilter" class="form-label">Priority</label>
                     <select class="form-select form-select-sm" id="priorityFilter" name="priority">
                         <option value="">All Priorities</option>
@@ -215,6 +215,7 @@
                             <td>
                                 <span class="badge 
                                     {% if complaint.status == 'pending' %}bg-warning
+                                    {% elif complaint.status == 'assigned' %}bg-primary
                                     {% elif complaint.status == 'in_progress' %}bg-info
                                     {% elif complaint.status == 'resolved' %}bg-success
                                     {% else %}bg-danger{% endif %}">
