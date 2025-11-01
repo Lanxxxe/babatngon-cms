@@ -68,81 +68,88 @@
 <div class="card-admin mb-3">
     <div class="card-body-admin py-3">
         <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label for="searchResidents" class="form-label">Search Residents</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control pt-1 pb-2" id="searchResidents" 
-                           placeholder="Search by name, email, or phone...">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="searchResidents" class="form-label">Search Residents</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="query" class="form-control pt-1 pb-2" id="searchResidents" 
+                            placeholder="Search by name, email, or phone..." value="{{ current_query|default:'' }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-2">
-                <label for="barangayFilter" class="form-label">Barangay</label>
-                <select class="form-select form-select-sm" id="barangayFilter">
-                    <option value="">All Barangays</option>
-                    <option value="barangay1">Barangay 1</option>
-                    <option value="barangay2">Barangay 2</option>
-                    <option value="barangay3">Barangay 3</option>
-                    <option value="barangay4">Barangay 4</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="statusFilter" class="form-label">Status</label>
-                <select class="form-select form-select-sm" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="pending">Pending</option>
-                    <option value="suspended">Suspended</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <div class="d-flex gap-1">
-                    <button class="btn btn-admin-primary btn-sm p-2">
-                        <i class="bi bi-funnel me-1"></i>Filter
-                    </button>
-                    <button class="btn btn-admin-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
-                    </button>
-                    <!-- <button class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addResidentModal">
-                        <i class="bi bi-person-plus me-1"></i>Add Resident
-                    </button> -->
-                    <!-- <div class="dropdown">
-                        <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots"></i>
+                <div class="col-md-2">
+                    <label for="barangayFilter" class="form-label">Barangay</label>
+                    <select class="form-select form-select-sm" name="barangay" id="barangayFilter">
+                        <option value="">All Barangays</option>
+                        <option value="Bacong" {% if current_barangay == 'Bacong' %}selected{% endif %}>Bacong</option>
+                        <option value="Bagong Silang" {% if current_barangay == 'Bagong Silang' %}selected{% endif %}>Bagong Silang</option>
+                        <option value="Biasong" {% if current_barangay == 'Biasong' %}selected{% endif %}>Biasong</option>
+                        <option value="Gov. E. Jaro" {% if current_barangay == 'Gov. E. Jaro' %}selected{% endif %}>Gov. E. Jaro</option>
+                        <option value="Guintigui-an" {% if current_barangay == 'Guintigui-an' %}selected{% endif %}>Guintigui-an</option>
+                        <option value="Lukay" {% if current_barangay == 'Lukay' %}selected{% endif %}>Lukay</option>
+                        <option value="Magcasuang" {% if current_barangay == 'Magcasuang' %}selected{% endif %}>Magcasuang</option>
+                        <option value="Malibago" {% if current_barangay == 'Malibago' %}selected{% endif %}>Malibago</option>
+                        <option value="Naga-asan" {% if current_barangay == 'Naga-asan' %}selected{% endif %}>Naga-asan</option>
+                        <option value="Pagsulhugon" {% if current_barangay == 'Pagsulhugon' %}selected{% endif %}>Pagsulhugon</option>
+                        <option value="Planza" {% if current_barangay == 'Planza' %}selected{% endif %}>Planza</option>
+                        <option value="Poblacion District I" {% if current_barangay == 'Poblacion District I' %}selected{% endif %}>Poblacion District I</option>
+                        <option value="Poblacion District II" {% if current_barangay == 'Poblacion District II' %}selected{% endif %}>Poblacion District II</option>
+                        <option value="Poblacion District III" {% if current_barangay == 'Poblacion District III' %}selected{% endif %}>Poblacion District III</option>
+                        <option value="Poblacion District IV" {% if current_barangay == 'Poblacion District IV' %}selected{% endif %}>Poblacion District IV</option>
+                        <option value="Rizal I" {% if current_barangay == 'Rizal I' %}selected{% endif %}>Rizal I</option>
+                        <option value="Rizal II" {% if current_barangay == 'Rizal II' %}selected{% endif %}>Rizal II</option>
+                        <option value="San Agustin" {% if current_barangay == 'San Agustin' %}selected{% endif %}>San Agustin</option>
+                        <option value="San Isidro" {% if current_barangay == 'San Isidro' %}selected{% endif %}>San Isidro</option>
+                        <option value="San Ricardo" {% if current_barangay == 'San Ricardo' %}selected{% endif %}>San Ricardo</option>
+                        <option value="Sangputan" {% if current_barangay == 'Sangputan' %}selected{% endif %}>Sangputan</option>
+                        <option value="Taguite" {% if current_barangay == 'Taguite' %}selected{% endif %}>Taguite</option>
+                        <option value="Uban" {% if current_barangay == 'Uban' %}selected{% endif %}>Uban</option>
+                        <option value="Victory" {% if current_barangay == 'Victory' %}selected{% endif %}>Victory</option>
+                        <option value="Villa Magsaysay" {% if current_barangay == 'Villa Magsaysay' %}selected{% endif %}>Villa Magsaysay</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select form-select-sm" name="status" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="verified" {% if current_status == 'verified' %}selected{% endif %}>Verified</option>
+                        <option value="unverified" {% if current_status == 'unverified' %}selected{% endif %}>Unverified</option>
+                        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-admin-primary btn-sm p-2">
+                            <i class="bi bi-funnel me-1"></i>Filter
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="exportResidents()">
-                                <i class="bi bi-download me-2"></i>Export Data
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="importResidents()">
-                                <i class="bi bi-upload me-2"></i>Import Data
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="sendBulkNotification()">
-                                <i class="bi bi-bell me-2"></i>Send Notification
-                            </a></li>
-                        </ul>
-                    </div> -->
+                        <button type="button" class="btn btn-admin-secondary btn-sm" onclick="resetFilters()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
+                    </div>
                 </div>
-            </div>
+                <!-- Hidden field to preserve per_page value -->
+                <input type="hidden" name="per_page" value="{{ current_per_page }}">
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Residents Table -->
 <div class="card-admin">
     <div class="card-header-admin d-flex justify-content-between align-items-center">
         <div>
             <span class="fw-semibold">All Residents</span>
-            <small class="text-muted ms-2">Showing 1-10 of 1,247 residents</small>
+            <small class="text-muted ms-2">
+                {% if paginator %}
+                    Showing {{ start_index }}-{{ end_index }} of {{ paginator.count }} residents
+                {% else %}
+                    No residents found
+                {% endif %}
+            </small>
         </div>
         <div class="d-flex gap-1">
-            <!-- <button class="btn btn-admin-secondary btn-sm" onclick="toggleView()">
-                <i class="bi bi-grid-3x3-gap me-1"></i>Card View
-            </button> -->
-            <button class="btn btn-admin-primary btn-sm">
+            <button class="btn btn-admin-primary btn-sm" disabled>
                 <i class="bi bi-list-ul me-1"></i>Table View
             </button>
         </div>
@@ -151,24 +158,19 @@
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr>
-                        <th style="width: 40px;">
-                            <input type="checkbox" class="form-check-input" id="selectAll">
-                        </th>
+                    <tr class="text-start table-light">
                         <th>Resident</th>
                         <th>Contact Info</th>
                         <th>Barangay</th>
-                        <th>Complaints</th>
+                        <th>Filed Cases</th>
                         <th>Status</th>
                         <th>Joined</th>
-                        <!-- <th>Last Active</th> -->
                         <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for resident in residents %}
                     <tr>
-                        <td><input type="checkbox" class="form-check-input" value="{{ resident.id }}"></td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="user-avatar-admin me-2" style="width: 32px; height: 32px; font-size: 12px;">
@@ -194,16 +196,26 @@
                             <span class="badge bg-secondary">{{ resident.address|default:"N/A" }}</span>
                         </td>
                         <td>
-                            <div class="text-center">
-                                <div class="fw-bold text-primary">
-                                    {{ resident.complaint_set.count }}
+                            <div class="d-flex gap-3">
+                                <div class="text-center">
+                                    <div class="fw-bold text-primary">
+                                        {{ resident.assistance_count }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: 10px;">Assistance</div>
                                 </div>
-                                <div class="text-muted" style="font-size: 10px;">complaints</div>
+                                <div class="text-center">
+                                    <div class="fw-bold text-primary">
+                                        {{ resident.complaint_count }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: 10px;">Complaints</div>
+                                </div>
                             </div>
                         </td>
                         <td>
-                            {% if resident.is_verified %}
-                                <span class="badge bg-success">Active</span>
+                            {% if resident.is_archived %}
+                                <span class="badge bg-secondary">Archived</span>
+                            {% elif resident.is_verified %}
+                                <span class="badge bg-success">Verified</span>
                             {% else %}
                                 <span class="badge bg-warning">Pending</span>
                             {% endif %}
@@ -212,84 +224,108 @@
                             <div class="small">{{ resident.created_at|date:"M d, Y" }}</div>
                             <div class="text-muted" style="font-size: 11px;">{{ resident.created_at|timesince }} ago</div>
                         </td>
-                        <!-- <td>
-                            <div class="small"></div>
-                            <div class="text-muted" style="font-size: 11px;">N/A</div>
-                        </td> -->
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-admin-primary btn-sm" onclick="viewResident({{ resident.id }})">
+                                {% if not resident.is_verified %}
+                                <a href="{% url 'approve_resident' resident.id %}" role="button" title="Approve Resident" class="btn btn-admin-secondary btn-sm">
+                                    <i class="bi bi-check"></i>
+                                </a>
+                                {% endif %}
+                                <button class="btn btn-admin-primary btn-sm" title="View Details" onclick="viewResident({{ resident.id }})"
+                                data-bs-resident="
+                                    {
+                                        'id': '{{ resident.id }}',
+                                        'image_url': '{% if resident.profile_picture %}{{ resident.profile_picture.url }}{% else %}{% endif %}',
+                                        'first_name': '{{ resident.first_name }}',
+                                        'middle_name': '{{ resident.middle_name }}',
+                                        'last_name': '{{ resident.last_name }}',
+                                        'email': '{{ resident.email }}',
+                                        'phone': '{{ resident.phone|default:"N/A" }}',
+                                        'address': '{{ resident.address|default:"N/A" }}',
+                                        'is_verified': '{{ resident.is_verified }}',
+                                        'created_at': '{{ resident.created_at|date:"M d, Y" }}'
+                                    }
+                                "
+                                >
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <button class="btn btn-admin-secondary btn-sm" onclick="editResident({{ resident.id }})">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="editResident({{ resident.id }})">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                <!-- <div class="dropdown">
-                                    <button class="btn btn-admin-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="sendMessage({{ resident.id }})">
-                                            <i class="bi bi-chat me-2"></i>Send Message
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="viewComplaints({{ resident.id }})">
-                                            <i class="bi bi-clipboard me-2"></i>View Complaints
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="suspendResident({{ resident.id }})">
-                                            <i class="bi bi-pause me-2"></i>Suspend Account
-                                        </a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteResident({{ resident.id }})">
-                                            <i class="bi bi-trash me-2"></i>Delete Account
-                                        </a></li>
-                                    </ul>
-                                </div> -->
+                                {% if not resident.is_archived %}
+                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Archive Resident" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-archive"></i>
+                                </a>
+                                {% endif %}
+                                {% if resident.is_archived %}
+                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Unarchive Resident" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="text-center text-muted">No residents found.</td>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            {% if current_query or current_barangay or current_status %}
+                                No residents found matching your filters. <a href="{% url 'admin_residents' %}" class="text-decoration-none">Clear filters</a>
+                            {% else %}
+                                No residents found.
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+    {% if paginator and paginator.num_pages > 1 %}
     <div class="card-footer bg-light py-2">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <select class="form-select form-select-sm" style="width: auto;">
-                    <option value="10">10 per page</option>
-                    <option value="25">25 per page</option>
-                    <option value="50">50 per page</option>
-                    <option value="100">100 per page</option>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
+                    <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 per page</option>
+                    <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 per page</option>
+                    <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 per page</option>
+                    <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100 per page</option>
                 </select>
             </div>
             <nav>
                 <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled">
-                        <span class="page-link">Previous</span>
-                    </li>
-                    <li class="page-item active">
-                        <span class="page-link">1</span>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="{% url 'admin_residents' %}?page={{ page_obj.previous_page_number }}&query={{ current_query }}&barangay={{ current_barangay }}&status={{ current_status }}&per_page={{ current_per_page }}">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="{% url 'admin_residents' %}?page={{ num }}&query={{ current_query }}&barangay={{ current_barangay }}&status={{ current_status }}&per_page={{ current_per_page }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{% url 'admin_residents' %}?page={{ page_obj.next_page_number }}&query={{ current_query }}&barangay={{ current_barangay }}&status={{ current_status }}&per_page={{ current_per_page }}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Add Resident Modal -->
@@ -373,63 +409,60 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-admin-primary">Edit Resident</button>
+                {% comment %} <button type="button" class="btn btn-admin-primary">Edit Resident</button> {% endcomment %}
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Select all functionality
-    document.getElementById('selectAll').addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
+    // Reset filters function
+    function resetFilters() {
+        window.location.href = '{% url "admin_residents" %}';
+    }
+
+    // Change per page function
+    function changePerPage(perPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.set('page', '1'); // Reset to first page
+        window.location.href = url.toString();
+    }
+
+    // Auto-submit form on filter change
+    document.getElementById('barangayFilter').addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
     });
 
     // Resident actions
     function viewResident(id) {
+        var resident_data = document.querySelector(`button[onclick="viewResident(${id})"]`).getAttribute('data-bs-resident');
+        var resident = JSON.parse(resident_data.replace(/'/g, '"'));
+        
         document.getElementById('residentModalBody').innerHTML = `
             <div class="row">
                 <div class="col-md-4 text-center">
                     <div class="user-avatar-admin mb-3" style="width: 80px; height: 80px; font-size: 1.5rem; margin: 0 auto;">
-                        JD
+                        <img src="${resident.image_url ? resident.image_url : 'https://via.placeholder.com/80'}" alt="Avatar" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
                     </div>
-                    <h5>Juan Dela Cruz</h5>
-                    <p class="text-muted">@juandc</p>
-                    <span class="badge bg-success">Active</span>
+                    <h5>${resident.first_name} ${resident.last_name}</h5>
+                    <span class="badge bg-success">${resident.is_verified === 'True' ? 'Active' : 'Inactive'}</span>
                 </div>
                 <div class="col-md-8">
                     <h6>Contact Information</h6>
-                    <p><strong>Email:</strong> juan@email.com</p>
-                    <p><strong>Phone:</strong> +63 XXX XXX XXXX</p>
-                    <p><strong>Address:</strong> 123 Main Street, Barangay 1</p>
-                    
-                    <h6>Account Details</h6>
-                    <p><strong>Member Since:</strong> January 15, 2024</p>
-                    <p><strong>Last Active:</strong> 2 hours ago</p>
-                    <p><strong>Total Complaints:</strong> 12</p>
-                    <p><strong>Resolved Complaints:</strong> 10</p>
-                    
-                    <h6>Recent Activity</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-clipboard text-primary me-2"></i>
-                            Filed complaint #001 - 2 days ago
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-check-circle text-success me-2"></i>
-                            Complaint #045 resolved - 1 week ago
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-person text-info me-2"></i>
-                            Updated profile information - 2 weeks ago
-                        </li>
-                    </ul>
+                    <p><strong>Name:</strong> ${resident.first_name} ${resident.middle_name} ${resident.last_name}</p>
+                    <p><strong>Email:</strong> ${resident.email}</p>
+                    <p><strong>Phone:</strong> ${resident.phone}</p>
+                    <p><strong>Address:</strong> ${resident.address}</p>
+                    <p><strong>Member Since:</strong> ${resident.created_at}</p>
                 </div>
             </div>
         `;
+        
         new bootstrap.Modal(document.getElementById('residentModal')).show();
     }
 

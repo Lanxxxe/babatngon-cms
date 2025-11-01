@@ -12,17 +12,31 @@ from .views import (
 
 urlpatterns = [
     path('', admin_helpers.admin_login, name='admin_login'),
+    
+    # Dashboard
     path('home/', admin_dashboard.admin_dashboard, name='admin_dashboard'),
+    
+    # Analytics
     path('analytics/', admin_analytics.admin_analytics, name='admin_analytics'),
+    
+    # Complaints
     path('complaints/', admin_complaints.admin_complaints, name='admin_complaints'),
     path('complaints/<int:complaint_id>/details/', admin_complaints.complaint_details, name='complaint_details'),
     path('complaints/assign/', admin_complaints.assign_complaint, name='assign_complaint'),
     path('complaints/update-status/', admin_complaints.update_complaint_status, name='update_complaint_status'),
+    
+    # Assistance
     path('assistance/', admin_assistance.admin_assistance, name='admin_assistance'),
     path('assistance/<int:assistance_id>/details/', admin_assistance.assistance_details, name='assistance_details'),
     path('assistance/assign/', admin_assistance.assign_assistance, name='assign_assistance'),
     path('assistance/update-status/', admin_assistance.update_assistance_status, name='update_assistance_status'),
+    
+    # Residents
     path('residents/', admin_resident.admin_resident, name='admin_residents'),
+    path('residents/approve/<int:resident_id>/', admin_resident.approve_resident, name='approve_resident'),
+    path('residents/archive/<int:resident_id>/', admin_resident.archive_resident, name='archive_resident'),
+
+    # Notifications
     path('notifications/', admin_notifications.admin_notification, name='admin_notifications'),
     path('notifications/mark-read/', admin_notifications.mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', admin_notifications.mark_all_notifications_read, name='mark_all_notifications_read'),
