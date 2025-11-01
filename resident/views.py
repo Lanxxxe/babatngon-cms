@@ -24,10 +24,10 @@ import sweetify
 
 
 def resident_dashboard(request):
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to access the dashboard.', timer=3000)
         return redirect('homepage')
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
 
     # Complaints stats
@@ -61,9 +61,10 @@ def resident_dashboard(request):
 
 # Complaint Views
 def file_complaint(request):
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to file a complaint.', timer=3000)
         return redirect('homepage')
+    
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
@@ -74,7 +75,7 @@ def file_complaint(request):
         address = request.POST.get('address', '').strip()
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
-        user_id = request.session.get('id')
+        user_id = request.session.get('resident_id')
         user = User.objects.filter(id=user_id).first()
         
         # Validate required fields
@@ -128,18 +129,23 @@ def file_complaint(request):
 
 
 def my_complaints(request):
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to view your complaints.', persistent=True, timer=3000)
         return redirect('homepage')
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
     return render(request, 'my_complaints.html', {'complaints': complaints})
 
 
 def delete_complaint(request, pk):
-    user_id = request.session.get('id')
+
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'You must be logged in to delete a complaint.', persistent=True, timer=3000)
+        return redirect('homepage')
+
     complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
     complaint.delete()
     sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
@@ -147,8 +153,13 @@ def delete_complaint(request, pk):
 
 
 def update_complaint(request, pk):
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'Action not allowed.', persistent=True, timer=3000)
+        return redirect('homepage')
+    
     complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
+    
     if request.method == 'POST':
         complaint.title = request.POST.get('title', complaint.title)
         complaint.description = request.POST.get('description', complaint.description)
@@ -221,13 +232,12 @@ def update_complaint(request, pk):
 
 def follow_up_complaint(request, complaint_id):
     """Handle follow-up on a complaint by creating admin notifications."""
-    if not request.session.get('id'):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
+    
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in.', timer=3000)
         return redirect('homepage')
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     complaint = get_object_or_404(Complaint, id=complaint_id, user=user)
     
@@ -279,7 +289,7 @@ def follow_up_complaint(request, complaint_id):
 
 # Assistance Views
 def file_assistance(request):
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to request assistance.', persistent=True, timer=3000)
         return redirect('homepage')
     if request.method == 'POST':
@@ -291,7 +301,7 @@ def file_assistance(request):
         address = request.POST.get('address', '').strip()
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
-        user_id = request.session.get('id')
+        user_id = request.session.get('resident_id')
         user = User.objects.filter(id=user_id).first()
         
         # Validate required fields
@@ -341,10 +351,11 @@ def file_assistance(request):
 
 
 def my_assistance(request):
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to view your assistance requests.', timer=3000)
         return redirect('homepage')
-    user_id = request.session.get('id')
+    
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     assistance_list = AssistanceRequest.objects.filter(user=user).order_by('-created_at')
 
@@ -356,7 +367,10 @@ def my_assistance(request):
 
 
 def update_assistance(request, pk):
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'Action not allowed.', persistent="Okay", timer=3000)
+        return redirect('homepage')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
     if request.method == 'POST':
         assistance.title = request.POST.get('title', assistance.title)
@@ -402,8 +416,9 @@ def update_assistance(request, pk):
             AssistanceAttachment.objects.create(assistance=assistance, file=file)
         
         assistance.save()
-        sweetify.success(request, 'Assistance updated.', persistent=True, timer=2000)
+        sweetify.success(request, 'Assistance updated.', persistent="Okay", timer=2000)
         return redirect('my_assistance')
+    
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         # Get attachments for the assistance request
@@ -433,7 +448,10 @@ def update_assistance(request, pk):
 
 
 def delete_assistance(request, pk):
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'Action not allowed', persistent="Okay", timer=3000)
+        return redirect('homepage')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
     assistance.delete()
     sweetify.success(request, 'Assistance request deleted.', persistent=True, timer=2000)
@@ -442,13 +460,11 @@ def delete_assistance(request, pk):
 
 def follow_up_assistance(request, assistance_id):
     """Handle follow-up on an assistance request by creating admin notifications."""
-    if not request.session.get('id'):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'message': 'You must be logged in.'})
-        sweetify.error(request, 'You must be logged in.', timer=3000)
+    if not request.session.get('resident_id'):
+        sweetify.error(request, 'Action not allowed.', persistent="Okay", timer=3000)
         return redirect('homepage')
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     assistance = get_object_or_404(AssistanceRequest, id=assistance_id, user=user)
     
@@ -501,11 +517,11 @@ def profile(request):
     """
     Resident profile page: view info, upload profile picture, update password.
     """
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     
     if not user:
-        sweetify.error(request, 'You must be logged in to view your profile.', timer=3000)
+        sweetify.error(request, 'You must be logged in to view your profile.', persistent="Okay", timer=3000)
         return redirect('homepage')
 
     if request.method == 'POST':
@@ -543,8 +559,12 @@ def profile(request):
 
 
 def resident_change_password(request):
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'You must be logged in to change your password.', persistent="Okay", timer=3000)
+        return redirect('homepage')
+    
     if request.method == 'POST':
-        user_id = request.session.get('id')
         user = User.objects.filter(id=user_id).first()
 
         current_password = request.POST.get('current_password', '').strip()
@@ -574,15 +594,14 @@ def resident_change_password(request):
 
 
 
-
 # Community Forum Views
 def community_forum(request):
     """Display the community forum with posts and filtering options."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to access the community forum.', timer=3000)
         return redirect('homepage')
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     
     # Get filter parameters
@@ -623,7 +642,7 @@ def community_forum(request):
         'search_query': search,
         'total_posts': total_posts,
         'my_posts': my_posts,
-        'current_user': user,  # Use different name to avoid conflict with context processor
+        'current_user': user,
     }
     
     return render(request, 'community_forum.html', context)
@@ -631,11 +650,11 @@ def community_forum(request):
 
 def create_post(request):
     """Create a new forum post."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
     if request.method == 'POST':
-        user_id = request.session.get('id')
+        user_id = request.session.get('resident_id')
         user = User.objects.filter(id=user_id).first()
         
         title = request.POST.get('title', '').strip()
@@ -676,11 +695,11 @@ def create_post(request):
 
 def toggle_reaction(request, post_id):
     """Toggle reaction on a post (like, love, support)."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
     if request.method == 'POST':
-        user_id = request.session.get('id')
+        user_id = request.session.get('resident_id')
         user = User.objects.filter(id=user_id).first()
         post = get_object_or_404(ForumPost, id=post_id, is_active=True)
         reaction_type = request.POST.get('reaction_type', 'like')
@@ -728,11 +747,11 @@ def toggle_reaction(request, post_id):
 
 def add_comment(request, post_id):
     """Add a comment to a post."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
     if request.method == 'POST':
-        user_id = request.session.get('id')
+        user_id = request.session.get('resident_id')
         user = User.objects.filter(id=user_id).first()
         post = get_object_or_404(ForumPost, id=post_id, is_active=True)
         content = request.POST.get('content', '').strip()
@@ -768,10 +787,10 @@ def add_comment(request, post_id):
 
 def delete_post(request, post_id):
     """Delete a forum post (only by author)."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     post = get_object_or_404(ForumPost, id=post_id, author=user)
     
@@ -795,10 +814,10 @@ def delete_post(request, post_id):
 
 def edit_post(request, post_id):
     """Edit a forum post (only by author)."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     post = get_object_or_404(ForumPost, id=post_id, author=user, is_active=True)
     
@@ -851,7 +870,7 @@ def get_post_comments(request, post_id):
             'author_name': comment.author.get_full_name(),
             'author_initials': comment.author.first_name[0].upper() + (comment.author.last_name[0].upper() if comment.author.last_name else ''),
             'created_at': comment.created_at.strftime('%b %d, %Y at %I:%M %p'),
-            'can_delete': request.session.get('id') == comment.author.id,
+            'can_delete': request.session.get('resident_id') == comment.author.id,
         })
     
     return JsonResponse({
@@ -863,10 +882,10 @@ def get_post_comments(request, post_id):
 
 def delete_comment(request, comment_id):
     """Delete a comment (only by author)."""
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         return JsonResponse({'success': False, 'message': 'You must be logged in.'})
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     comment = get_object_or_404(PostComment, id=comment_id, author=user)
     
@@ -888,10 +907,10 @@ def delete_comment(request, comment_id):
 def notifications(request):
     """Display resident notifications."""
     
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
 
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to view notifications.', timer=3000)
         return redirect('homepage')
  
@@ -940,10 +959,10 @@ def notifications(request):
 
 def resident_notification_details(request, notification_id):
     """Display details of a specific notification."""
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
 
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to view notifications.', timer=3000)
         return redirect('homepage')
 
@@ -968,10 +987,10 @@ def resident_notification_details(request, notification_id):
 
 def resident_mark_notification_read(request, notification_id):
     """Mark a notification as read."""
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
 
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to manage notifications.', timer=3000)
         return redirect('homepage')
 
@@ -989,10 +1008,10 @@ def resident_mark_notification_read(request, notification_id):
 
 def resident_archive_notification(request, notification_id):
     """Archive a notification."""
-    user_id = request.session.get('id')
+    user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
 
-    if not request.session.get('id'):
+    if not request.session.get('resident_id'):
         sweetify.error(request, 'You must be logged in to manage notifications.', timer=3000, persistent=True)
         return redirect('homepage')
 
