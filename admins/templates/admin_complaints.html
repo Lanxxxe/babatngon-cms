@@ -99,22 +99,29 @@
                     <label for="categoryFilter" class="form-label">Category</label>
                     <select class="form-select form-select-sm" id="categoryFilter" name="category">
                         <option value="">All Categories</option>
-                        {% for category in categories %}
-                            <option value="{{ category }}" {% if current_category == category %}selected{% endif %}>
-                                {{ category|title }}
-                            </option>
-                        {% endfor %}
+                        <option value="Sanitation">Sanitation</option>
+                        <option value="Safety/Security">Safety/Security</option>
+                        <option value="Infrastructure">Infrastructure</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Noise">Noise</option>
+                        <option value="Environment">Environment</option>
+                        <option value="Disaster/Emergency">Disaster/Emergency</option>
+                        <option value="Health">Health</option>
+                        <option value="Traffic/Transport">Traffic/Transport</option>
+                        <option value="Corruption/Abuse">Corruption/Abuse</option>
+                        <option value="Discrimination">Discrimination</option>
+                        <option value="Service Delivery">Service Delivery</option>
+                        <option value="Others">Others</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label for="priorityFilter" class="form-label">Priority</label>
                     <select class="form-select form-select-sm" id="priorityFilter" name="priority">
                         <option value="">All Priorities</option>
-                        {% for priority in priorities %}
-                            <option value="{{ priority }}" {% if current_priority == priority %}selected{% endif %}>
-                                {{ priority|title }}
-                            </option>
-                        {% endfor %}
+                        <option value="low" {% if current_priority == 'low' %}selected{% endif %}>Low</option>
+                        <option value="medium" {% if current_priority == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if current_priority == 'high' %}selected{% endif %}>High</option>
+                        <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>Urgent</option>
                     </select>
                 </div>
                 <div class="col-md-1">
