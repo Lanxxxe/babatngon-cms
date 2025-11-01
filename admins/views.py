@@ -50,6 +50,12 @@ def admin_login(request):
 # Create your views here.
 def admin_dashboard(request):
 
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+
     # Get all complaints
     complaints = Complaint.objects.select_related('user').all().order_by('-created_at')
     assistance = AssistanceRequest.objects.select_related('user').all().order_by('-created_at')
@@ -79,7 +85,11 @@ def admin_analytics(request):
     """
     Analytics dashboard with comprehensive data visualization and metrics.
     """
-    import json
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         # Get all complaints for analysis
@@ -232,7 +242,13 @@ def admin_analytics(request):
 
 # Admin Complaint Management
 def admin_complaints(request):
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
+
     # Start with unassigned complaints by default
     complaints = Complaint.objects.select_related('user', 'assigned_to').filter(assigned_to__isnull=True)
     
@@ -339,12 +355,18 @@ def assign_complaint(request):
     """
     Assign a complaint to a staff member.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     
     try:
         complaint_id = request.POST.get('complaint_id')
         staff_id = request.POST.get('staff_id')
         
-        complaint = Complaint.objects.get(id=complaint_id)
+        complaint = Complaint.objects.get(id=complaint_id) 
         staff = Admin.objects.get(id=staff_id) if staff_id else None
         
         # Get current admin from session
@@ -376,6 +398,11 @@ def update_complaint_status(request):
     """
     Update complaint status.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         complaint_id = request.POST.get('complaint_id')
@@ -403,6 +430,11 @@ def admin_assistance(request):
     """
     Display all assistance requests for admin management.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     # Start with unassigned assistance requests by default
     assistance_requests = AssistanceRequest.objects.select_related('user', 'assigned_to').filter(assigned_to__isnull=True)
@@ -506,6 +538,11 @@ def complaint_details(request, complaint_id):
     """
     Get complaint details for modal display.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         complaint = Complaint.objects.select_related('user', 'assigned_to', 'assigned_by').get(id=complaint_id)
@@ -578,6 +615,11 @@ def assistance_details(request, assistance_id):
     """
     Get assistance request details for modal display.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         assistance = AssistanceRequest.objects.select_related('user', 'assigned_to').get(id=assistance_id)
@@ -647,6 +689,11 @@ def assign_assistance(request):
     """
     Assign an assistance request to a staff member.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         assistance_id = request.POST.get('assistance_id')
@@ -682,6 +729,11 @@ def update_assistance_status(request):
     """
     Update assistance request status.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     try:
         assistance_id = request.POST.get('assistance_id')
@@ -708,6 +760,12 @@ def admin_resident(request):
     """
     Display all residents for admin management, with complaint count and stats for dashboard cards.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+
     try:
         # Annotate each resident with their complaint count
         residents = User.objects.annotate(complaint_count=Count('complaint')).order_by('-created_at')
@@ -742,6 +800,11 @@ def admin_notification(request):
     """
     Display notifications for admin dashboard - showing only admin notifications.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     
     # Get filter parameters
     type_filter = request.GET.get('type', '').strip()
@@ -818,6 +881,12 @@ def mark_notification_read(request):
     """
     Mark a specific notification as read.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     try:
         data = json.loads(request.body)
         notification_id = data.get('notification_id')
@@ -835,6 +904,13 @@ def mark_all_notifications_read(request):
     """
     Mark all admin notifications as read.
     """
+
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     try:
         from django.contrib.contenttypes.models import ContentType
         admin_content_type = ContentType.objects.get_for_model(StaffAdmin)
@@ -854,6 +930,13 @@ def archive_notification(request):
     """
     Archive a specific notification.
     """
+
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     try:
         data = json.loads(request.body)
         notification_id = data.get('notification_id')
@@ -870,6 +953,12 @@ def notification_details(request, notification_id):
     """
     Get notification details for modal or page display.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     try:
         notification = Notification.objects.get(id=notification_id)
         
@@ -897,6 +986,12 @@ def accounts(request):
     """
     List all staff and admin accounts for management.
     """
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     admins = Admin.objects.all().order_by('-role', 'username')
     admin_count = Admin.objects.filter(role='admin').count()
     context = {
@@ -906,11 +1001,18 @@ def accounts(request):
     return render(request, 'accounts.html', context)
 
 
-
 # Register new staff/admin
 @require_POST
 def add_account(request):
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
+    
     try:
+
+        
         # Account Information
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
@@ -978,6 +1080,11 @@ def add_account(request):
 # Change password for staff/admin
 @require_POST
 def change_account_password(request):
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     try:
         admin_id = request.POST.get('admin_id')
         new_password = request.POST.get('new_password', '').strip()
@@ -1002,6 +1109,11 @@ def change_account_password(request):
 # Delete staff/admin account
 @require_POST
 def delete_account(request):
+    user = request.session.get('admin_role', '')
+
+    if user != 'admin' and user != 'staff' or not user:
+        sweetify.error(request, 'Access denied.', icon='error', timer=3000, persistent='Okay')
+        return redirect('homepage')
     try:
         admin_id = request.POST.get('admin_id')
         admin = Admin.objects.filter(id=admin_id).first()
