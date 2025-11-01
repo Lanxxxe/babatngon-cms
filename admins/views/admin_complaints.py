@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from admins.models import Complaint
 from core.models import Admin
+from datetime import datetime
 
 
 # Admin Complaint Management
@@ -130,8 +131,10 @@ def assign_complaint(request):
     
     
     try:
-        complaint_id = request.POST.get('complaint_id')
-        staff_id = request.POST.get('staff_id')
+        complaint_id = request.POST.get('complaint_id', '').strip()
+        staff_id = request.POST.get('staff_id', '').strip()
+        admin_remarks = request.POST.get('assignment_notes', '').strip()
+        updated_priority = request.POST.get('priority', '').strip()
         
         complaint = Complaint.objects.get(id=complaint_id) 
         staff = Admin.objects.get(id=staff_id) if staff_id else None
@@ -142,22 +145,26 @@ def assign_complaint(request):
         
         complaint.assigned_to = staff
         complaint.assigned_by = current_admin
+        complaint.admin_remarks = admin_remarks
+        complaint.updated_at = datetime.now()
         
-        complaint.status = 'pending'
- 
+        if updated_priority:
+            complaint.priority = updated_priority
+
+        complaint.status = 'Assigned'
+
+        complaint.save()
         if staff:
             sweetify.toast(request, f'Complaint #{complaint.id} assigned to {staff.full_name}', timer=2000)
- 
+
         else:
             sweetify.toast(request, f'Complaint #{complaint.id} unassigned', timer=2000)
 
-        complaint.save()
-        
-        return JsonResponse({'success': True})
+        return redirect('admin_complaints')
         
     except Exception as e:
         sweetify.error(request, f'Failed to assign complaint. Please try again. {e}', persistent=True, timer=3000)
-        return JsonResponse({'success': False, 'error': str(e)})
+        return redirect('complaint_details', complaint_id=complaint.id)
 
 @require_POST 
 def update_complaint_status(request):
@@ -202,6 +209,7 @@ def complaint_details(request, complaint_id):
         return redirect('homepage')
     
     try:
+        staff = Admin.objects.all().order_by('first_name', 'last_name').filter(role='staff')
         complaint = Complaint.objects.select_related('user', 'assigned_to', 'assigned_by').get(id=complaint_id)
         
         # Format the complaint data
@@ -251,19 +259,17 @@ def complaint_details(request, complaint_id):
         except Exception:
             pass  # No attachments or error accessing them
         
-        return JsonResponse({
-            'success': True,
-            'complaint': complaint_data
-        })
+        context = {
+            'complaint': complaint_data,
+            'staffs' : staff
+        }
+        return render(request, 'admin_cases/complaint_details.html', context)
         
     except Complaint.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': 'Complaint not found'
-        })
+        sweetify.error(request, 'Complaint not found.', icon='error', timer=3000, persistent='Okay')
+        return redirect('admin_complaints')
+    
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        })
+        sweetify.error(request, 'An error occurred.', icon='error', timer=3000, persistent='Okay')
+        return redirect('admin_complaints')
 

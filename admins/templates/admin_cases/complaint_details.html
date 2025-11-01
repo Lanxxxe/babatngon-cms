@@ -1,0 +1,292 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Manage Complaints - Admin Portal{% endblock %}
+{% block page_title %}{{ complaint.title }} {% endblock %}
+{% block page_subtitle %}Complaint Details{% endblock %}
+
+{% block extra_css %}
+<style>
+   .map-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+
+    dl dt {
+        font-weight: 600;
+    }
+
+    dl dd {
+        margin-bottom: 0.5rem;
+    }
+
+    .attachment-card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .attachment-card:hover {
+        border-color: #5a67d8;
+        box-shadow: 0 4px 12px rgba(90, 103, 216, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .attachment-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fc;
+        border-radius: 6px;
+    }
+
+    .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Complaints Table -->
+<div class="card-admin">
+    <div class="card-header-admin d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-semibold">Complaint Details</span>
+            <small class="text-muted ms-2">ID: #{{ complaint.id }}</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-admin-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignStaffModal">
+                <i class="bi bi-person-plus me-1"></i>Assign Staff
+            </button>
+            <a href="{% url 'admin_complaints' %}" class="btn btn-admin-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back to Complaints
+            </a>
+        </div>
+    </div>
+    <div class="card-body-admin py-3">
+
+        <div class="row">
+            <!-- Complaint Information -->
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Complaint Information
+                </h6>
+                <dl class="row small">
+                    <dt class="col-sm-4">Subject:</dt>
+                    <dd class="col-sm-8" id="complaintSubject">{{ complaint.title }}</dd>
+                    <dt class="col-sm-4">Category:</dt>
+                    <dd class="col-sm-8" id="complaintCategory">{{ complaint.category }}</dd>
+                    <dt class="col-sm-4">Priority:</dt>
+                    <dd class="col-sm-8" id="complaintPriority"><span class="badge bg-primary">{{ complaint.priority }}</span></dd>
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8" id="complaintStatus"><span class="badge bg-primary">{{ complaint.status }}</span></dd>
+                    <dt class="col-sm-4">Date Filed:</dt>
+                    <dd class="col-sm-8" id="filedDate">{{ complaint.created_at }}</dd>
+                </dl>
+            </div>
+            
+            <!-- Resident Information -->
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-person me-2"></i>Resident Information
+                </h6>
+                <dl class="row small">
+                    <dt class="col-sm-4">Name:</dt>
+                    <dd class="col-sm-8" id="residentName">{{ complaint.resident_name }}</dd>
+                    <dt class="col-sm-4">Phone:</dt>
+                    <dd class="col-sm-8" id="residentPhone">{{ complaint.resident_phone }}</dd>
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8" id="residentEmail">{{ complaint.resident_email }}</dd>
+                    <dt class="col-sm-4">Address:</dt>
+                    <dd class="col-sm-8" id="residentAddress">{{ complaint.resident_address }}</dd>
+                </dl>
+            </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-file-text me-2"></i>Description
+                </h6>
+                <p class="text-muted bg-light p-3 rounded" id="complaintDescription">No description available</p>
+            </div>
+        </div>
+        
+        <!-- Assignment Information -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-person-check me-2"></i>Assignment Information
+                </h6>
+                <dl class="row small">
+                    <dt class="col-sm-4">Assigned To:</dt>
+                    <dd class="col-sm-8" id="assignedTo">{{ complaint.assigned_to }}</dd>
+                    <dt class="col-sm-4">Assigned By:</dt>
+                    <dd class="col-sm-8" id="assignedBy">{{ complaint.assigned_by }}</dd>
+                    <dt class="col-sm-4">Assigned Date:</dt>
+                    <dd class="col-sm-8" id="assignedDate">{{ complaint.assigned_date }}</dd>
+                </dl>
+            </div>
+            
+            <!-- Resolution Information -->
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-check-circle me-2"></i>Resolution Information
+                </h6>
+                <dl class="row small">
+                    <dt class="col-sm-4">Resolved By:</dt>
+                    <dd class="col-sm-8" id="resolvedBy">{{ complaint.resolved_by }}</dd>
+                    <dt class="col-sm-4">Resolved Date:</dt>
+                    <dd class="col-sm-8" id="resolvedDate">{{ complaint.resolved_date }}</dd>
+                </dl>
+            </div>
+        </div>
+        
+        <!-- Admin Notes -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-sticky me-2"></i>Admin Notes
+                </h6>
+                <p class="text-muted bg-light p-3 rounded" id="adminNotes">{{ complaint.admin_notes|default:"No notes available" }}</p>
+            </div>
+        </div>
+        
+        <!-- Attachments and Map Section -->
+        <div class="row mt-3">
+            <!-- Attachments Section -->
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-paperclip me-2"></i>Attachments
+                </h6>
+                <div id="attachmentsContainer" class="row g-2">
+                    {% if complaint.attachments %}
+                        {% for attachment in complaint.attachments %}
+                            <div class="col-12 col-sm-6 col-lg-12">
+                                <div class="attachment-card p-2 d-flex align-items-center">
+                                    <div class="attachment-icon me-3">
+                                        <i class="bi bi-file-earmark-text" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <span class="attachment-name d-block">{{ attachment.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <p class="text-muted">No attachments available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Map Section -->
+            <div class="col-md-6" id="complaintMapContainer" style="display: none;">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-geo-alt me-2"></i>Location
+                </h6>
+                <div id="complaintMap" class="map-container" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Staff Modal -->
+<div class="modal fade" id="assignStaffModal" tabindex="-1" aria-labelledby="assignStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignStaffModalLabel">Assign Staff to Complaint</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'assign_complaint' %}">
+                {% csrf_token %}
+                <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="staffSelect" class="form-label">Select Staff Member</label>
+                        <select class="form-select" id="staffSelect" name="staff_id" required>
+                            <option value="">Choose a staff member...</option>
+                            <!-- You'll need to pass staff list from the view -->
+                            {% for staff in staffs %}
+                                <option value="{{ staff.id }}" {% if complaint.assigned_to == staff %}selected{% endif %}>
+                                    {{ staff.get_full_name }} - {{ staff.position|default:"Staff" }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignmentNotes" class="form-label">Assignment Notes (Optional)</label>
+                        <textarea class="form-control" id="assignmentNotes" name="assignment_notes" rows="3" 
+                            placeholder="Add any notes or instructions for the assigned staff..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="priorityUpdate" class="form-label">Update Priority</label>
+                        <select class="form-select" id="priorityUpdate" name="priority">
+                            <option value="low" {% if complaint.priority == 'low' %}selected{% endif %}>Low</option>
+                            <option value="medium" {% if complaint.priority == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="high" {% if complaint.priority == 'high' %}selected{% endif %}>High</option>
+                            <option value="urgent" {% if complaint.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check me-1"></i>Assign Staff
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let complaintMap = null;
+
+    function initComplaintMap(lat, lng) {
+        complaintMap = L.map('complaintMap').setView([lat, lng], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(complaintMap);
+
+        L.marker([lat, lng]).addTo(complaintMap)
+            .bindPopup('Complaint Location')
+            .openPopup();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const lat = "{{ complaint.latitude }}";
+        const lng = "{{ complaint.longitude }}";
+
+        if (lat && lng) {
+            document.getElementById('complaintMapContainer').style.display = 'block';
+            initComplaintMap(lat, lng);
+        }
+    });
+</script>
+{% endblock %}

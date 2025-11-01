@@ -7,13 +7,28 @@ from core.models import User, Admin
 
 # Create your models here.
 class Complaint(models.Model):
-    
+    COMPLAINT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('assigned', 'Assigned'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+
+    PRIORITY_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField()
     category = models.CharField(max_length=50)
     priority = models.CharField(max_length=20, default='low')
-    status = models.CharField(max_length=20, default='pending')
+    status = models.CharField(max_length=20, default='pending', choices=COMPLAINT_STATUS_CHOICES)
     location_description = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
