@@ -1,0 +1,557 @@
+{% extends 'base_resident.html' %}
+{% block title %}Complaint Details{% endblock %}
+
+{% block internal_css %}
+
+<style>
+    .info-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .info-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .info-card .card-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 12px 12px 0 0 !important;
+        color: white;
+        padding: 1rem 1.5rem;
+    }
+
+    .info-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+
+    .detail-section h6 {
+        color: #28a745;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .detail-row {
+        margin-bottom: 0.75rem;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        color: #6c757d;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #28a745;
+    }
+
+    .status-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .urgency-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .map-container {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: #f8f9fa;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .map-placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .attachment-card {
+        border: 1px solid #e3e6f0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .attachment-card:hover {
+        border-color: #28a745;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .attachment-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 10px;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(52, 58, 64, 0.3);
+    }
+
+    .timeline-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        background: #28a745;
+        border-radius: 50%;
+        border: 3px solid #e9ecef;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 1.25rem;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .timeline-item:last-child::after {
+        display: none;
+    }
+
+    .timeline-date {
+        font-size: 0.875rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .timeline-status {
+        font-weight: 600;
+        color: #28a745;
+        margin: 0.25rem 0;
+    }
+
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+
+    #assistance-description {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .info-card .card-body {
+            padding: 1rem;
+        }
+        
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block breadcrumb %}
+Complaint Details
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="text-success mb-2">{{ assistance.title }}</h3>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-calendar me-2"></i>
+                        Complaint ID: #{{ complaint.id }} | Filed on {{ assistance.created_at|date:"F d, Y \a\t g:i A" }}
+                    </p>
+                </div>
+                <a href="{% url 'my_assistance' %}" class="back-btn text-decoration-none">
+                    <i class="bi bi-arrow-left me-2"></i>Back to My Complaints
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column - Main Information -->
+        <div class="col-lg-8">
+            <!-- Basic Information Card -->
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Assistance Request Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-section">
+                                <div class="detail-row">
+                                    <div class="detail-label">Subject</div>
+                                    <div class="detail-value">{{ assistance.title }}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Type</div>
+                                    <div class="detail-value">
+                                        <span class="badge bg-secondary">{{ assistance.type }}</span>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Urgency</div>
+                                    <div class="detail-value">
+                                        <span class="urgency-badge 
+                                            {% if assistance.urgency == 'urgent' %}bg-danger
+                                            {% elif assistance.urgency == 'high' %}bg-warning
+                                            {% elif assistance.urgency == 'medium' %}bg-info
+                                            {% else %}bg-success{% endif %}">
+                                            {{ assistance.urgency|title }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-section">
+                                <div class="detail-row">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value">
+                                        <span class="status-badge 
+                                            {% if assistance.status == 'pending' %}bg-warning
+                                            {% elif assistance.status == 'assigned' %}bg-primary
+                                            {% elif assistance.status == 'in_progress' %}bg-info
+                                            {% elif assistance.status == 'completed' %}bg-success
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ assistance.status|title|default:"Pending" }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Date Filed</div>
+                                    <div class="detail-value">{{ assistance.created_at|date:"F d, Y \a\t g:i A" }}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Last Updated</div>
+                                    <div class="detail-value">{{ assistance.updated_at|date:"F d, Y \a\t g:i A" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        Description
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="assistance-description" class="detail-value">
+                        {{ assistance.description|default:"No description provided" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Information Card -->
+            {% if assistance.assigned_to or assistance.assigned_by %}
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-check me-2"></i>
+                        Assignment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Assigned To</div>
+                                <div class="detail-value">
+                                    {{ assistance.assigned_to.get_full_name|default:"Not assigned yet" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Assigned By</div>
+                                <div class="detail-value">
+                                    {{ assistance.assigned_by.get_full_name|default:"Not specified" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% if assistance.assigned_date %}
+                        <div class="col-12 mt-3">
+                            <div class="detail-row">
+                                <div class="detail-label">Assignment Date</div>
+                                <div class="detail-value">{{ assistance.assigned_date|date:"F d, Y \a\t g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Admin Remarks Card -->
+            {% if assistance.admin_remarks %}
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-sticky me-2"></i>
+                        Admin Remarks
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-value">
+                        {{ assistance.admin_remarks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Additional Information -->
+        <div class="col-lg-4">
+            <!-- Location Information Card -->
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        Location Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-section">
+                        <div class="detail-row">
+                            <div class="detail-label">Address</div>
+                            <div class="detail-value">{{ assistance.address|default:"No address specified" }}</div>
+                        </div>
+                        {% if assistance.latitude and assistance.longitude %}
+                        <div class="detail-row">
+                            <div class="detail-label">Coordinates</div>
+                            <div class="detail-value">
+                                {{ assistance.latitude }}, {{ assistance.longitude }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Map Section -->
+                    {% if assistance.latitude and assistance.longitude %}
+                    <div class="map-container" id="assistance-map" style="height: 250px;"></div>
+                    {% else %}
+                    <div class="map-container">
+                        <div class="map-placeholder">
+                            <i class="bi bi-geo-alt-fill me-2"></i>
+                            No location coordinates available
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Attachments Card -->
+            <div class="info-card card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip me-2"></i>
+                        Attachments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if assistance.attachments.all %}
+                        {% for attachment in assistance.attachments.all %}
+                        <div class="attachment-card">
+                            <div class="d-flex align-items-center">
+                                <div class="attachment-icon me-3">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ attachment.file.name|default:"Attachment" }}</h6>
+                                    <small class="text-muted">
+                                        Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <div class="ms-2">
+                                    <a href="{{ attachment.file.url }}" target="_blank" 
+                                       class="btn btn-outline-success btn-sm" title="View/Download">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-paperclip text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">No attachments available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Progress Timeline Card -->
+            <div class="timeline-section">
+                <h6 class="text-success mb-3">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Progress Timeline
+                </h6>
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ assistance.created_at|date:"M d, Y \a\t g:i A" }}</div>
+                    <div class="timeline-status">Request Submitted</div>
+                    <small class="text-muted">Assistance request was filed</small>
+                </div>
+                
+                {% if assistance.assigned_to and assistance.assigned_date %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ assistance.assigned_date|date:"M d, Y \a\t g:i A" }}</div>
+                    <div class="timeline-status">Assigned to Staff</div>
+                    <small class="text-muted">Assigned to {{ assistance.assigned_to.get_full_name }}</small>
+                </div>
+                {% endif %}
+
+                {% if assistance.status == 'in_progress' %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ assistance.updated_at|date:"M d, Y \a\t g:i A" }}</div>
+                    <div class="timeline-status">In Progress</div>
+                    <small class="text-muted">Work has begun on your request</small>
+                </div>
+                {% endif %}
+
+                {% if assistance.status == 'completed' %}
+                <div class="timeline-item">
+                    <div class="timeline-date">{{ assistance.completed_at|date:"M d, Y \a\t g:i A" }}</div>
+                    <div class="timeline-status">Completed</div>
+                    <small class="text-muted">Assistance request has been completed</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block internal_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if coordinates exist
+        {% if assistance.latitude and assistance.longitude %}
+        initializeAssistanceMap({{ assistance.latitude }}, {{ assistance.longitude }});
+        {% endif %}
+    });
+
+    function initializeAssistanceMap(lat, lng) {
+        const map = L.map('assistance-map').setView([lat, lng], 16);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Add marker
+        const marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup(`
+                <div class="text-center">
+                    <strong>{{ assistance.title }}</strong><br>
+                    <small class="text-muted">Assistance Location</small>
+                </div>
+            `)
+            .openPopup();
+
+        // Add a circle to show general area
+        L.circle([lat, lng], {
+            color: '#28a745',
+            fillColor: '#28a745',
+            fillOpacity: 0.1,
+            radius: 100
+        }).addTo(map);
+    }
+
+    // Smooth scrolling for any anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

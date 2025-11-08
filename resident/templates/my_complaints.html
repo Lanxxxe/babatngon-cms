@@ -185,7 +185,7 @@ My Complaints
               </td>
               <td>{{ complaint.created_at|date:"M d, Y" }}</td>
               <td>
-                  <button class="btn btn-success btn-sm" onclick="viewComplaint({{ complaint.id }})">View</button>
+                  <a href="{% url 'resident_complaint_details' complaint.id %}" role="button" class="btn btn-success btn-sm">View</a>
                   <button class="btn btn-primary btn-sm" onclick="editComplaint({{ complaint.id }})">Update</button>
                   <button class="btn btn-warning btn-sm" onclick="followUpComplaint({{ complaint.id }})">Follow-up</button>
                   <a href="{% url 'delete_complaint' complaint.id %}" class="btn btn-danger btn-sm"

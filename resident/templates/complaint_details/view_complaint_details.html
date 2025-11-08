@@ -1,0 +1,388 @@
+{% extends 'base_resident.html' %}
+{% block title %}Complaint Details{% endblock %}
+
+{% block internal_css %}
+<style>
+    .leaflet-popup-content {
+        margin: 8px 12px;
+        line-height: 1.4;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+    
+    .leaflet-control-attribution {
+        font-size: 10px;
+    }
+    
+    .timeline-dot {
+        width: 12px;
+        height: 12px;
+        background: #28a745;
+        border-radius: 50%;
+        border: 3px solid #e9ecef;
+    }
+    
+    .timeline-line {
+        width: 2px;
+        background: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+Complaint Details
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4"> 
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div class="mb-3 mb-md-0">
+                    <h3 class="text-success mb-2 fs-2">{{ complaint.title }}</h3>
+                    <p class="text-muted mb-0 fs-5">
+                        <i class="bi bi-calendar me-2"></i>
+                        Request ID: #{{ complaint.id }} | Filed on {{ complaint.created_at|date:"F d, Y \a\t g:i A" }}
+                    </p>
+                </div>
+                <a href="{% url 'my_complaints' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to My Complaints
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column - Main Information -->
+        <div class="col-lg-8">
+            <!-- Basic Information Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fs-3">
+                        <i class="bi bi-info-circle me-2 fs-3"></i>
+                        Complaint Information
+                    </h5>
+                </div>
+                <div class="card-body fs-5">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Subject</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.title }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Category</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">
+                                    <span class="badge bg-secondary">{{ complaint.category }}</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Priority</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">
+                                    <span class="badge rounded-pill
+                                        {% if complaint.priority == 'urgent' %}bg-danger
+                                        {% elif complaint.priority == 'high' %}bg-warning text-dark
+                                        {% elif complaint.priority == 'medium' %}bg-info
+                                        {% else %}bg-success{% endif %}">
+                                        {{ complaint.priority|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Status</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">
+                                    <span class="badge rounded-pill
+                                        {% if complaint.status == 'pending' %}bg-warning text-dark
+                                        {% elif complaint.status == 'assigned' %}bg-primary
+                                        {% elif complaint.status == 'in_progress' %}bg-info
+                                        {% elif complaint.status == 'resolved' %}bg-success
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ complaint.status|title|default:"Pending" }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Date Filed</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.created_at|date:"F d, Y \a\t g:i A" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Last Updated</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.updated_at|date:"F d, Y \a\t g:i A" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fs-3">
+                        <i class="bi bi-file-text me-2 fs-3"></i>
+                        Description
+                    </h5>
+                </div>
+                <div class="card-body fs-5">
+                    <div class="p-2 bg-light border-start border-success border-3 rounded" style="white-space: pre-wrap; line-height: 1.6; font-size: 1.35rem;">
+                        {{ complaint.description|default:"No description provided" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Information Card -->
+            {% if complaint.assigned_to or complaint.assigned_by %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-check me-2"></i>
+                        Assignment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Assigned To</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">
+                                    {{ complaint.assigned_to.get_full_name|default:"Not assigned yet" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Assigned By</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">
+                                    {{ complaint.assigned_by.get_full_name|default:"Not specified" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% if complaint.assigned_date %}
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark fs-5">Assignment Date</label>
+                                <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.assigned_date|date:"F d, Y \a\t g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Admin Remarks Card -->
+            {% if complaint.admin_remarks %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fs-3">
+                        <i class="bi bi-sticky me-2 fs-3"></i>
+                        Admin Remarks
+                    </h5>
+                </div>
+                <div class="card-body fs-5">
+                    <div class="p-3 bg-light border-start border-success border-3 rounded" style="font-size: 1.35rem;">
+                        {{ complaint.admin_remarks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Additional Information -->
+        <div class="col-lg-4">
+            <!-- Location Information Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fs-3">
+                        <i class="bi bi-geo-alt me-2 fs-3"></i>
+                        Location Information
+                    </h5>
+                </div>
+                <div class="card-body fs-5">
+                    <div class="mb-3">
+                        <label class="fw-bold text-dark fs-5">Address</label>
+                        <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.address|default:"No address specified" }}</div>
+                    </div>
+
+                    <!-- Map Section -->
+                    {% if complaint.latitude and complaint.longitude %}
+                    <div class="rounded border" id="complaint-map" style="height: 460px;"></div>
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-light rounded border text-muted" style="height: 250px;">
+                        <div class="text-center">
+                            <i class="bi bi-geo-alt-fill me-2"></i>
+                            <div>No location coordinates available</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold text-dark fs-5">Location Description</label>
+                        <div class="p-2 bg-light border-start border-success border-3 rounded">{{ complaint.location_description|default:"No description specified" }}</div>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+
+            <!-- Attachments Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fs-3">
+                        <i class="bi bi-paperclip me-2 fs-3"></i>
+                        Attachments
+                    </h5>
+                </div>
+                <div class="card-body fs-5">
+                    {% if complaint.attachments.all %}
+                        {% for attachment in complaint.attachments.all %}
+                        <div class="border rounded p-3 mb-2 hover-shadow">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success text-white rounded d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-file-earmark-text fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ attachment.file.name|default:"Attachment" }}</h6>
+                                    <small class="text-muted">
+                                        Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-paperclip text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">No attachments available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Progress Timeline Card -->
+            {% comment %} <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Progress Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex mb-3">
+                        <div class="position-relative me-3">
+                            <div class="timeline-dot position-relative"></div>
+                            <div class="timeline-line position-absolute start-50 translate-middle-x" style="top: 20px; height: 40px;"></div>
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ complaint.created_at|date:"M d, Y \a\t g:i A" }}</div>
+                            <div class="fw-bold text-success">Request Submitted</div>
+                            <small class="text-muted">Complaint was filed</small>
+                        </div>
+                    </div>
+                    
+                    {% if complaint.assigned_to and complaint.assigned_date %}
+                    <div class="d-flex mb-3">
+                        <div class="position-relative me-3">
+                            <div class="timeline-dot position-relative"></div>
+                            {% if complaint.status != 'assigned' %}<div class="timeline-line position-absolute start-50 translate-middle-x" style="top: 20px; height: 40px;"></div>{% endif %}
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ complaint.assigned_date|date:"M d, Y \a\t g:i A" }}</div>
+                            <div class="fw-bold text-success">Assigned to Staff</div>
+                            <small class="text-muted">Assigned to {{ complaint.assigned_to.get_full_name }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if complaint.status == 'in_progress' %}
+                    <div class="d-flex mb-3">
+                        <div class="position-relative me-3">
+                            <div class="timeline-dot position-relative"></div>
+                            <div class="timeline-line position-absolute start-50 translate-middle-x" style="top: 20px; height: 40px;"></div>
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ complaint.updated_at|date:"M d, Y \a\t g:i A" }}</div>
+                            <div class="fw-bold text-success">In Progress</div>
+                            <small class="text-muted">Work has begun on your complaint</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if complaint.status == 'resolved' %}
+                    <div class="d-flex">
+                        <div class="position-relative me-3">
+                            <div class="timeline-dot position-relative"></div>
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ complaint.resolved_at|date:"M d, Y \a\t g:i A" }}</div>
+                            <div class="fw-bold text-success">Resolved</div>
+                            <small class="text-muted">Complaint has been resolved</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div> {% endcomment %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block internal_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map if coordinates exist
+        {% if complaint.latitude and complaint.longitude %}
+        initializeComplaintMap({{ complaint.latitude }}, {{ complaint.longitude }});
+        {% endif %}
+    });
+
+    function initializeComplaintMap(lat, lng) {
+        const map = L.map('complaint-map').setView([lat, lng], 17);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Add marker
+        const marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup(`
+                <div class="text-center">
+                    <strong>{{ complaint.title }}</strong><br>
+                    <small class="text-muted">Complaint Location</small>
+                </div>
+            `)
+            .openPopup();
+
+        // Add a circle to show general area
+        L.circle([lat, lng], {
+            color: '#28a745',
+            fillColor: '#28a745',
+            fillOpacity: 0.1,
+            radius: 100
+        }).addTo(map);
+    }
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
