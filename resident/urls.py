@@ -15,6 +15,7 @@ urlpatterns = [
 
     # Complaints
     path('my-complaints/', resident_complaints.my_complaints, name='my_complaints'),
+    path('complaint-details/<int:pk>/', resident_complaints.complaint_details, name='resident_complaint_details'),
     path('update-complaint/<int:pk>/', resident_complaints.update_complaint, name='update_complaint'),
     path('delete-complaint/<int:pk>/', resident_complaints.delete_complaint, name='delete_complaint'),
     path('follow-up-complaint/<int:complaint_id>/', resident_complaints.follow_up_complaint, name='follow_up_complaint'),
