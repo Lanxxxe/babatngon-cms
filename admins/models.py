@@ -54,7 +54,7 @@ class AssistanceRequest(models.Model):
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
-        ('critical', 'Critical'),
+        ('urgent', 'Urgent'),
     ]    
 
     ASSISTANCE_STATUS_CHOICES = [
