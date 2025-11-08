@@ -102,6 +102,23 @@ def my_complaints(request):
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
     return render(request, 'my_complaints.html', {'complaints': complaints})
 
+def complaint_details(request, pk):
+    user_id = request.session.get('resident_id')
+
+    if not user_id:
+        sweetify.error(request, 'You must be logged in to view complaint details.', persistent=True, timer=3000)
+        return redirect('homepage')
+
+    user = User.objects.filter(id=user_id).first()
+    complaint = get_object_or_404(Complaint, pk=pk, user=user)
+    attachments = ComplaintAttachment.objects.filter(complaint=complaint)
+
+    context = {
+        'complaint': complaint,
+        'attachments': attachments,
+    }
+
+    return render(request, 'complaint_details/view_complaint_details.html', context)
 
 def delete_complaint(request, pk):
 
