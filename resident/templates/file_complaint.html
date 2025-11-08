@@ -58,7 +58,7 @@ File Complaint
                             <!-- Subject field - full width -->
                             <div class="col-12 mb-3">
                                 <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road">
+                                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road" required>
                                 <div class="invalid-feedback">Please enter a subject.</div>
                             </div>
                             
@@ -92,7 +92,7 @@ File Complaint
                             </div>
                             
                             <!-- Priority field - half width on medium+ screens, full on small -->
-                            <div class="col-md-6 mb-3">
+                            {% comment %} <div class="col-md-6 mb-3">
                                 <label for="priority" class="form-label">Priority</label>
                                 <select class="form-select" id="priority" name="priority">
                                     <option value="low">Low</option>
@@ -100,10 +100,10 @@ File Complaint
                                     <option value="high">High</option>
                                     <option value="urgent">Urgent</option>
                                 </select>
-                            </div>
+                            </div> {% endcomment %}
                             
                             <!-- Other category specification - hidden by default -->
-                            <div class="col-12 mb-3" id="other-category-container" style="display: none;">
+                            <div class="col-md-6 mb-3" id="other-category-container" style="display: none;">
                                 <label for="other_category" class="form-label">Please specify other category<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="other_category" name="other_category" placeholder="Enter the specific category">
                                 <div class="invalid-feedback">Please specify the other category.</div>
@@ -111,14 +111,14 @@ File Complaint
                             
                             <!-- Location field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="location" class="form-label">Location Description</label>
-                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall">
+                                <label for="location" class="form-label">Location Description<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall" required>
                                 <div class="form-text">Provide a brief description of the location.</div>
                             </div>
                             
                             <!-- Address field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="address" class="form-label">Address</label>
+                                <label for="address" class="form-label">Address<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled automatically when you pin location on map" readonly>
                                 <div class="form-text">
                                     <i class="bi bi-info-circle me-1"></i>
@@ -164,15 +164,6 @@ File Complaint
         </div>
     </div>
 </div>
-
-
-<div class="d-flex justify-content-center align-items-center px-md-5 px-0 " style="min-height: 80vh;">
-    <div class="card container-fluid shadow-lg p-4" style="width: 100%;">
-        <h3 class="mb-4 text-center text-primary ">File a Complaint</h3>
-
-    </div>
-</div>
-
 {% endblock %}
 
 {% block internal_js %}
