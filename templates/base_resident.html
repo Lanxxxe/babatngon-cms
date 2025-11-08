@@ -68,7 +68,7 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="{% url 'my_complaints' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+                    <a href="{% url 'my_complaints' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_complaints' or request.resolver_match.url_name == 'resident_complaint_details' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-clipboard-data"></i>
                         </div>
