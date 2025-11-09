@@ -127,9 +127,15 @@ def delete_complaint(request, pk):
         sweetify.error(request, 'You must be logged in to delete a complaint.', persistent=True, timer=3000)
         return redirect('homepage')
 
-    complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
-    complaint.delete()
-    sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
+    try:
+        complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
+        ComplaintAttachment.objects.filter(complaint=complaint).delete()
+        complaint.delete()
+        sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
+
+    except Exception as e:
+        sweetify.error(request, 'Error deleting complaint.', persistent=True, timer=3000)
+
     return redirect('my_complaints')
 
 
@@ -147,16 +153,12 @@ def update_complaint(request, pk):
         category = request.POST.get('category', '').strip()
         location_description = request.POST.get('location', '').strip()
         address = request.POST.get('address', '').strip() 
+
         # Handle coordinate updates
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
 
-        # complaint.title = request.POST.get('title', complaint.title)
-        # complaint.description = request.POST.get('description', complaint.description)
-        # complaint.category = request.POST.get('category', complaint.category)
-        # complaint.location_description = request.POST.get('location', complaint.location_description)
-        # complaint.address = request.POST.get('address', complaint.address)
-                
+
         # Handle attachment deletions
         attachments_to_delete = request.POST.getlist('delete_attachments')
         if attachments_to_delete:
@@ -215,7 +217,7 @@ def update_complaint(request, pk):
     
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        
+
         # Get attachments for the complaint
         attachments = []
         for attachment in complaint.attachments.all():

@@ -188,8 +188,8 @@ My Complaints
                       <a href="{% url 'resident_complaint_details' complaint.id %}" role="button" class="btn btn-success btn-md">View</a>
                       <button class="btn btn-primary btn-md" onclick="editComplaint({{ complaint.id }})">Update</button>
                       {% comment %} <button class="btn btn-warning btn-sm" onclick="followUpComplaint({{ complaint.id }})">Follow-up</button> {% endcomment %}
-                      <a href="{% url 'delete_complaint' complaint.id %}" class="btn btn-danger btn-md"
-                        onclick="return confirm('Are you sure you want to delete this complaint?');">Delete</a>
+                      <button class="btn btn-danger btn-md"
+                        onclick="confirmDelete({{ complaint.id }})">Delete</button>
                   </td>
                 </tr>
             {% empty %}
@@ -873,6 +873,23 @@ My Complaints
             }
         });
         
+        function confirmDelete(complaintId) {
+            Swal.fire({
+                title: 'Delete Complaint?',
+                text: 'Are you sure you want to delete this complaint? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to delete URL
+                    window.location.href = "{% url 'delete_complaint' 0 %}".replace('0', complaintId);
+                }
+            });
+        }
 
     </script>
 
