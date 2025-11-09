@@ -142,24 +142,21 @@ def update_complaint(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
     
     if request.method == 'POST':
-        complaint.title = request.POST.get('title', complaint.title)
-        complaint.description = request.POST.get('description', complaint.description)
-        complaint.category = request.POST.get('category', complaint.category)
-        complaint.priority = request.POST.get('priority', complaint.priority)
-        complaint.location_description = request.POST.get('location', complaint.location_description)
-        complaint.address = request.POST.get('address', complaint.address)
-        
+        subject = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        category = request.POST.get('category', '').strip()
+        location_description = request.POST.get('location', '').strip()
+        address = request.POST.get('address', '').strip() 
         # Handle coordinate updates
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
-        
-        try:
-            complaint.latitude = float(latitude) if latitude else complaint.latitude
-            complaint.longitude = float(longitude) if longitude else complaint.longitude
-        except (ValueError, TypeError):
-            # Keep existing coordinates if invalid input
-            pass
-        
+
+        # complaint.title = request.POST.get('title', complaint.title)
+        # complaint.description = request.POST.get('description', complaint.description)
+        # complaint.category = request.POST.get('category', complaint.category)
+        # complaint.location_description = request.POST.get('location', complaint.location_description)
+        # complaint.address = request.POST.get('address', complaint.address)
+                
         # Handle attachment deletions
         attachments_to_delete = request.POST.getlist('delete_attachments')
         if attachments_to_delete:
@@ -173,17 +170,52 @@ def update_complaint(request, pk):
                 except ComplaintAttachment.DoesNotExist:
                     pass
         
-        # Handle new file uploads
-        new_files = request.FILES.getlist('new_attachments')
-        for file in new_files:
-            ComplaintAttachment.objects.create(complaint=complaint, file=file)
+        try: 
+            complaint_details = {
+                'subject': subject,
+                'description': description,
+                'category': category,
+                'location_description': location_description,
+                'address': address,
+            }
+
+            details = prompt_details(complaint_details)
+            priority = generate_priority(details).lower()
+
+            complaint.title = subject
+            complaint.description = description
+            complaint.category = category
+            complaint.location_description = location_description
+            complaint.address =  address
+            complaint.priority = priority
+
+            try:
+                complaint.latitude = float(latitude) if latitude else complaint.latitude
+                complaint.longitude = float(longitude) if longitude else complaint.longitude
+            except (ValueError, TypeError):
+                # Keep existing coordinates if invalid input
+                pass
+
+
+            complaint.save()
+
+            # Handle new file uploads
+            new_files = request.FILES.getlist('new_attachments')
+            for file in new_files:
+                ComplaintAttachment.objects.create(complaint=complaint, file=file)
+            
+            sweetify.success(request, 'Complaint updated successfully.', persistent=True, timer=2000)
+            redirect('my_complaints')
+
         
-        complaint.save()
-        sweetify.success(request, 'Complaint updated successfully.', persistent=True, timer=2000)
-        return redirect('my_complaints')
+        except Exception as e:
+            sweetify.error(request, 'Error updating complaint details.', persistent=True, timer=3000)
+            return redirect('my_complaints')
+
     
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        
         # Get attachments for the complaint
         attachments = []
         for attachment in complaint.attachments.all():
