@@ -22,6 +22,7 @@ urlpatterns = [
 
     # Assistance Requests
     path('my-assistance/', resident_assistance.my_assistance, name='my_assistance'),
+    path('assistance-details/<int:pk>/', resident_assistance.assistance_detail, name='resident_assistance_detail'),
     path('update-assistance/<int:pk>/', resident_assistance.update_assistance, name='update_assistance'),
     path('delete-assistance/<int:pk>/', resident_assistance.delete_assistance, name='delete_assistance'),
     path('follow-up-assistance/<int:assistance_id>/', resident_assistance.follow_up_assistance, name='follow_up_assistance'),

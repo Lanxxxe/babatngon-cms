@@ -25,11 +25,19 @@ def generate_priority(prompt: str) -> str:
 
     return response.candidates[0].content.parts[0].text
 
-def prompt_details(details: dict) -> str:
-    prompt = f"""
-    Determine the priority level for the following case details:
-    {details}
-    """
+def prompt_details(details: dict, is_follow_up: bool = False) -> str:
+    prompt = ""
+    if is_follow_up:
+        prompt = f"""
+        Update the priority level base on the follow up message of the user on the following case details:
+        {details}
+        """
+
+    else:   
+        prompt = f"""
+        Determine the priority level for the following case details:
+        {details}
+        """
 
     return prompt
 

@@ -2,7 +2,7 @@ from core.models import User
 from django.shortcuts import redirect, get_object_or_404, render
 from django.http import JsonResponse
 from admins.notification_utils import notify_new_case_filed
-from admins.models import Complaint, ComplaintAttachment
+from admins.models import Complaint, ComplaintAttachment, Notification
 from resident.automate_priority import generate_priority, prompt_details
 import os
 import sweetify
@@ -49,13 +49,11 @@ def file_complaint(request):
 
         
         complaint_details = {
-            'title': title,
+            'subject': title,
             'description': description,
             'category': final_category,
             'location_description': location_description,
             'address': address,
-            'latitude': lat_float,
-            'longitude': lng_float
         }
         
         details = prompt_details(complaint_details)
@@ -102,6 +100,7 @@ def my_complaints(request):
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
     return render(request, 'my_complaints.html', {'complaints': complaints})
 
+
 def complaint_details(request, pk):
     user_id = request.session.get('resident_id')
 
@@ -119,6 +118,7 @@ def complaint_details(request, pk):
     }
 
     return render(request, 'complaint_details/view_complaint_details.html', context)
+
 
 def delete_complaint(request, pk):
 
@@ -224,8 +224,21 @@ def follow_up_complaint(request, complaint_id):
     
     if request.method == 'POST':
         message = request.POST.get('message', '').strip()
-        urgency = request.POST.get('urgency', 'normal')
+
+        complaint_details = {
+            'subject': complaint.title,
+            'description': complaint.description,
+            'category': complaint.category,
+            'location_description': complaint.location_description,
+            'address': complaint.address,
+            'follow_up_message': message
+        }
         
+        details = prompt_details(complaint_details, is_follow_up=True)
+
+        priority = generate_priority(details).lower()
+        
+
         if not message:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Follow-up message is required.'})
@@ -233,9 +246,7 @@ def follow_up_complaint(request, complaint_id):
             return redirect('my_complaints')
         
         try:
-            from admins.models import Notification
-            from core.models import Admin
-            
+
             # Use the unified notification system to notify all admins
             notifications = Notification.notify_admins(
                 sender=user,
@@ -243,10 +254,14 @@ def follow_up_complaint(request, complaint_id):
                 message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nComplaint Details:\n- Title: {complaint.title}\n- Category: {complaint.category}\n- Status: {complaint.status.replace("_", " ").title()}\n- Priority: {complaint.priority.title()}\n- Filed: {complaint.created_at.strftime("%B %d, %Y at %I:%M %p")}',
                 notification_type='status_update',
                 action_type='commented',
-                priority=urgency,
+                priority=priority,
                 related_complaint=complaint
             )
+
             notifications_created = len(notifications)
+
+            complaint.priority = priority
+            complaint.save()
             
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({

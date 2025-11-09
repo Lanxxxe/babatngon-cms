@@ -36,9 +36,19 @@ Complaint Details
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4"> 
+<div class="container-fluid py-2"> 
     <!-- Header Section -->
     <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{% url 'my_complaints' %}" role="button" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to My Complaints
+                </a>
+                <button class="btn btn-warning" onclick="followUpComplaint({{ complaint.id }})">
+                    <i class="bi bi-megaphone me-2"></i>Request Follow Up
+                </button>
+            </div>
+        </div>
         <div class="col-12">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
                 <div class="mb-3 mb-md-0">
@@ -48,9 +58,6 @@ Complaint Details
                         Request ID: #{{ complaint.id }} | Filed on {{ complaint.created_at|date:"F d, Y \a\t g:i A" }}
                     </p>
                 </div>
-                <a href="{% url 'my_complaints' %}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to My Complaints
-                </a>
             </div>
         </div>
     </div>
@@ -332,6 +339,60 @@ Complaint Details
         </div>
     </div>
 </div>
+
+<!-- Follow-up Modal -->
+<div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="followUpModalLabel">
+                    <i class="bi bi-chat-dots me-2"></i>Follow-up on Complaint
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="followUpForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="followUpComplaintId" name="complaint_id">
+                    
+                    <!-- Complaint Info -->
+                    <div class="alert alert-info" id="complaintInfo">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-1"></i>Complaint Information</h6>
+                        <div id="complaintDetails">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Follow-up Message -->
+                    <div class="mb-3">
+                        <label for="followUpMessage" class="form-label">Follow-up Message <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="followUpMessage" name="message" rows="4" required
+                                  placeholder="Please provide additional details, ask questions, or update the status of your complaint..."></textarea>
+                        <div class="form-text">This message will be sent to the administrators handling your complaint.</div>
+                    </div>
+                    
+                    <!-- Urgency Level -->
+                    {% comment %} <div class="mb-3">
+                        <label for="followUpUrgency" class="form-label">Urgency Level</label>
+                        <select class="form-select" id="followUpUrgency" name="urgency">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                        <div class="form-text">Select urgency level based on the importance of your follow-up.</div>
+                    </div> {% endcomment %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-modern-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Send Follow-up
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block internal_js %}
@@ -384,5 +445,139 @@ Complaint Details
             }
         });
     });
+
+    // Follow-up functionality
+    function followUpComplaint(complaintId) {
+        // Fetch complaint details first
+        fetch("{% url 'update_complaint' 0 %}".replace('0', complaintId), {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                // Populate complaint info
+                document.getElementById('followUpComplaintId').value = complaintId;
+                
+                const complaintDetails = document.getElementById('complaintDetails');
+                const statusClass = getStatusClass(data.status);
+                const priorityClass = getPriorityClass(data.priority);
+                
+                complaintDetails.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Title:</strong> ${data.title}<br>
+                            <strong>Category:</strong> ${data.category}<br>
+                            <strong>Filed:</strong> ${data.created_at}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong> <span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span><br>
+                            <strong>Priority:</strong> <span class="badge ${priorityClass}">${data.priority.charAt(0).toUpperCase() + data.priority.slice(1)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Set form action
+                document.getElementById('followUpForm').action = "{% url 'follow_up_complaint' 0 %}".replace('0', complaintId);
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('followUpModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching complaint details:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading complaint details. Please try again.',
+                confirmButtonColor: '#dc3545'
+            });
+        });
+    }
+
+
+    // Handle follow-up form submission
+    document.getElementById('followUpForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Sending...';
+        submitBtn.disabled = true;
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and show success message
+                bootstrap.Modal.getInstance(document.getElementById('followUpModal')).hide();
+                
+                // Show success message with SweetAlert2
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Follow-up Sent!',
+                    text: 'Your message has been forwarded to the administrators.',
+                    confirmButtonColor: '#28a745',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                
+                // Clear form
+                this.reset();
+                window.location.reload();
+                
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Error sending follow-up',
+                    confirmButtonColor: '#dc3545'
+                });
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error sending follow-up. Please try again.',
+                confirmButtonColor: '#dc3545'
+            });
+            window.location.reload();
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+
+    function getStatusClass(status) {
+        switch(status) {
+            case 'pending': return 'bg-warning';
+            case 'in_progress': return 'bg-info';
+            case 'resolved': return 'bg-success';
+            case 'closed': return 'bg-secondary';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    function getPriorityClass(priority) {
+        switch(priority) {
+            case 'low': return 'bg-success';
+            case 'medium': return 'bg-warning';
+            case 'high': return 'bg-orange';
+            case 'urgent': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
 </script>
 {% endblock %}

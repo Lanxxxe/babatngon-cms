@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from admins.notification_utils import notify_new_case_filed
 from admins.models import AssistanceRequest, AssistanceAttachment
 from admins.models import Notification
+from resident.automate_priority import generate_priority, prompt_details
 from core.models import User
 import os, sweetify
 
@@ -18,7 +19,7 @@ def file_assistance(request):
         description = request.POST.get('description', '').strip()
         type_ = request.POST.get('type', '').strip()
         other_assistance_type = request.POST.get('other_assistance_type', '').strip()
-        urgency = request.POST.get('urgency', 'low')
+        # urgency = request.POST.get('urgency', 'low')
         address = request.POST.get('address', '').strip()
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
@@ -46,12 +47,22 @@ def file_assistance(request):
             lat_float = None
             lng_float = None
         
+        assistance_details = {
+            'subject' : title,
+            'description' : description,
+            'type' : final_type,
+            'address' : address,
+        }
+
+        details = prompt_details(assistance_details)
+        priority = generate_priority(details).lower()
+
         assistance = AssistanceRequest.objects.create(
             user=user,
             title=title,
             description=description,
             type=final_type,
-            urgency=urgency,
+            urgency=priority,
             address=address,
             latitude=lat_float,
             longitude=lng_float
@@ -86,6 +97,21 @@ def my_assistance(request):
 
     return render(request, 'my_assistance.html', context)
 
+def assistance_detail(request, pk):
+    user_id = request.session.get('resident_id')
+    if not user_id:
+        sweetify.error(request, 'Action not allowed.', persistent="Okay", timer=3000)
+        return redirect('homepage')
+    
+    user = User.objects.filter(id=user_id).first()
+    assistance = get_object_or_404(AssistanceRequest, pk=pk, user=user)
+    attachments = AssistanceAttachment.objects.filter(assistance=assistance)
+    context = {
+        'assistance': assistance,
+        'attachments': attachments,
+    }
+
+    return render(request, 'assistance_details/view_assistance_details.html', context)
 
 def update_assistance(request, pk):
     user_id = request.session.get('resident_id')
@@ -93,6 +119,7 @@ def update_assistance(request, pk):
         sweetify.error(request, 'Action not allowed.', persistent="Okay", timer=3000)
         return redirect('homepage')
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
+
     if request.method == 'POST':
         assistance.title = request.POST.get('title', assistance.title)
         assistance.description = request.POST.get('description', assistance.description)
@@ -191,7 +218,18 @@ def follow_up_assistance(request, assistance_id):
     
     if request.method == 'POST':
         message = request.POST.get('message', '').strip()
-        urgency = request.POST.get('urgency', 'normal')
+        # urgency = request.POST.get('urgency', 'normal')
+        
+        assistance_details = {
+            'subject' : assistance.title,
+            'description' : assistance.description,
+            'type' : assistance.type,
+            'address' : assistance.address,
+            'follow_up_message' : message,
+        }
+
+        details = prompt_details(assistance_details)
+        priority = generate_priority(details)
         
         if not message:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -208,11 +246,16 @@ def follow_up_assistance(request, assistance_id):
                 message=f'Resident {user.get_full_name()} has sent a follow-up message:\n\n{message}\n\nAssistance Request Details:\n- Title: {assistance.title}\n- Type: {assistance.type}\n- Status: {assistance.status.replace("_", " ").title()}\n- Urgency: {assistance.urgency.title()}\n- Filed: {assistance.created_at.strftime("%B %d, %Y at %I:%M %p")}',
                 notification_type='new_assistance',
                 action_type='commented',
-                priority=urgency,
+                priority=priority,
                 related_assistance=assistance
             )
+
             notifications_created = len(notifications)
-            
+
+            assistance.urgency = priority
+            assistance.save()    
+
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True, 

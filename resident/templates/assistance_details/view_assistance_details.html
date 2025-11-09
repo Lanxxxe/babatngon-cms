@@ -1,5 +1,5 @@
 {% extends 'base_resident.html' %}
-{% block title %}Complaint Details{% endblock %}
+{% block title %}Assitance Request Details{% endblock %}
 
 {% block internal_css %}
 
@@ -218,25 +218,32 @@
 {% endblock %}
 
 {% block breadcrumb %}
-Complaint Details
+Assitance Request Details
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Header Section -->
     <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{% url 'my_assistance' %}" class="back-btn text-decoration-none">
+                    <i class="bi bi-arrow-left me-2"></i>Back to My Assistance
+                </a>
+                <button class="btn btn-warning" onclick="followUpAssistance({{ assistance.id }})">
+                    <i class="bi bi-megaphone me-2"></i>Request Follow Up
+                </button>
+            </div>
+        </div>
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h3 class="text-success mb-2">{{ assistance.title }}</h3>
                     <p class="text-muted mb-0">
                         <i class="bi bi-calendar me-2"></i>
-                        Complaint ID: #{{ complaint.id }} | Filed on {{ assistance.created_at|date:"F d, Y \a\t g:i A" }}
+                        Assitance ID: #{{ assistance.id }} | Filed on {{ assistance.created_at|date:"F d, Y \a\t g:i A" }}
                     </p>
                 </div>
-                <a href="{% url 'my_assistance' %}" class="back-btn text-decoration-none">
-                    <i class="bi bi-arrow-left me-2"></i>Back to My Complaints
-                </a>
             </div>
         </div>
     </div>
@@ -262,14 +269,14 @@ Complaint Details
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Type</div>
-                                    <div class="detail-value">
-                                        <span class="badge bg-secondary">{{ assistance.type }}</span>
+                                    <div class="detail-value fs-5">
+                                        <span class="badge bg-info">{{ assistance.type }}</span>
                                     </div>
                                 </div>
                                 <div class="detail-row">
                                     <div class="detail-label">Urgency</div>
                                     <div class="detail-value">
-                                        <span class="urgency-badge 
+                                        <span class="urgency-badge text-light
                                             {% if assistance.urgency == 'urgent' %}bg-danger
                                             {% elif assistance.urgency == 'high' %}bg-warning
                                             {% elif assistance.urgency == 'medium' %}bg-info
@@ -285,7 +292,7 @@ Complaint Details
                                 <div class="detail-row">
                                     <div class="detail-label">Status</div>
                                     <div class="detail-value">
-                                        <span class="status-badge 
+                                        <span class="status-badge text-light
                                             {% if assistance.status == 'pending' %}bg-warning
                                             {% elif assistance.status == 'assigned' %}bg-primary
                                             {% elif assistance.status == 'in_progress' %}bg-info
@@ -398,14 +405,6 @@ Complaint Details
                             <div class="detail-label">Address</div>
                             <div class="detail-value">{{ assistance.address|default:"No address specified" }}</div>
                         </div>
-                        {% if assistance.latitude and assistance.longitude %}
-                        <div class="detail-row">
-                            <div class="detail-label">Coordinates</div>
-                            <div class="detail-value">
-                                {{ assistance.latitude }}, {{ assistance.longitude }}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                     
                     <!-- Map Section -->
@@ -462,7 +461,7 @@ Complaint Details
                 </div>
             </div>
 
-            <!-- Progress Timeline Card -->
+            {% comment %} <!-- Progress Timeline Card -->
             <div class="timeline-section">
                 <h6 class="text-success mb-3">
                     <i class="bi bi-clock-history me-2"></i>
@@ -497,7 +496,60 @@ Complaint Details
                     <small class="text-muted">Assistance request has been completed</small>
                 </div>
                 {% endif %}
+            </div> {% endcomment %}
+        </div>
+    </div>
+</div>
+
+<!-- Follow-up Modal -->
+<div class="modal fade" id="followUpAssistanceModal" tabindex="-1" aria-labelledby="followUpAssistanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="followUpAssistanceModalLabel">
+                    <i class="bi bi-chat-dots me-2"></i>Follow-up on Assistance Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form id="followUpAssistanceForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="followUpAssistanceId" name="assistance_id">
+                    
+                    <!-- Assistance Info -->
+                    <div class="alert alert-info" id="assistanceInfo">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-1"></i>Assistance Request Information</h6>
+                        <div id="assistanceDetails">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Follow-up Message -->
+                    <div class="mb-3">
+                        <label for="followUpAssistanceMessage" class="form-label">Follow-up Message <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="followUpAssistanceMessage" name="message" rows="4" required
+                                  placeholder="Please provide additional details, ask questions, or update the status of your assistance request..."></textarea>
+                        <div class="form-text">This message will be sent to the administrators handling your assistance request.</div>
+                    </div>
+                    
+                    <!-- Urgency Level -->
+                    {% comment %} <div class="mb-3">
+                        <label for="followUpAssistanceUrgency" class="form-label">Urgency Level</label>
+                        <select class="form-select" id="followUpAssistanceUrgency" name="urgency">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                        <div class="form-text">Select urgency level based on the importance of your follow-up.</div>
+                    </div> {% endcomment %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-modern-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Send Follow-up
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -505,6 +557,7 @@ Complaint Details
 
 {% block internal_js %}
 <script>
+
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize map if coordinates exist
         {% if assistance.latitude and assistance.longitude %}
@@ -551,6 +604,140 @@ Complaint Details
                     block: 'start'
                 });
             }
+        });
+    });
+
+
+    // Function to get urgency badge class
+    function getUrgencyClass(urgency) {
+        switch(urgency) {
+            case 'low': return 'bg-success';
+            case 'medium': return 'bg-warning';
+            case 'high': return 'bg-orange';
+            case 'critical': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+
+    // Function to get assistance status badge class
+    function getAssistanceStatusClass(status) {
+        switch(status) {
+            case 'pending': return 'bg-warning';
+            case 'approved': return 'bg-info';
+            case 'in_progress': return 'bg-primary';
+            case 'completed': return 'bg-success';
+            case 'rejected': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+
+    // Follow-up functionality
+    function followUpAssistance(assistanceId) {
+        // Fetch assistance details first
+        fetch("{% url 'update_assistance' 0 %}".replace('0', assistanceId), {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                // Populate assistance info
+                document.getElementById('followUpAssistanceId').value = assistanceId;
+                
+                const assistanceDetails = document.getElementById('assistanceDetails');
+                const statusClass = getAssistanceStatusClass(data.status);
+                const urgencyClass = getUrgencyClass(data.urgency);
+                
+                assistanceDetails.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Title:</strong> ${data.title}<br>
+                            <strong>Type:</strong> ${data.type}<br>
+                            <strong>Filed:</strong> ${data.created_at}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong> <span class="badge ${statusClass}">${data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span><br>
+                            <strong>Urgency:</strong> <span class="badge ${urgencyClass}">${data.urgency.charAt(0).toUpperCase() + data.urgency.slice(1)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Set form action
+                document.getElementById('followUpAssistanceForm').action = "{% url 'follow_up_assistance' 0 %}".replace('0', assistanceId);
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('followUpAssistanceModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching assistance details:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading assistance details. Please try again.',
+                confirmButtonColor: '#dc3545'
+            });
+        });
+    }
+
+    // Handle follow-up form submission
+    document.getElementById('followUpAssistanceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Sending...';
+        submitBtn.disabled = true;
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and show success message
+                bootstrap.Modal.getInstance(document.getElementById('followUpAssistanceModal')).hide();
+                
+                // Show success message with SweetAlert2
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Follow-up Sent!',
+                    text: 'Your message has been forwarded to the administrators.',
+                    confirmButtonColor: '#28a745',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                
+                // Clear form
+                this.reset();
+                
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Error sending follow-up',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error sending follow-up. Please try again.',
+                confirmButtonColor: '#dc3545'
+            });
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         });
     });
 </script>
