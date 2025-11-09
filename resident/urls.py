@@ -5,6 +5,7 @@ from resident.views import (
     resident_complaints,
     resident_notifications,
     resident_profile,
+    resident_chatbot,
 )
 
 urlpatterns = [
@@ -48,4 +49,7 @@ urlpatterns = [
     # Profile
     path('profile/', resident_profile.profile, name='profile'),
     path('change-password/', resident_profile.resident_change_password, name='resident_change_password'),
+    
+    # Chatbot
+    path('chatbot/response/', resident_chatbot.chatbot_response, name='chatbot_response'),
 ]

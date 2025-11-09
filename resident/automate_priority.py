@@ -40,24 +40,3 @@ def prompt_details(details: dict, is_follow_up: bool = False) -> str:
         """
 
     return prompt
-
-def main():
-    details = {
-        "Subject" : "Broken Streetlight",
-        "Description" : "The streetlight on 5th Avenue has been flickering for weeks, causing safety concerns for pedestrians at night.",
-        "Category" : "Public Safety",
-        "Area Description" : "Residential Area",
-        "Location" : "5th Avenue, Downtown"
-    }
-
-    prompt = f"""
-    Determine the priority level for the following case details:
-    {details}
-    """
-
-    priority = generate_priority(prompt)
-    print(f"Response type: {type(priority)}")
-    print(f"Generated Priority: {priority}")
-
-# if __name__ == "__main__":
-#     main()
