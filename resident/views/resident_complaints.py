@@ -98,7 +98,12 @@ def my_complaints(request):
     user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
-    return render(request, 'my_complaints.html', {'complaints': complaints})
+    
+    context = {
+        'complaints': complaints,
+    }
+
+    return render(request, 'my_complaints.html', context)
 
 
 def complaint_details(request, pk):

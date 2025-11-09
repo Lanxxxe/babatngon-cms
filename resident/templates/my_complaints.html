@@ -168,8 +168,9 @@ My Complaints
                       <span class="badge fs-6
                           {% if complaint.status == 'pending' %}bg-warning
                           {% elif complaint.status == 'in_progress' %}bg-info
+                          {% elif complaint.status == 'assigned' %}bg-primary
                           {% elif complaint.status == 'resolved' %}bg-success
-                          {% else %}bg-danger{% endif %}">
+                          {% else %}bg-secondary{% endif %}">
                           {{ complaint.status|title }}
                       </span>
                   </td>
@@ -856,14 +857,6 @@ My Complaints
                 default: return 'bg-secondary';
             }
         }
-
-        // Clean up maps when modals are hidden
-        document.getElementById('viewComplaintModal').addEventListener('hidden.bs.modal', function () {
-            if (viewMap) {
-                viewMap.remove();
-                viewMap = null;
-            }
-        });
 
         document.getElementById('editComplaintModal').addEventListener('hidden.bs.modal', function () {
             if (editMap) {

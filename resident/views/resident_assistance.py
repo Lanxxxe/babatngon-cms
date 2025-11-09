@@ -97,6 +97,7 @@ def my_assistance(request):
 
     return render(request, 'my_assistance.html', context)
 
+
 def assistance_detail(request, pk):
     user_id = request.session.get('resident_id')
     if not user_id:
@@ -113,6 +114,7 @@ def assistance_detail(request, pk):
 
     return render(request, 'assistance_details/view_assistance_details.html', context)
 
+
 def update_assistance(request, pk):
     user_id = request.session.get('resident_id')
     if not user_id:
@@ -121,51 +123,68 @@ def update_assistance(request, pk):
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
 
     if request.method == 'POST':
-        assistance.title = request.POST.get('title', assistance.title)
-        assistance.description = request.POST.get('description', assistance.description)
-        type_ = request.POST.get('type', assistance.type)
+        subject = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        assistance_type = request.POST.get('type', '').strip()
         other_assistance_type = request.POST.get('other_assistance_type', '').strip()
-        assistance.urgency = request.POST.get('urgency', assistance.urgency)
-        assistance.address = request.POST.get('address', assistance.address)
-        
-        # Handle "Others" assistance type
-        if type_ == 'Others' and other_assistance_type:
-            assistance.type = other_assistance_type
-        elif type_ != 'Others':
-            assistance.type = type_
-        
+        address = request.POST.get('address', '').strip()
         # Handle coordinate updates
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
-        
-        try:
-            assistance.latitude = float(latitude) if latitude else assistance.latitude
-            assistance.longitude = float(longitude) if longitude else assistance.longitude
-        except (ValueError, TypeError):
-            # Keep existing coordinates if invalid input
-            pass
-        
+
+        # Handle "Others" assistance type
+        if assistance_type == 'Others' and other_assistance_type:
+            assistance.type = other_assistance_type
+
         # Handle attachment deletions
         attachments_to_delete = request.POST.getlist('delete_attachments')
         if attachments_to_delete:
             for attachment_id in attachments_to_delete:
                 try:
                     attachment = AssistanceAttachment.objects.get(id=attachment_id, assistance=assistance)
-                    # Delete the physical file
-                    if attachment.file and os.path.exists(attachment.file.path):
-                        os.remove(attachment.file.path)
                     attachment.delete()
                 except AssistanceAttachment.DoesNotExist:
-                    pass  # Attachment doesn't exist, skip
+                    continue
         
-        # Handle new file uploads
-        new_files = request.FILES.getlist('new_attachments')
-        for file in new_files:
-            AssistanceAttachment.objects.create(assistance=assistance, file=file)
+        details = {
+            'subject' : subject if subject else assistance.title,
+            'description' : description if description else assistance.description,
+            'type' : assistance_type if assistance_type != 'Others' else assistance.type,
+            'address' : address if address else assistance.address,
+        }
+
+        detail_prompt = prompt_details(details)
+        priority = generate_priority(detail_prompt).lower()
+
+        try:
+            assistance.title = subject if subject else assistance.title
+            assistance.description = description if description else assistance.description
+            assistance.type = assistance_type if assistance_type != 'Others' else assistance.type
+            assistance.address = address if address else assistance.address
+            assistance.urgency = priority
         
-        assistance.save()
-        sweetify.success(request, 'Assistance updated.', persistent="Okay", timer=2000)
-        return redirect('my_assistance')
+            try:
+                assistance.latitude = float(latitude) if latitude else assistance.latitude
+                assistance.longitude = float(longitude) if longitude else assistance.longitude
+            except (ValueError, TypeError):
+                # Keep existing coordinates if invalid input
+                pass
+
+            # Handle new file uploads
+            new_files = request.FILES.getlist('new_attachments')
+            for file in new_files:
+                AssistanceAttachment.objects.create(assistance=assistance, file=file)
+
+            assistance.save()
+
+            sweetify.success(request, 'Assistance updated.', persistent="Okay", timer=2000)
+            return redirect('my_assistance')
+
+
+        except Exception:
+            sweetify.error(request, 'Error updating assistance details.', persistent="Okay", timer=3000)
+            return redirect('my_assistance')
+
     
     # For AJAX/modal prefill
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -192,6 +211,8 @@ def update_assistance(request, pk):
             'created_at': assistance.created_at.strftime('%Y-%m-%d %H:%M'),
             'attachments': attachments,
         })
+    
+    
     return redirect('my_assistance')
 
 
