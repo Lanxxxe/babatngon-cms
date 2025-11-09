@@ -67,7 +67,7 @@
             <div class="nav-section-admin">
                 <div class="nav-section-title-admin">Management</div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'admin_complaints' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}">
+                    <a href="{% url 'admin_complaints' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_complaints' or request.resolver_match.url_name == 'complaint_details' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-clipboard-check"></i>
                         </div>
@@ -76,7 +76,7 @@
                     </a>
                 </div>
                 <div class="nav-item-admin">
-                    <a href="{% url 'admin_assistance' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_assistance' %}active{% endif %}">
+                    <a href="{% url 'admin_assistance' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_assistance' or request.resolver_match.url_name == 'assistance_details' %}active{% endif %}">
                         <div class="nav-icon-admin">
                             <i class="bi bi-hand-thumbs-up"></i>
                         </div>
