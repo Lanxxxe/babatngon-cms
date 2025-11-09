@@ -76,11 +76,11 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="{% url 'my_assistance' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_assistance' %}active{% endif %}">
+                    <a href="{% url 'my_assistance' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'my_assistance' or request.resolver_match.url_name == 'resident_assistance_detail' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-clipboard-pulse"></i>
                         </div>
-                        <span class="nav-text">My Assitance</span>
+                        <span class="nav-text">My Assistance</span>
                     </a>
                 </div>
             </div>
