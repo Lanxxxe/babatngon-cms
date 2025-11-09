@@ -14,7 +14,7 @@
                     <div class="stat-number">{{ total_complaints|default:0 }}</div>
                     <div class="stat-label">Total Complaints</div>
                     <div class="stat-change">
-                        <i class="bi bi-arrow-up me-1"></i>+12% from last month
+                        Filed Complaints
                     </div>
                 </div>
                 <i class="bi bi-clipboard-data text-primary" style="font-size: 20px; opacity: 0.6;"></i>
@@ -228,36 +228,59 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="col-lg-4 ">
-        <!-- Priority Complaints -->
+    <div class="col-lg-4">
         <div class="card-admin mb-3">
             <div class="card-header-admin text-danger">
-                <i class="bi bi-exclamation-triangle me-2"></i>High Priority
+                <i class="bi bi-exclamation-triangle me-2"></i>High Priority Cases
             </div>
             <div class="card-body-admin">
-                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                    <div>
-                        <div class="fw-semibold small">#001</div>
-                        <div class="text-muted small">Broken streetlight</div>
-                    </div>
-                    <button class="btn btn-outline-danger btn-sm">View</button>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                    <div>
-                        <div class="fw-semibold small">#005</div>
-                        <div class="text-muted small">Water leak emergency</div>
-                    </div>
-                    <button class="btn btn-outline-danger btn-sm">View</button>
-                </div>
+
+                <!-- Urgent Assistance -->
+                <h5 class="card-title">Urgent Assistance Requests</h5>
+                {% if urgent_assistance %}
+                    <ul class="list-group my-3">
+                        {% for assistance in urgent_assistance %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-semibold fs-6">#{{ assistance.id }} - {{ assistance.title }}</div>
+                                    <div class="text-muted fs-6">{{ assistance.description }}</div>
+                                </div>
+                                <a href="#" class="btn btn-outline-danger btn-sm">View</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center text-muted mb-3">No urgent assistance requests.</div>
+                {% endif %}
+
+                <!-- Urgent Complaints -->
+                <h5 class="card-title">Urgent Complaints</h5>
+                {% if urgent_complaints %}
+                    <ul class="list-group my-3">
+                        {% for complaint in urgent_complaints %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-semibold fs-6">#{{ complaint.id }} - {{ complaint.title }}</div>
+                                    <div class="text-muted fs-6">{{ complaint.description }}</div>
+                                </div>
+                                <a href="#" class="btn btn-outline-danger btn-sm">View</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center text-muted">No urgent complaints.</div>
+                {% endif %}
+
                 <div class="text-center mt-3">
                     <a href="{% url 'admin_complaints' %}?priority=high" class="btn btn-admin-outline btn-sm">
                         View All High Priority
                     </a>
                 </div>
+
             </div>
         </div>
-
     </div>
+
 </div>
 
 <!-- Charts Row -->

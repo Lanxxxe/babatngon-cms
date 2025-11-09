@@ -21,10 +21,16 @@ def admin_dashboard(request):
     pending_complaints = complaints.filter(status='pending').count()
     in_progress_complaints = complaints.filter(status='in_progress').count()
     resolved_complaints = complaints.filter(status='resolved').count()
+    urgent_complaints = complaints.filter(priority='urgent')
+    urgent_assistance = assistance.filter(urgency='urgent')
 
     # For recent complaints table (limit to 10 for dashboard)
     recent_complaints = complaints[:5]
     recent_assistance = assistance[:5]
+
+    # Urgent Cases
+    urgent_complaints = urgent_complaints[:3]
+    urgent_assistance = urgent_assistance[:3]
 
     context = {
         'complaints': complaints,
@@ -34,6 +40,8 @@ def admin_dashboard(request):
         'pending_complaints': pending_complaints,
         'in_progress_complaints': in_progress_complaints,
         'resolved_complaints': resolved_complaints,
+        'urgent_complaints': urgent_complaints,
+        'urgent_assistance': urgent_assistance,
     }
     return render(request, 'admin_dashboard.html', context)
 
