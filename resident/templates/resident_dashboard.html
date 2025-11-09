@@ -17,10 +17,6 @@
                         Here's an overview of your complaints and community activity. 
                         Ready to make a difference today?
                     </p>
-                    <!-- <a href="" class="btn btn-light">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        File New Complaint
-                    </a> -->
                 </div>
                 <div class="col-lg-4 text-center">
                     <div class="position-relative">
@@ -46,7 +42,7 @@
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h3 class="fw-bold mb-1">{{ pending_complaints|default:0 }}</h3>
-                    <p class="text-muted mb-0">Pending Complaints</p>
+                    <p class="text-muted mb-0 fs-5">Pending Complaints</p>
                     <small class="text-muted">Awaiting review</small>
                 </div>
             </div>
@@ -63,7 +59,7 @@
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h3 class="fw-bold mb-1">{{ in_progress_complaints|default:0 }}</h3>
-                    <p class="text-muted mb-0">In Progress</p>
+                    <p class="text-muted mb-0 fs-5">In Progress</p>
                     <small class="text-muted">Being resolved</small>
                 </div>
             </div>
@@ -80,7 +76,7 @@
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h3 class="fw-bold mb-1">{{ pending_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">Pending Assistance</p>
+                    <p class="text-muted mb-0 fs-5">Pending Assistance</p>
                     <small class="text-muted">Awaiting review</small>
                 </div>
             </div>
@@ -97,85 +93,13 @@
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h3 class="fw-bold mb-1">{{ in_progress_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">In Progress</p>
+                    <p class="text-muted mb-0 fs-5">In Progress</p>
                     <small class="text-muted">Being processed</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Assistance Cards -->
-<!-- <div class="row g-4 mb-4">
-    <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--primary-color);">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-people text-primary fs-4"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ total_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">Total Assistance</p>
-                    <small class="text-success">
-                        <i class="bi bi-arrow-up me-1"></i>+1 this month
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--warning-color);">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-clock text-warning fs-4"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ pending_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">Pending</p>
-                    <small class="text-muted">Awaiting review</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--info-color);">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <div class="bg-info bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-gear text-info fs-4"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ in_progress_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">In Progress</p>
-                    <small class="text-muted">Being processed</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card-modern p-3" style="border-left: 4px solid var(--success-color);">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                        <i class="bi bi-check-circle text-success fs-4"></i>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <h3 class="fw-bold mb-1">{{ completed_assistance|default:0 }}</h3>
-                    <p class="text-muted mb-0">Completed</p>
-                    <small class="text-success">
-                        <i class="bi bi-check me-1"></i>Assistance delivered
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
 
 <div class="row g-4">
     <!-- Recent Complaints -->
@@ -197,8 +121,8 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-3">
-                                            <strong>#{{ complaint.id }}</strong> - {{ complaint.subject }}
+                                        <h6 class="mb-0 me-3 fs-5">
+                                            <strong>#{{ complaint.id }}</strong> -  {{ complaint.title }}
                                         </h6>
                                         {% if complaint.status == 'pending' %}
                                             <span class="badge bg-warning">Pending</span>
@@ -206,8 +130,10 @@
                                             <span class="badge bg-info">In Progress</span>
                                         {% elif complaint.status == 'resolved' %}
                                             <span class="badge bg-success">Resolved</span>
+                                        {% elif complaint.status == 'assigned' %}
+                                            <span class="badge bg-primary">Assigned</span>
                                         {% else %}
-                                            <span class="badge bg-danger">Rejected</span>
+                                            <span class="badge bg-secondary">Unverified</span>
                                         {% endif %}
                                     </div>
                                     <p class="text-muted mb-2">{{ complaint.description|truncatechars:100 }}</p>
@@ -219,7 +145,7 @@
                                     </div>
                                 </div>
                                 <div class="flex-shrink-0 ms-3">
-                                    <a href="{% url 'my_complaints' %}" 
+                                    <a href="{% url 'resident_complaint_details' complaint.id %}" 
                                        class="btn btn-modern-secondary btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -260,17 +186,19 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-3">
+                                        <h6 class="mb-0 me-3 fs-5">
                                             <strong>#{{ assistance.id }}</strong> - {{ assistance.title }}
                                         </h6>
                                         {% if assistance.status == 'pending' %}
                                             <span class="badge bg-warning">Pending</span>
                                         {% elif assistance.status == 'in_progress' %}
                                             <span class="badge bg-info">In Progress</span>
-                                        {% elif assistance.status == 'completed' %}
-                                            <span class="badge bg-success">Completed</span>
+                                        {% elif assistance.status == 'resolved' %}
+                                            <span class="badge bg-success">Resolved</span>
+                                        {% elif assistance.status == 'assigned' %}
+                                            <span class="badge bg-primary">Assigned</span>
                                         {% else %}
-                                            <span class="badge bg-danger">Rejected</span>
+                                            <span class="badge bg-secondary">Unverified</span>
                                         {% endif %}
                                     </div>
                                     <p class="text-muted mb-2">{{ assistance.description|truncatechars:100 }}</p>
@@ -282,7 +210,7 @@
                                     </div>
                                 </div>
                                 <div class="flex-shrink-0 ms-3">
-                                    <a href="{% url 'my_assistance' %}" 
+                                    <a href="{% url 'resident_assistance_detail' assistance.id %}" 
                                        class="btn btn-modern-secondary btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -317,14 +245,20 @@
                 </h5>
             </div>
             <div class="card-body-modern">
-                <div class="d-grid gap-2">
-                    <a href="{% url 'file_complaint' %}" class="btn btn-modern-primary">
+                <div class="row gap-2 justify-content-center">
+                    <a href="{% url 'file_complaint' %}" class="col-md-10 btn btn-outline-primary text-start ">
                         <i class="bi bi-plus-circle me-2"></i>File New Complaint
                     </a>
-                    <a href="{% url 'my_complaints' %}" class="btn btn-modern-secondary">
-                        <i class="bi bi-list-ul me-2"></i>View My Complaints
+                    <a href="{% url 'my_complaints' %}" class="col-md-10 btn btn-outline-primary text-start ">
+                        <i class="bi bi-list-ul me-2"></i>My Complaints
                     </a>
-                    <a href="" class="btn btn-modern-secondary">
+                    <a href="{% url 'file_assistance' %}" class="col-md-10 btn btn-outline-primary text-start ">
+                        <i class="bi bi-plus-circle me-2"></i>Request Assistance
+                    </a>
+                    <a href="{% url 'my_assistance' %}" class="col-md-10 btn btn-outline-primary text-start ">
+                        <i class="bi bi-list-ul me-2"></i>My Assistance
+                    </a>
+                    <a href="{% url 'notifications' %}" class="col-md-10  btn btn-outline-primary text-start ">
                         <i class="bi bi-bell me-2"></i>Notifications
                     </a>
                 </div>
@@ -340,7 +274,11 @@
             </div>
             <div class="card-body-modern text-center">
                 <div class="user-avatar-admin mb-3" style="width: 80px; height: 80px; margin: 0 auto; font-size: 1.5rem;">
-                    {{ user.first_name.0|default:"" }}
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="rounded-circle object-fit-cover" width="80" height="80" alt="Profile Picture">
+                    {% else %}
+                        <img src="{% static 'images/community-placeholder.png' %}" class="rounded-circle" width="80" height="80" alt="Profile Picture">
+                    {% endif %}
                 </div>
                 <h6 class="fw-bold mb-1">{{ user.get_full_name|default:user.first_name|add:" "|add:user.last_name }}</h6>
                 <p class="text-muted small mb-3">{{ user.email }}</p>
@@ -357,8 +295,8 @@
                         <small class="text-muted">Resolved</small>
                     </div>
                 </div>
-                
-                <a href="" class="btn btn-modern-secondary btn-sm w-100">
+
+                <a href="{% url 'profile' %}" class="btn btn-modern-secondary btn-sm w-100">
                     <i class="bi bi-pencil me-2"></i>Edit Profile
                 </a>
             </div>
@@ -401,53 +339,4 @@
     </div>
 </div>
 
-<!-- Community Updates -->
-<!-- <div class="row mt-4">
-    <div class="col-12">
-        <div class="card-modern">
-            <div class="card-header-modern">
-                <h5 class="mb-0">
-                    <i class="bi bi-megaphone me-2"></i>Community Updates
-                </h5>
-            </div>
-            <div class="card-body-modern">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-info-circle text-info me-2"></i>
-                                <h6 class="mb-0">System Maintenance</h6>
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Scheduled maintenance on Sunday, 2AM-4AM. Service may be temporarily unavailable.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-star text-warning me-2"></i>
-                                <h6 class="mb-0">New Feature</h6>
-                            </div>
-                            <p class="text-muted small mb-0">
-                                You can now attach multiple photos to your complaints for better documentation.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-calendar-event text-success me-2"></i>
-                                <h6 class="mb-0">Community Meeting</h6>
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Monthly barangay meeting scheduled for next Friday at 7PM in the community hall.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
 {% endblock %}
