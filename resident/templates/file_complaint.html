@@ -42,12 +42,12 @@ File Complaint
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 ">
+<div class="container-fluid py-2 ">
     <div class="row justify-content-center ">
         <div class="col-12 col-lg-12">
             <div class="card shadow-lg border-0">
                 <div class="card-header text-success text-center py-3">
-                    <h3 class="mb-0">
+                    <h3 class="mb-0 fw-bold">
                         File Complaint
                     </h3>
                 </div>
@@ -57,21 +57,21 @@ File Complaint
                         <div class="row">
                             <!-- Subject field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="title" class="form-label">Subject<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road" required>
+                                <label for="title" class="form-label fs-5 fw-bold">Subject<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-lg" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road" required>
                                 <div class="invalid-feedback">Please enter a subject.</div>
                             </div>
                             
                             <!-- Description field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
+                                <label for="description" class="form-label fs-5 fw-bold">Description<span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
                                 <div class="invalid-feedback">Please enter a description.</div>
                             </div>
                             
                             <!-- Category field - half width on medium+ screens, full on small -->
                             <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label">Category<span class="text-danger">*</span></label>
+                                <label for="category" class="form-label fs-5 fw-bold">Category<span class="text-danger">*</span></label>
                                 <select class="form-select" id="category" name="category" required>
                                     <option value="">Select category</option>
                                     <option value="Sanitation">Sanitation</option>
@@ -104,21 +104,21 @@ File Complaint
                             
                             <!-- Other category specification - hidden by default -->
                             <div class="col-md-6 mb-3" id="other-category-container" style="display: none;">
-                                <label for="other_category" class="form-label">Please specify other category<span class="text-danger">*</span></label>
+                                <label for="other_category" class="form-label fs-5 fw-bold">Please specify other category<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="other_category" name="other_category" placeholder="Enter the specific category">
                                 <div class="invalid-feedback">Please specify the other category.</div>
                             </div>
                             
                             <!-- Location field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="location" class="form-label">Location Description<span class="text-danger">*</span></label>
+                                <label for="location" class="form-label fs-5 fw-bold">Location Description<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall" required>
                                 <div class="form-text">Provide a brief description of the location.</div>
                             </div>
                             
                             <!-- Address field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="address" class="form-label">Address<span class="text-danger">*</span></label>
+                                <label for="address" class="form-label fs-5 fw-bold">Address<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled automatically when you pin location on map" readonly>
                                 <div class="form-text">
                                     <i class="bi bi-info-circle me-1"></i>
@@ -128,7 +128,7 @@ File Complaint
                             
                             <!-- Map Location Picker - full width -->
                             <div class="col-12 mb-3">
-                                <label class="form-label">Pin Exact Location on Map</label>
+                                <label class="form-label fs-5 fw-bold">Pin Exact Location on Map</label>
                                 <div class="map-container">
                                     <div id="complaint-map" style="height: 600px; border-radius: 8px; border: 2px solid #dee2e6;"></div>
                                 </div>
@@ -148,7 +148,7 @@ File Complaint
                             
                             <!-- Attachments field - full width -->
                             <div class="col-12 mb-3">
-                                <label for="attachments" class="form-label">Attachments (optional)</label>
+                                <label for="attachments" class="form-label fs-5 fw-bold">Attachments (optional)</label>
                                 <input type="file" class="form-control" id="attachments" name="attachments" multiple>
                                 <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
                             </div>

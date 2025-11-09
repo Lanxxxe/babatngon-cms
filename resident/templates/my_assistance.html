@@ -154,7 +154,7 @@ My Assistance Requests
                     <th>Description</th>
                     <th>Status</th>
                     <th>Urgency</th>
-                    <th>Filed On</th>
+                    <th>Date and Time</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -183,7 +183,7 @@ My Assistance Requests
                             {{ assistance.urgency|default:"N/A" }}
                         </span>
                     </td>
-                    <td>{{ assistance.created_at|date:"M d, Y" }}</td>
+                    <td>{{ assistance.created_at|date:"M d, Y \a\t h:i A" }}</td>
                     <td>
                         <a href="{% url 'resident_assistance_detail' assistance.id %}" class="btn btn-md btn-success">View</a>
                         <button class="btn btn-md btn-primary" onclick="editAssistance({{ assistance.id }})">Update</button>
