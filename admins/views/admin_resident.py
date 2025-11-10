@@ -32,8 +32,11 @@ def admin_resident(request):
         except (ValueError, TypeError):
             per_page = 10
 
-        # Annotate each resident with their complaint count
-        residents = User.objects.annotate(complaint_count=Count('complaint'), assistance_count=Count('assistancerequest'))
+        # Annotate each resident with their complaint count (using distinct to avoid inflated counts)
+        residents = User.objects.annotate(
+            complaint_count=Count('complaint', distinct=True), 
+            assistance_count=Count('assistancerequest', distinct=True)
+        )
 
         if query:
             residents = residents.filter(
