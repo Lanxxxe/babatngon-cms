@@ -13,23 +13,6 @@
                 <h6 class="mb-0 fw-semibold">Analytics Overview</h6>
                 <small class="text-muted">Track system performance and community engagement</small>
             </div>
-            <div class="col-md-6 text-end">
-                <div class="d-flex gap-1 justify-content-end">
-                    <select class="form-select form-select-sm" id="dateRange" style="width: auto;">
-                        <option value="7">Last 7 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 3 months</option>
-                        <option value="365">Last year</option>
-                        <option value="custom">Custom Range</option>
-                    </select>
-                    <button class="btn btn-admin-secondary btn-sm" onclick="refreshData()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                    </button>
-                    <button class="btn btn-admin-primary btn-sm" onclick="exportReport()">
-                        <i class="bi bi-download me-1"></i>Export
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -60,6 +43,69 @@
                     <!-- <div class="stat-change">This month</div> -->
                 </div>
                 <i class="bi bi-people text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Smart Analytics -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card-admin mb-3">
+            <div class="card-header-admin">
+                <i class="bi bi-lightbulb me-2"></i>Smart Insights
+            </div>
+            <div class="card-body-admin">
+                <div class="row g-3">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">Weekly change</div>
+                                    <div id="smartWeeklyChange" class="h5 mb-0">--</div>
+                                </div>
+                                <i class="bi bi-arrow-repeat text-muted" style="font-size: 22px;"></i>
+                            </div>
+                            <small class="text-muted">Last 7 days vs previous 7 days</small>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">Unresolved &gt; 7 days</div>
+                                    <div id="smartUnresolved7" class="h5 mb-0">--</div>
+                                </div>
+                                <i class="bi bi-clock-history text-warning" style="font-size: 22px;"></i>
+                            </div>
+                            <small class="text-muted">Cases pending longer than 7 days</small>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12">
+                        <div class="p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">Detected spike</div>
+                                    <div id="smartSpike" class="h5 mb-0">--</div>
+                                </div>
+                                <i class="bi bi-exclamation-circle text-danger" style="font-size: 22px;"></i>
+                            </div>
+                            <small class="text-muted">Large increase in reports</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-lg-8">
+                        <canvas id="smartTrendChart" height="120"></canvas>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="fw-semibold mb-2">Top Locations</div>
+                        <div id="smartTopLocations">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -173,14 +219,6 @@
                 <div>
                     <i class="bi bi-table me-2"></i>Detailed Analytics
                 </div>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-admin-secondary btn-sm" onclick="exportTable()">
-                        <i class="bi bi-download me-1"></i>Export Table
-                    </button>
-                    <button class="btn btn-admin-primary btn-sm" onclick="customizeColumns()">
-                        <i class="bi bi-gear me-1"></i>Customize
-                    </button>
-                </div>
             </div>
             <div class="card-body-admin p-0">
                 <div class="table-responsive">
@@ -188,141 +226,17 @@
                         <thead>
                             <tr>
                                 <th>Category</th>
+                                <th>Type</th>
                                 <th>Total</th>
                                 <th>Pending</th>
                                 <th>In Progress</th>
                                 <th>Resolved</th>
-                                <th>Avg Resolution Time</th>
-                                <th>Satisfaction</th>
-                                <th>Trend</th>
+                                <th>Resolution Rate</th>
+                                <th>Percentage</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-tools text-primary me-2"></i>
-                                        <span class="small">Infrastructure</span>
-                                    </div>
-                                </td>
-                                <td><span class="fw-semibold">89</span></td>
-                                <td><span class="badge bg-warning">8</span></td>
-                                <td><span class="badge bg-info">15</span></td>
-                                <td><span class="badge bg-success">66</span></td>
-                                <td class="small">3.2 days</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2 small">95%</span>
-                                        <div class="progress" style="width: 40px; height: 3px;">
-                                            <div class="progress-bar bg-success" style="width: 95%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <i class="bi bi-arrow-up text-success"></i>
-                                    <small class="text-success">+12%</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-shield text-danger me-2"></i>
-                                        <span class="small">Public Safety</span>
-                                    </div>
-                                </td>
-                                <td><span class="fw-semibold">67</span></td>
-                                <td><span class="badge bg-warning">5</span></td>
-                                <td><span class="badge bg-info">12</span></td>
-                                <td><span class="badge bg-success">50</span></td>
-                                <td class="small">2.8 days</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2 small">97%</span>
-                                        <div class="progress" style="width: 40px; height: 3px;">
-                                            <div class="progress-bar bg-success" style="width: 97%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <i class="bi bi-arrow-up text-success"></i>
-                                    <small class="text-success">+8%</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-tree text-success me-2"></i>
-                                        <span class="small">Environment</span>
-                                    </div>
-                                </td>
-                                <td><span class="fw-semibold">45</span></td>
-                                <td><span class="badge bg-warning">3</span></td>
-                                <td><span class="badge bg-info">8</span></td>
-                                <td><span class="badge bg-success">34</span></td>
-                                <td class="small">4.1 days</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2 small">92%</span>
-                                        <div class="progress" style="width: 40px; height: 3px;">
-                                            <div class="progress-bar bg-warning" style="width: 92%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <i class="bi bi-arrow-down text-danger"></i>
-                                    <small class="text-danger">-3%</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-heart-pulse text-info me-2"></i>
-                                        <span class="small">Health</span>
-                                    </div>
-                                </td>
-                                <td><span class="fw-semibold">32</span></td>
-                                <td><span class="badge bg-warning">2</span></td>
-                                <td><span class="badge bg-info">5</span></td>
-                                <td><span class="badge bg-success">25</span></td>
-                                <td class="small">3.7 days</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2 small">98%</span>
-                                        <div class="progress" style="width: 40px; height: 3px;">
-                                            <div class="progress-bar bg-success" style="width: 98%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <i class="bi bi-arrow-up text-success"></i>
-                                    <small class="text-success">+15%</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-lightning text-warning me-2"></i>
-                                        <span class="small">Utilities</span>
-                                    </div>
-                                </td>
-                                <td><span class="fw-semibold">28</span></td>
-                                <td><span class="badge bg-warning">4</span></td>
-                                <td><span class="badge bg-info">3</span></td>
-                                <td><span class="badge bg-success">21</span></td>
-                                <td class="small">5.2 days</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2 small">89%</span>
-                                        <div class="progress" style="width: 40px; height: 3px;">
-                                            <div class="progress-bar bg-warning" style="width: 89%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <i class="bi bi-dash text-muted"></i>
-                                    <small class="text-muted">0%</small>
-                                </td>
-                            </tr>
+                        <tbody id="analyticsTableBody">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
@@ -429,5 +343,202 @@
     function customizeColumns() {
         console.log('Customize columns modal');
     }
+
+    // --- Smart Analytics rendering ---
+    (function renderSmartAnalytics(){
+        try {
+            const labels = {{ smart_daily_labels|default:'[]'|safe }};
+            const counts = {{ smart_daily_counts|default:'[]'|safe }};
+            const weeklyChange = {{ smart_weekly_change|default:'null' }};
+            const spike = {{ smart_spike|default:'false'|lower }};
+            const topLocations = {{ smart_top_locations|default:'[]'|safe }};
+            const unresolved7 = {{ smart_unresolved_over_7days|default:0 }};
+
+            // Update cards
+            const weeklyEl = document.getElementById('smartWeeklyChange');
+            const spikeEl = document.getElementById('smartSpike');
+            const unresolvedEl = document.getElementById('smartUnresolved7');
+            const topLocEl = document.getElementById('smartTopLocations');
+
+            if (weeklyEl) weeklyEl.textContent = (weeklyChange === null) ? '--' : (weeklyChange + '%');
+            if (unresolvedEl) unresolvedEl.textContent = unresolved7;
+            if (spikeEl) spikeEl.textContent = spike ? 'Yes' : 'No';
+
+            // Populate top locations
+            if (topLocEl && Array.isArray(topLocations)){
+                topLocEl.innerHTML = '';
+                topLocations.forEach(loc => {
+                    const row = document.createElement('div');
+                    row.className = 'd-flex justify-content-between align-items-center mb-2';
+                    row.innerHTML = `<div class="small">${loc.location}</div><div class="fw-semibold small">${loc.count}</div>`;
+                    topLocEl.appendChild(row);
+                });
+            }
+
+            // Render daily trend chart
+            const ctx = document.getElementById('smartTrendChart');
+            if (ctx && window.Chart) {
+                new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Reports',
+                            data: counts,
+                            backgroundColor: 'rgba(59,130,246,0.08)',
+                            borderColor: '#2563eb',
+                            pointRadius: 2,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Smart analytics render error', err);
+        }
+    })();
+
+    // --- Populate Analytics Table ---
+    (function renderAnalyticsTable() {
+        try {
+            const categoryData = {{ category_data|safe }};
+            const assistanceData = {{ assistance_data|safe }};
+            const categoryDetailData = {{ category_detail_data|default:'{}'|safe }};
+            const assistanceDetailData = {{ assistance_detail_data|default:'{}'|safe }};
+            
+            const tbody = document.getElementById('analyticsTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            // Category icons mapping
+            const categoryIcons = {
+                'Sanitation': 'bi-trash text-success',
+                'Safety/Security': 'bi-shield-check text-danger',
+                'Infrastructure': 'bi-tools text-primary',
+                'Utilities': 'bi-lightning text-warning',
+                'Noise': 'bi-volume-up text-info',
+                'Environment': 'bi-tree text-success',
+                'Disaster/Emergency': 'bi-exclamation-triangle text-danger',
+                'Health': 'bi-heart-pulse text-info',
+                'Traffic/Transport': 'bi-car-front text-secondary',
+                'Corruption/Abuse': 'bi-shield-x text-danger',
+                'Discrimination': 'bi-person-x text-warning',
+                'Service Delivery': 'bi-gear text-primary',
+                'Others': 'bi-three-dots text-muted'
+            };
+
+            const assistanceIcons = {
+                'Medical': 'bi-heart-pulse text-danger',
+                'Financial': 'bi-currency-dollar text-success',
+                'Food/Supplies': 'bi-basket text-warning',
+                'Evacuation/Shelter': 'bi-house text-info',
+                'Legal': 'bi-scales text-primary',
+                'Livelihood': 'bi-briefcase text-success',
+                'Education': 'bi-book text-info',
+                'Transportation': 'bi-bus-front text-secondary',
+                'Disaster/Emergency': 'bi-exclamation-triangle text-danger',
+                'Others': 'bi-three-dots text-muted'
+            };
+
+            // Calculate totals
+            const totalComplaints = Object.values(categoryData).reduce((sum, val) => sum + val, 0);
+            const totalAssistance = Object.values(assistanceData).reduce((sum, val) => sum + val, 0);
+
+            // Add complaint categories
+            Object.entries(categoryData).forEach(([category, total]) => {
+                if (total > 0) { // Only show categories with data
+                    const detail = categoryDetailData[category] || {pending: 0, in_progress: 0, resolved: 0};
+                    const resolutionRate = total > 0 ? Math.round((detail.resolved / total) * 100) : 0;
+                    const percentage = totalComplaints > 0 ? Math.round((total / totalComplaints) * 100) : 0;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi ${categoryIcons[category] || 'bi-circle text-muted'} me-2"></i>
+                                <span class="small">${category}</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-primary">Complaint</span></td>
+                        <td><span class="fw-semibold">${total}</span></td>
+                        <td><span class="badge bg-warning">${detail.pending}</span></td>
+                        <td><span class="badge bg-info">${detail.in_progress}</span></td>
+                        <td><span class="badge bg-success">${detail.resolved}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 small">${resolutionRate}%</span>
+                                <div class="progress" style="width: 40px; height: 3px;">
+                                    <div class="progress-bar ${resolutionRate >= 80 ? 'bg-success' : resolutionRate >= 60 ? 'bg-warning' : 'bg-danger'}" 
+                                         style="width: ${resolutionRate}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="text-muted small">${percentage}%</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+
+            // Add assistance types
+            Object.entries(assistanceData).forEach(([assistanceType, total]) => {
+                if (total > 0) { // Only show types with data
+                    const detail = assistanceDetailData[assistanceType] || {pending: 0, in_progress: 0, resolved: 0};
+                    const resolutionRate = total > 0 ? Math.round((detail.resolved / total) * 100) : 0;
+                    const percentage = totalAssistance > 0 ? Math.round((total / totalAssistance) * 100) : 0;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi ${assistanceIcons[assistanceType] || 'bi-circle text-muted'} me-2"></i>
+                                <span class="small">${assistanceType}</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-success">Assistance</span></td>
+                        <td><span class="fw-semibold">${total}</span></td>
+                        <td><span class="badge bg-warning">${detail.pending}</span></td>
+                        <td><span class="badge bg-info">${detail.in_progress}</span></td>
+                        <td><span class="badge bg-success">${detail.resolved}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 small">${resolutionRate}%</span>
+                                <div class="progress" style="width: 40px; height: 3px;">
+                                    <div class="progress-bar ${resolutionRate >= 80 ? 'bg-success' : resolutionRate >= 60 ? 'bg-warning' : 'bg-danger'}" 
+                                         style="width: ${resolutionRate}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="text-muted small">${percentage}%</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+
+            // Add empty state if no data
+            if (tbody.children.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox mb-2" style="font-size: 24px;"></i>
+                        <div>No data available</div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+
+        } catch (err) {
+            console.error('Analytics table render error', err);
+        }
+    })();
 </script>
 {% endblock %}
