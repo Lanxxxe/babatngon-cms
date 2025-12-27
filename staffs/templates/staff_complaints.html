@@ -1,7 +1,7 @@
 {% extends 'base_staff.html' %}
 
-{% block title %}My Assigned Complaints - Staff Portal{% endblock %}
-{% block page_title %}My Assigned Complaints{% endblock %}
+{% block title %}Assigned Complaints - Staff Portal{% endblock %}
+{% block page_title %}Assigned Complaints{% endblock %}
 {% block page_subtitle %}Manage complaints assigned to you{% endblock %}
 
 {% block content %}
@@ -23,6 +23,7 @@
                 <label for="statusFilter" class="form-label">Status</label>
                 <select class="form-select form-select-sm" id="statusFilter" onchange="applyFilters()">
                     <option value="">All Status</option>
+                    <option value="assigned" {% if status_filter == 'assigned' %}selected{% endif %}>Assigned</option>
                     <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                     <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
                     <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
@@ -117,6 +118,7 @@
                                 <span class="badge 
                                     {% if complaint.status == 'pending' %}bg-warning
                                     {% elif complaint.status == 'in_progress' %}bg-info
+                                    {% elif complaint.status == 'assigned' %}bg-primary
                                     {% elif complaint.status == 'resolved' %}bg-success
                                     {% else %}bg-danger{% endif %}">
                                     {{ complaint.status|title }}

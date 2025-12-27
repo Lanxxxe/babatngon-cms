@@ -9,54 +9,54 @@
 {% csrf_token %}
 <!-- Notification Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-lg-3 col-md-6">
+    <div class="col-6 col-lg-3">
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-number">{{ total_notifications }}</div>
                     <div class="stat-label">Total Notifications</div>
-                    <div class="stat-change">This month</div>
+                    <div class="stat-change d-none d-sm-block">This month</div>
                 </div>
-                <i class="bi bi-bell text-primary" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-bell text-primary d-none d-md-block" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-3 col-md-6">
+    <div class="col-6 col-lg-3">
         <div class="stat-card warning">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-number">{{ unread_notifications }}</div>
                     <div class="stat-label">Unread</div>
-                    <div class="stat-change">Requires attention</div>
+                    <div class="stat-change d-none d-sm-block">Requires attention</div>
                 </div>
-                <i class="bi bi-bell-fill text-warning" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-bell-fill text-warning d-none d-md-block" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-3 col-md-6">
+    <div class="col-6 col-lg-3">
         <div class="stat-card success">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-number">{{ resolved_notifications }}</div>
                     <div class="stat-label">Read</div>
-                    <div class="stat-change">Completed</div>
+                    <div class="stat-change d-none d-sm-block">Completed</div>
                 </div>
-                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-check-circle text-success d-none d-md-block" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-3 col-md-6">
+    <div class="col-6 col-lg-3">
         <div class="stat-card info">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-number">{{ urgent_notifications }}</div>
                     <div class="stat-label">Urgent</div>
-                    <div class="stat-change">High priority</div>
+                    <div class="stat-change d-none d-sm-block">High priority</div>
                 </div>
-                <i class="bi bi-exclamation-triangle text-info" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-exclamation-triangle text-info d-none d-md-block" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
@@ -66,18 +66,19 @@
     <!-- Staff Notifications -->
     <div class="col-12">
         <div class="card-admin">
-            <div class="card-header-admin d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="fw-semibold">My Notifications</span>
-                    <small class="text-muted ms-2">Notifications sent to you</small>
-                </div>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-admin-secondary btn-sm" onclick="markAllAsRead()">
-                        <i class="bi bi-check-all me-1"></i>Mark All Read
-                    </button>
-                    <div class="d-flex gap-1">
-                        <select class="form-select form-select-sm" id="typeFilter" onchange="filterNotifications()">
-                            <option value="">All Types</option>
+            <div class="card-header-admin">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                    <div>
+                        <span class="fw-semibold">My Notifications</span>
+                        <small class="text-muted d-block d-sm-inline ms-sm-2">Notifications sent to you</small>
+                    </div>
+                    <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-lg-auto">
+                        <button class="btn btn-admin-secondary btn-sm" onclick="markAllAsRead()">
+                            <i class="bi bi-check-all me-1"></i><span class="d-none d-sm-inline">Mark All </span>Read
+                        </button>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <select class="form-select form-select-sm" id="typeFilter" onchange="filterNotifications()">
+                                <option value="">All Types</option>
                             {% for type in notification_types %}
                                 <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
                                     {% if type == 'case_assignment' %}Case Assignment
@@ -95,12 +96,13 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <select class="form-select form-select-sm" id="statusFilter" onchange="filterNotifications()">
-                            <option value="">All Status</option>
-                            <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
-                            <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
-                            <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
-                        </select>
+                            <select class="form-select form-select-sm" id="statusFilter" onchange="filterNotifications()">
+                                <option value="">All Status</option>
+                                <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
+                                <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
+                                <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,66 +110,70 @@
                 {% if notifications %}
                     <div class="list-group list-group-flush">
                         {% for notification in notifications %}
-                            <div class="list-group-item d-flex justify-content-between align-items-start p-4 {% if not notification.is_read %}border-start border-primary border-3{% endif %}">
-                                <div class="d-flex align-items-start w-100">
-                                    <div class="flex-shrink-0 me-3">
-                                        <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
-                                            {% if notification.notification_type == 'case_assignment' %}
-                                                <i class="bi bi-person-check {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% elif notification.notification_type == 'status_update' %}
-                                                <i class="bi bi-arrow-repeat {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% elif notification.notification_type == 'new_complaint' %}
-                                                <i class="bi bi-exclamation-triangle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% elif notification.notification_type == 'new_assistance' %}
-                                                <i class="bi bi-hand-thumbs-up {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% elif notification.notification_type == 'case_resolved' %}
-                                                <i class="bi bi-check-circle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% else %}
-                                                <i class="bi bi-bell {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
-                                            {% endif %}
+                            <div class="list-group-item p-3 p-md-4 {% if not notification.is_read %}border-start border-primary border-3{% endif %}">
+                                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                    <div class="d-flex align-items-start flex-grow-1">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
+                                                {% if notification.notification_type == 'case_assignment' %}
+                                                    <i class="bi bi-person-check {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% elif notification.notification_type == 'status_update' %}
+                                                    <i class="bi bi-arrow-repeat {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% elif notification.notification_type == 'new_complaint' %}
+                                                    <i class="bi bi-exclamation-triangle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% elif notification.notification_type == 'new_assistance' %}
+                                                    <i class="bi bi-hand-thumbs-up {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% elif notification.notification_type == 'case_resolved' %}
+                                                    <i class="bi bi-check-circle {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% else %}
+                                                    <i class="bi bi-bell {% if notification.priority == 'urgent' %}text-danger{% elif notification.priority == 'high' %}text-warning{% elif notification.priority == 'normal' %}text-info{% else %}text-secondary{% endif %}" style="font-size: 14px;"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-1 mb-2">
+                                                <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    {% if not notification.is_read %}
+                                                        <span class="badge bg-primary small">New</span>
+                                                    {% endif %}
+                                                    <span class="badge bg-secondary small">{{ notification.get_notification_type_display }}</span>
+                                                    {% if notification.priority == 'urgent' %}
+                                                        <span class="badge bg-danger small">URGENT</span>
+                                                    {% elif notification.priority == 'high' %}
+                                                        <span class="badge bg-warning small">HIGH</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="mb-2 text-muted small">{{ notification.message|truncatechars:120 }}</p>
+                                            <small class="text-muted d-block">
+                                                {% if notification.sender %}
+                                                    <span class="d-inline-block me-2"><i class="bi bi-person me-1"></i>From: {{ notification.sender.get_full_name }}</span>
+                                                {% endif %}
+                                                <span class="d-inline-block me-2"><i class="bi bi-clock me-1"></i>{{ notification.created_at|timesince }} ago</span>
+                                                {% if notification.related_complaint %}
+                                                    <span class="d-inline-block"><i class="bi bi-link me-1"></i>Related to Complaint #{{ notification.related_complaint.id }}</span>
+                                                {% elif notification.related_assistance %}
+                                                    <span class="d-inline-block"><i class="bi bi-link me-1"></i>Related to Assistance #{{ notification.related_assistance.id }}</span>
+                                                {% endif %}
+                                            </small>
                                         </div>
                                     </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
-                                            {% if not notification.is_read %}
-                                                <span class="badge bg-primary ms-2 small">New</span>
-                                            {% endif %}
-                                            <span class="badge bg-secondary ms-2 small">{{ notification.get_notification_type_display }}</span>
-                                            {% if notification.priority == 'urgent' %}
-                                                <span class="badge bg-danger ms-2 small">URGENT</span>
-                                            {% elif notification.priority == 'high' %}
-                                                <span class="badge bg-warning ms-2 small">HIGH</span>
-                                            {% endif %}
-                                        </div>
-                                        <p class="mb-1 text-muted small">{{ notification.message|truncatechars:120 }}</p>
-                                        <small class="text-muted">
-                                            {% if notification.sender %}
-                                                <i class="bi bi-person me-1"></i>From: {{ notification.sender.get_full_name }}
-                                            {% endif %}
-                                            <i class="bi bi-clock ms-2 me-1"></i>{{ notification.created_at|timesince }} ago
-                                            {% if notification.related_complaint %}
-                                                <i class="bi bi-link ms-2 me-1"></i>Related to Complaint #{{ notification.related_complaint.id }}
-                                            {% elif notification.related_assistance %}
-                                                <i class="bi bi-link ms-2 me-1"></i>Related to Assistance #{{ notification.related_assistance.id }}
-                                            {% endif %}
-                                        </small>
+                                    <div class="d-flex flex-row gap-2 align-self-start flex-shrink-0">
+                                        {% if not notification.is_read %}
+                                            <button class="btn btn-sm btn-outline-primary" onclick="markAsRead({{ notification.id }})" title="Mark as Read">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ notification.id }})" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        {% if not notification.is_archived %}
+                                            <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification({{ notification.id }})" title="Archive">
+                                                <i class="bi bi-archive"></i>
+                                            </button>
+                                        {% endif %}
                                     </div>
-                                </div>
-                                <div class="d-flex gap-1 flex-shrink-0">
-                                    {% if not notification.is_read %}
-                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead({{ notification.id }})" title="Mark as Read">
-                                            <i class="bi bi-check"></i>
-                                        </button>
-                                    {% endif %}
-                                    <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ notification.id }})" title="View Details">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    {% if not notification.is_archived %}
-                                        <button class="btn btn-sm btn-outline-warning" onclick="archiveNotification({{ notification.id }})" title="Archive">
-                                            <i class="bi bi-archive"></i>
-                                        </button>
-                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}

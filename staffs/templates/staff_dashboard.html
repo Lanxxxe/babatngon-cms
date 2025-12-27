@@ -75,13 +75,7 @@
                     <i class="bi bi-list-ul me-2"></i>Recent Complaints
                 </div>
                 <div class="d-flex gap-2 align-items-center">
-                    {% comment %} <select class="form-select form-select-sm" id="statusFilter" style="width: 120px;">
-                        <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                    </select> {% endcomment %}
-                    <a href="{% url 'staff_complaints' %}" role="button" class="btn btn-primary btn-sm pb-0">
+                    <a href="{% url 'staff_complaints' %}" role="button" class="btn btn-primary btn-sm ">
                         View All
                     </a>
                 </div>
@@ -119,8 +113,8 @@
                                     <td>
                                         <span class="badge 
                                             {% if complaint.priority == 'urgent' %}bg-danger
-                                            {% elif complaint.priority == 'high' %}bg-danger
-                                            {% elif complaint.priority == 'medium' %}bg-warning
+                                            {% elif complaint.priority == 'high' %}bg-warning
+                                            {% elif complaint.priority == 'medium' %}bg-primary
                                             {% else %}bg-success{% endif %}">
                                             {{ complaint.priority|title }}
                                         </span>
@@ -129,6 +123,7 @@
                                         <span class="badge 
                                             {% if complaint.status == 'pending' %}bg-warning
                                             {% elif complaint.status == 'in_progress' %}bg-info
+                                            {% elif complaint.status == 'assigned' %}bg-primary
                                             {% elif complaint.status == 'resolved' %}bg-success
                                             {% else %}bg-danger{% endif %}">
                                             {{ complaint.status|title }}
@@ -195,7 +190,7 @@
                 {% if high_priority_complaints %}
                 <div class="text-center mt-3">
                     <a href="{% url 'staff_complaints' %}?priority=urgent" class="btn btn-admin-outline btn-sm">
-                        View All Urgent Priority
+                        View All High Priority
                     </a>
                 </div>
                 {% endif %}

@@ -56,7 +56,7 @@ def staff_notifications(request):
         notification_types = notifications.values_list('notification_type', flat=True).distinct()
         
         # Pagination
-        paginator = Paginator(notifications, 15)
+        paginator = Paginator(notifications, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         

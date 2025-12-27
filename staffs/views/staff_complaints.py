@@ -27,7 +27,7 @@ def staff_complaints(request):
         if status_filter:
             complaints = complaints.filter(status=status_filter)
         else:
-            complaints = complaints.filter(status__in=['pending', 'in_progress'])
+            complaints = complaints.filter(status__in=['pending', 'in_progress', 'assigned'])
 
         if priority_filter:
             complaints = complaints.filter(priority=priority_filter)
