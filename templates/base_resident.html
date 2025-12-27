@@ -32,6 +32,9 @@
     {% block internal_css %} {% endblock %}
 </head>
 <body>
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    
     <!-- Modern Sidebar -->
     <nav class="sidebar-modern" id="sidebar">
         <div class="sidebar-header">
@@ -39,6 +42,9 @@
                 <img src="{% static './images/babatngon-logo.png' %}" class="img-25 img-fluid" alt="Babatngon Logo" style="width: 50px;">
             </div>
             <div class="sidebar-title">Barangay CMS</div>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="bi bi-x"></i>
+            </button>
         </div>
 
         <div class="sidebar-nav">
@@ -53,7 +59,7 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="{% url 'file_complaint' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'file_complaint' %}active{% endif %}">
+                    <a href="{% url 'file_complaint' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'file_complaint' or request.resolver_match.url_name == 'file_emergency_complaint' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-plus-circle"></i>
                         </div>
@@ -61,7 +67,7 @@
                     </a>
                 </div>
                 <div class="nav-item-modern">
-                    <a href="{% url 'file_assistance' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'file_assistance' %}active{% endif %}">
+                    <a href="{% url 'file_assistance' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'file_assistance' or request.resolver_match.url_name == 'file_emergency_assistance' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-plus-circle"></i>
                         </div>
@@ -121,7 +127,7 @@
             <div class="nav-section">
                 <div class="nav-section-title">Support</div>
                 <div class="nav-item-modern">
-                    <a href="#" class="nav-link-modern">
+                    <a href="{% url 'resident_help_center' %}" class="nav-link-modern {% if request.resolver_match.url_name == 'resident_help_center' %}active{% endif %}">
                         <div class="nav-icon">
                             <i class="bi bi-question-circle"></i>
                         </div>
@@ -216,11 +222,6 @@
         </div>
     </div>
 
-    <!-- Floating Action Button -->
-    <button class="fab" onclick="window.location.href=''">
-        <i class="bi bi-plus"></i>
-    </button>
-
     {% load sweetify %}
     {% sweetify %}
 
@@ -228,36 +229,83 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
             const mainWrapper = document.getElementById('mainWrapper');
             const sidebarToggle = document.getElementById('sidebarToggle');
 
-            // Sidebar toggle functionality
-            sidebarToggle.addEventListener('click', function() {
-                if (window.innerWidth > 768) {
-                    sidebar.classList.toggle('collapsed');
-                    mainWrapper.classList.toggle('expanded');
+            // Initialize sidebar state based on screen size
+            function initializeSidebar() {
+                // Sidebar is hidden by default on all screen sizes
+                sidebar.classList.remove('show');
+                // Backdrop always starts hidden
+                sidebarBackdrop.classList.remove('show');
+            }
+
+            // Toggle sidebar function
+            function toggleSidebar() {
+                const isOpen = sidebar.classList.contains('show');
+                
+                if (isOpen) {
+                    // Close sidebar
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
                 } else {
-                    sidebar.classList.toggle('show');
+                    // Open sidebar
+                    sidebar.classList.add('show');
+                    sidebarBackdrop.classList.add('show');
                 }
+            }
+
+            // Close sidebar function
+            function closeSidebar() {
+                sidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            }
+
+            // Initialize on page load
+            initializeSidebar();
+
+            // Sidebar toggle button click
+            sidebarToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleSidebar();
             });
 
-            // Close sidebar on mobile when clicking outside
+            // Sidebar close button click
+            const sidebarClose = document.getElementById('sidebarClose');
+            sidebarClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeSidebar();
+            });
+
+            // Close sidebar when clicking backdrop
+            sidebarBackdrop.addEventListener('click', function() {
+                closeSidebar();
+            });
+
+            // Close sidebar when clicking outside on mobile only
             document.addEventListener('click', function(e) {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth < 992) {
                     if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                        sidebar.classList.remove('show');
+                        if (sidebar.classList.contains('show')) {
+                            closeSidebar();
+                        }
                     }
                 }
             });
 
+            // Prevent clicks inside sidebar from closing it
+            sidebar.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
             // Handle window resize
+            let resizeTimer;
             window.addEventListener('resize', function() {
-                if (window.innerWidth > 768) {
-                    sidebar.classList.remove('show');
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    mainWrapper.classList.remove('expanded');
-                }
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    initializeSidebar();
+                }, 250);
             });
         });
     </script>
