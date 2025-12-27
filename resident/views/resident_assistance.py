@@ -8,6 +8,63 @@ from core.models import User
 import os, sweetify
 
 
+# Emergency Assistance View
+def file_emergency_assistance(request):
+    if not request.session.get('resident_id'):
+        sweetify.error(request, 'You must be logged in to request emergency assistance.', timer=3000)
+        return redirect('homepage')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', 'Emergency Assistance Required - Immediate Help Needed').strip()
+        description = request.POST.get('description', '').strip()
+        type_ = 'Disaster/Emergency'  # Fixed type for emergency assistance
+        urgency = 'urgent'  # Fixed urgency for emergency assistance
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        user_id = request.session.get('resident_id')
+        user = User.objects.filter(id=user_id).first()
+        
+        # Validate required fields
+        if not all([title, description, address, latitude, longitude]):
+            sweetify.error(request, 'Please fill in all required fields and pin the location on the map.', persistent=True, timer=3000)
+            return render(request, 'emergency_assistance.html')
+        
+        # Convert coordinates to float
+        try:
+            lat_float = float(latitude)
+            lng_float = float(longitude)
+        except (ValueError, TypeError):
+            sweetify.error(request, 'Invalid coordinates. Please pin a location on the map.', persistent=True, timer=3000)
+            return render(request, 'emergency_assistance.html')
+
+        # Create the emergency assistance request
+        assistance = AssistanceRequest.objects.create(
+            user=user,
+            title=title,
+            description=description,
+            type=type_,
+            urgency=urgency,
+            address=address,
+            latitude=lat_float,
+            longitude=lng_float
+        )
+
+        try:
+            notify_new_case_filed(assistance)  # Notifies all active admins
+        except Exception as e:
+            # Log the error but do not interrupt the user flow
+            print(f"Error notifying admins of new emergency assistance request: {e}")
+
+        # Handle multiple file uploads
+        for f in request.FILES.getlist('attachments'):
+            AssistanceAttachment.objects.create(assistance=assistance, file=f)
+
+        sweetify.success(request, 'Emergency assistance request filed successfully! Admins have been notified.', persistent=True, timer=3000)
+        return redirect('my_assistance')
+    
+    return render(request, 'emergency_assistance.html')
+
 
 # Assistance Views
 def file_assistance(request):
@@ -89,10 +146,32 @@ def my_assistance(request):
     
     user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
+    
+    # Get all assistance requests for the user
     assistance_list = AssistanceRequest.objects.filter(user=user).order_by('-created_at')
+    
+    # Apply filters
+    status_filter = request.GET.get('status')
+    urgency_filter = request.GET.get('urgency')
+    search_query = request.GET.get('search')
+    
+    if status_filter:
+        assistance_list = assistance_list.filter(status=status_filter)
+    
+    if urgency_filter:
+        assistance_list = assistance_list.filter(urgency=urgency_filter)
+    
+    if search_query:
+        from django.db.models import Q
+        assistance_list = assistance_list.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
 
     context = {
         'assistance_list': assistance_list,
+        'status_filter': status_filter,
+        'urgency_filter': urgency_filter,
+        'search_query': search_query,
     }
 
     return render(request, 'my_assistance.html', context)

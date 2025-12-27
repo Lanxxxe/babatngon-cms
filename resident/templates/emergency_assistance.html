@@ -1,5 +1,5 @@
 {% extends 'base_resident.html' %}
-{% block title %}File Complaint{% endblock %}
+{% block title %}Request Emergency Assistance{% endblock %}
 
 {% block internal_css %}
 <style>
@@ -8,7 +8,6 @@
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        z-index: 1;
     }
     
     .leaflet-popup-content {
@@ -34,141 +33,132 @@
         filter: hue-rotate(0deg) brightness(1.1);
     }
 
-    /* Responsive map height */
-    @media (min-width: 768px) {
-        .complaint-map-responsive {
-            height: 600px !important;
+    .emergency-badge {
+        animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-red {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
         }
     }
 </style>
-
 {% endblock %}
 
 
 {% block breadcrumb %}
-File Complaint
+Request Emergency Assistance
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2 ">
     <div class="row justify-content-center ">
         <div class="col-12 col-lg-12">
-            <div class="card shadow-lg border-0">
-                <div class="card-header text-success text-center py-3">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div class="card shadow-lg border-0 border-danger" style="border-width: 3px !important;">
+                <div class="card-header bg-danger text-white text-center py-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center">
                         <h3 class="mb-0 fw-bold">
-                            File Complaint
+                            Request Emergency Assistance
                         </h3>
-                        <a href="{% url 'file_emergency_complaint' %}" class="btn btn-danger btn-sm">
-                            <i class="bi bi-exclamation-triangle-fill me-1 me-sm-2"></i><span class="d-none d-sm-inline">Emergency </span>Complaint
-                        </a>
+                        <span class="badge bg-white text-danger me-3 emergency-badge">
+                            <i class="bi bi-exclamation-triangle-fill"></i> EMERGENCY
+                        </span>
                     </div>
+                    <p class="mb-0 mt-2 small">For critical situations requiring immediate help</p>
                 </div>
                 <div class="card-body p-4">
+                    <div class="alert alert-warning border-warning" role="alert">
+                        <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Important Notice</h5>
+                        <p class="mb-0">This form is for <strong>emergency situations only</strong>. Your assistance request will be marked as <strong>CRITICAL</strong> and prioritized for immediate response. Please provide accurate details and exact location.</p>
+                    </div>
+
                     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
                         <div class="row">
-                            <!-- Subject field - full width -->
+                            <!-- Subject field - Pre-filled and readonly -->
                             <div class="col-12 mb-3">
                                 <label for="title" class="form-label fs-5 fw-bold">Subject<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-lg" id="title" name="title" required placeholder="e.g. Broken Streetlight on Main Road" required>
-                                <div class="invalid-feedback">Please enter a subject.</div>
+                                <input type="text" class="form-control form-control-lg bg-light" id="title" name="title" value="Emergency Assistance Required - Immediate Help Needed" readonly required>
+                                <div class="form-text">
+                                    <i class="bi bi-lock-fill me-1"></i>
+                                    Pre-filled for emergency assistance requests. This field is locked.
+                                </div>
                             </div>
                             
-                            <!-- Description field - full width -->
+                            <!-- Description field - full width, REQUIRED -->
                             <div class="col-12 mb-3">
-                                <label for="description" class="form-label fs-5 fw-bold">Description<span class="text-danger">*</span></label>
-                                <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
-                                <div class="invalid-feedback">Please enter a description.</div>
+                                <label for="description" class="form-label fs-5 fw-bold">Emergency Description<span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" name="description" rows="6" required placeholder="Describe the emergency situation and what type of assistance you need... (e.g., Medical emergency, Evacuation needed, Food/water urgently required, etc.)"></textarea>
+                                <div class="invalid-feedback">Please describe the emergency situation and assistance needed.</div>
+                                <div class="form-text text-danger">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                    Please provide as much detail as possible about the emergency and the type of help needed.
+                                </div>
                             </div>
                             
-                            <!-- Category field - half width on medium+ screens, full on small -->
+                            <!-- Type field - Pre-filled and readonly -->
                             <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label fs-5 fw-bold">Category<span class="text-danger">*</span></label>
-                                <select class="form-select" id="category" name="category" required>
-                                    <option value="">Select category</option>
-                                    <option value="Sanitation">Sanitation</option>
-                                    <option value="Safety/Security">Safety/Security</option>
-                                    <option value="Infrastructure">Infrastructure</option>
-                                    <option value="Utilities">Utilities</option>
-                                    <option value="Noise">Noise</option>
-                                    <option value="Environment">Environment</option>
-                                    <option value="Disaster/Emergency">Disaster/Emergency</option>
-                                    <option value="Health">Health</option>
-                                    <option value="Traffic/Transport">Traffic/Transport</option>
-                                    <option value="Corruption/Abuse">Corruption/Abuse</option>
-                                    <option value="Discrimination">Discrimination</option>
-                                    <option value="Service Delivery">Service Delivery</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                                <div class="invalid-feedback">Please select a category.</div>
+                                <label for="type" class="form-label fs-5 fw-bold">Assistance Type<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control bg-light" id="type" name="type" value="Disaster/Emergency" readonly required>
+                                <div class="form-text">
+                                    <i class="bi bi-lock-fill me-1"></i>
+                                    Automatically set to Disaster/Emergency.
+                                </div>
                             </div>
+
+                            <!-- Urgency field - Hidden but set to critical -->
+                            <input type="hidden" name="urgency" value="critical">
                             
-                            <!-- Priority field - half width on medium+ screens, full on small -->
-                            {% comment %} <div class="col-md-6 mb-3">
-                                <label for="priority" class="form-label">Priority</label>
-                                <select class="form-select" id="priority" name="priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                </select>
-                            </div> {% endcomment %}
-                            
-                            <!-- Other category specification - hidden by default -->
-                            <div class="col-md-6 mb-3" id="other-category-container" style="display: none;">
-                                <label for="other_category" class="form-label fs-5 fw-bold">Please specify other category<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="other_category" name="other_category" placeholder="Enter the specific category">
-                                <div class="invalid-feedback">Please specify the other category.</div>
-                            </div>
-                            
-                            <!-- Location field - full width -->
-                            <div class="col-12 mb-3">
-                                <label for="location" class="form-label fs-5 fw-bold">Location Description<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Zone 2, Main Road, near Barangay Hall" required>
-                                <div class="form-text">Provide a brief description of the location.</div>
-                            </div>
-                            
-                            <!-- Address field - full width -->
-                            <div class="col-12 mb-3">
+                            <!-- Address/Location field - full width -->
+                            <div class="col-md-6 mb-3">
                                 <label for="address" class="form-label fs-5 fw-bold">Address<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled automatically when you pin location on map" readonly>
+                                <input type="text" class="form-control" id="address" name="address" placeholder="Address will be filled when you pin location on map" readonly>
                                 <div class="form-text">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    This field will be automatically filled when you pin a location on the map below.
+                                    Auto-filled from map location.
                                 </div>
                             </div>
                             
-                            <!-- Map Location Picker - full width -->
+                            <!-- Map Location Picker - full width, REQUIRED -->
                             <div class="col-12 mb-3">
-                                <label class="form-label fs-5 fw-bold">Pin Exact Location on Map</label>
+                                <label class="form-label fs-5 fw-bold">Pin Emergency Location on Map<span class="text-danger">*</span></label>
                                 <div class="map-container">
-                                    <div id="complaint-map" style="height: 400px; border-radius: 8px; border: 2px solid #dee2e6;" class="complaint-map-responsive"></div>
+                                    <div id="assistance-map" style="height: 600px; border-radius: 8px; border: 3px solid #dc3545;"></div>
                                 </div>
-                                <div class="form-text mt-2">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Click on the map to pin the exact location of your complaint. You can drag the marker to adjust the position.
+                                <div class="form-text mt-2 text-danger">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                    <strong>REQUIRED:</strong> Click on the map to pin the exact location where emergency assistance is needed. You can drag the marker to adjust the position.
                                 </div>
                                 <div class="mt-2">
                                     <small class="text-muted">
-                                        <span id="coordinates-display">Click on the map to select location</span>
+                                        <span id="coordinates-display">Click on the map to select emergency location</span>
                                     </small>
                                 </div>
                                 <!-- Hidden inputs to store coordinates -->
-                                <input type="hidden" id="latitude" name="latitude">
-                                <input type="hidden" id="longitude" name="longitude">
+                                <input type="hidden" id="latitude" name="latitude" required>
+                                <input type="hidden" id="longitude" name="longitude" required>
                             </div>
                             
-                            <!-- Attachments field - full width -->
+                            <!-- Attachments field - full width, OPTIONAL -->
                             <div class="col-12 mb-3">
                                 <label for="attachments" class="form-label fs-5 fw-bold">Attachments (optional)</label>
                                 <input type="file" class="form-control" id="attachments" name="attachments" multiple>
-                                <div class="form-text">You can upload multiple files (images, documents, etc.).</div>
+                                <div class="form-text">Upload images or documents that show the emergency situation (optional but recommended).</div>
                             </div>
                             
                             <!-- Submit button - full width -->
                             <div class="col-12">
-                                <button type="submit" class="btn btn-primary w-100">Submit Complaint</button>
+                                <button type="submit" class="btn btn-danger btn-lg w-100">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Submit Emergency Assistance Request
+                                </button>
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'file_assistance' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-2"></i>Back to Regular Assistance Form
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -182,7 +172,7 @@ File Complaint
 {% block internal_js %}
 <script>
     // Initialize Leaflet Map for Location Picking
-    let complaintMap;
+    let assistanceMap;
     let locationMarker;
     
     // Default coordinates for Babatngon, Leyte (you can adjust these)
@@ -195,6 +185,17 @@ File Complaint
         const forms = document.querySelectorAll('.needs-validation');
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
+                // Check if coordinates are set
+                const lat = document.getElementById('latitude').value;
+                const lng = document.getElementById('longitude').value;
+                
+                if (!lat || !lng) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    alert('Please pin the emergency location on the map before submitting.');
+                    return false;
+                }
+                
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
@@ -204,47 +205,31 @@ File Complaint
         });
     })();
 
-    // Handle "Others" category selection
-    document.getElementById('category').addEventListener('change', function() {
-        const otherCategoryContainer = document.getElementById('other-category-container');
-        const otherCategoryInput = document.getElementById('other_category');
-        
-        if (this.value === 'Others') {
-            otherCategoryContainer.style.display = 'block';
-            otherCategoryInput.setAttribute('required', 'required');
-        } else {
-            otherCategoryContainer.style.display = 'none';
-            otherCategoryInput.removeAttribute('required');
-            otherCategoryInput.value = ''; // Clear the input when hidden
-        }
-    });
-
-
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize the map
-        complaintMap = L.map('complaint-map').setView([defaultLat, defaultLng], 13);
+        assistanceMap = L.map('assistance-map').setView([defaultLat, defaultLng], 13);
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19
-        }).addTo(complaintMap);
+        }).addTo(assistanceMap);
 
         // Add click event to map
-        complaintMap.on('click', function(e) {
+        assistanceMap.on('click', function(e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
             
             // Remove existing marker if any
             if (locationMarker) {
-                complaintMap.removeLayer(locationMarker);
+                assistanceMap.removeLayer(locationMarker);
             }
             
-            // Add new marker
+            // Add new marker with red color for emergency
             locationMarker = L.marker([lat, lng], {
                 draggable: true,
-                title: 'Complaint Location'
-            }).addTo(complaintMap);
+                title: 'Emergency Assistance Location'
+            }).addTo(assistanceMap);
             
             // Update hidden inputs and display
             updateLocationData(lat, lng);
@@ -259,7 +244,7 @@ File Complaint
             // Add popup to marker
             locationMarker.bindPopup(`
                 <div class="text-center">
-                    <strong>Complaint Location</strong><br>
+                    <strong class="text-danger">⚠️ Emergency Assistance Location</strong><br>
                     <small>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}</small><br>
                     <em>You can drag this marker to adjust</em>
                 </div>
@@ -274,15 +259,15 @@ File Complaint
                     const userLng = position.coords.longitude;
                     
                     // Center map on user's location
-                    complaintMap.setView([userLat, userLng], 16);
+                    assistanceMap.setView([userLat, userLng], 16);
                     
-                    // Add a blue circle to show user's approximate location
+                    // Add a red circle to show user's approximate location
                     L.circle([userLat, userLng], {
-                        color: '#007bff',
-                        fillColor: '#007bff',
-                        fillOpacity: 0.1,
+                        color: '#dc3545',
+                        fillColor: '#dc3545',
+                        fillOpacity: 0.2,
                         radius: 100
-                    }).addTo(complaintMap).bindPopup('Your approximate location');
+                    }).addTo(assistanceMap).bindPopup('Your approximate location');
                 },
                 function(error) {
                     console.log('Geolocation error:', error);
@@ -304,7 +289,7 @@ File Complaint
         
         // Update display
         document.getElementById('coordinates-display').innerHTML = 
-            `<i class="bi bi-geo-alt-fill text-danger me-1"></i>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            `<i class="bi bi-geo-alt-fill text-danger me-1"></i><strong>Emergency Coordinates:</strong> ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         
         // Perform reverse geocoding to get address
         reverseGeocode(lat, lng);

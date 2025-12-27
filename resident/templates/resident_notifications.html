@@ -8,53 +8,58 @@ Notifications
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid ">
-    <div class="row justify-content-center ">
-        <div class="col-10 col-lg-12 mx-auto">
-            <div class="card w-100 p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="fw-semibold">Notifications</span>
-                    </div>
-                    <div class="d-flex gap-1 w-50 ">
-                        <form class="d-flex items-center justify-content-end gap-2 w-100" method="GET" id="filterForm">
-                            {% csrf_token %}
-                            <select class="form-select form-select-sm" name="type" id="typeFilter">
-                                <option value="">All Types</option>
-                                {% for type in notification_types %}
-                                    <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
-                                        {% if type == 'case_assignment' %}Case Assignment
-                                        {% elif type == 'status_update' %}Status Update
-                                        {% elif type == 'new_complaint' %}New Complaint
-                                        {% elif type == 'new_assistance' %}New Assistance Request
-                                        {% elif type == 'case_resolved' %}Case Resolved
-                                        {% elif type == 'case_closed' %}Case Closed
-                                        {% elif type == 'urgent_case' %}Urgent Case
-                                        {% elif type == 'system_alert' %}System Alert
-                                        {% elif type == 'reminder' %}Reminder
-                                        {% elif type == 'other' %}Other
-                                        {% else %}{{ type|title }}
-                                        {% endif %}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <select class="form-select form-select-sm" name="status" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
-                                <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
-                                <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
-                            </select>
+<div class="container-fluid px-3 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-3 border-bottom">
+                    <div class="row gap-2 justify-content-between">
 
-                            <button type="submit" class="btn btn-sm btn-primary btn-block w-50"><i class="bi bi-funnel"></i> Filter</button>
-                        </form>
+                        <div class="col-12 col-md-4 d-flex align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-bell me-2"></i>Notifications</h5>
+                        </div>
+                        <div class="col-12 col-md-7 col-lg-6 self-end">
+                            <form class="row g-3 align-items-center" method="GET" id="filterForm">
+                                {% csrf_token %}
+
+                                <div class="col-12 col-md-4">
+                                    <select class="form-select" name="type" id="typeFilter">
+                                        <option value="">All Types</option>
+                                        {% for type in notification_types %}
+                                            <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>
+                                                {{ type|title }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-4">
+                                    <select class="form-select" name="status" id="statusFilter">
+                                        <option value="">All Status</option>
+                                        <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread</option>
+                                        <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read</option>
+                                        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-3">
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                                        <i class="bi bi-funnel me-1"></i>
+                                        <span class="d-none d-lg-inline">Apply </span>Filter
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
                     </div>
                 </div>
-                <div class="card-body-admin p-0">
+                <div class="card-body p-0">
                     {% if notifications %}
                         <div class="list-group list-group-flush">
                             {% for notification in notifications %}
-                                <div class="list-group-item d-flex justify-content-between align-items-start p-4">
-                                    <div class="d-flex align-items-start">
+                                <div class="list-group-item p-3 p-md-4">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                        <div class="d-flex align-items-start flex-grow-1">
                                         <div class="flex-shrink-0 me-3">
                                             <div class="{% if notification.priority == 'urgent' %}bg-danger{% elif notification.priority == 'high' %}bg-warning{% elif notification.priority == 'normal' %}bg-info{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2">
                                                 {% if notification.notification_type == 'case_assignment' %}
@@ -70,38 +75,41 @@ Notifications
                                                 {% endif %}
                                             </div>
                                         </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex align-items-center mb-1">
-                                                <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
-                                                {% if not notification.is_read %}
-                                                    <span class="badge bg-primary ms-2 small">New</span>
-                                                {% endif %}
-                                                <span class="badge bg-secondary ms-2 small">{{ notification.get_notification_type_display }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-1 mb-2">
+                                                    <h6 class="mb-0 fw-semibold">{{ notification.title }}</h6>
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        {% if not notification.is_read %}
+                                                            <span class="badge bg-primary small">New</span>
+                                                        {% endif %}
+                                                        <span class="badge bg-secondary small">{{ notification.get_notification_type_display }}</span>
+                                                    </div>
+                                                </div>
+                                                <p class="mb-2 text-muted small">{{ notification.message|truncatechars:100 }}</p>
+                                                <small class="text-muted d-block">
+                                                    <span class="d-inline-block me-2"><i class="bi bi-person me-1"></i>To: {{ notification.recipient.get_full_name }}</span>
+                                                    {% if notification.sender %}
+                                                        <span class="d-inline-block me-2"><i class="bi bi-arrow-right me-1"></i>From: {{ notification.sender.get_full_name }}</span>
+                                                    {% endif %}
+                                                    <span class="d-inline-block"><i class="bi bi-clock me-1"></i>{{ notification.created_at|timesince }} ago</span>
+                                                </small>
                                             </div>
-                                            <p class="mb-1 text-muted small">{{ notification.message|truncatechars:100 }}</p>
-                                            <small class="text-muted">
-                                                <i class="bi bi-person me-1"></i>To: {{ notification.recipient.get_full_name }}
-                                                {% if notification.sender %}
-                                                    <i class="bi bi-arrow-right mx-1"></i>From: {{ notification.sender.get_full_name }}
-                                                {% endif %}
-                                                <i class="bi bi-clock ms-2 me-1"></i>{{ notification.created_at|timesince }} ago
-                                            </small>
                                         </div>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        {% if not notification.is_read %}
-                                            <a href="{% url 'mark_notification_as_read' notification.id %}" role="button" class="btn btn-sm btn-outline-primary" title="Mark as Read">
-                                                <i class="bi bi-check"></i>
+                                        <div class="d-flex flex-row flex-md-column flex-lg-row gap-2 align-self-start">
+                                            {% if not notification.is_read %}
+                                                <a href="{% url 'mark_notification_as_read' notification.id %}" role="button" class="btn btn-sm btn-outline-primary" title="Mark as Read">
+                                                    <i class="bi bi-check"></i><span class="d-none d-lg-inline ms-1">Read</span>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'resident_notification_details' notification.id %}" role="button" class="btn btn-sm btn-outline-info" title="View Details">
+                                                <i class="bi bi-eye"></i><span class="d-none d-lg-inline ms-1">View</span>
                                             </a>
-                                        {% endif %}
-                                        <a href="{% url 'resident_notification_details' notification.id %}" role="button" class="btn btn-sm btn-outline-info" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        {% if not notification.is_archived %}
-                                            <a href="{% url 'mark_notification_as_archived' notification.id %}" role="button" class="btn btn-sm btn-outline-warning" title="Archive">
-                                                <i class="bi bi-archive"></i>
-                                            </a>
-                                        {% endif %}
+                                            {% if not notification.is_archived %}
+                                                <a href="{% url 'mark_notification_as_archived' notification.id %}" role="button" class="btn btn-sm btn-outline-warning" title="Archive">
+                                                    <i class="bi bi-archive"></i><span class="d-none d-lg-inline ms-1">Archive</span>
+                                                </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -115,9 +123,8 @@ Notifications
                 </div>
                 {% if page_obj.has_other_pages %}
                     <div class="card-footer bg-light py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} notifications</small>
-                            <nav>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <nav class="order-1 order-md-2">
                                 <ul class="pagination pagination-sm mb-0">
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">
@@ -152,6 +159,7 @@ Notifications
                                     {% endif %}
                                 </ul>
                             </nav>
+                            <small class="text-muted order-2 order-md-1">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} </small>
                         </div>
                     </div>
                 {% endif %}

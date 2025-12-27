@@ -7,6 +7,66 @@ from resident.automate_priority import generate_priority, prompt_details
 import os
 import sweetify
 
+# Emergency Complaint View
+def file_emergency_complaint(request):
+    if not request.session.get('resident_id'):
+        sweetify.error(request, 'You must be logged in to file an emergency complaint.', timer=3000)
+        return redirect('homepage')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', 'Emergency Situation Requiring Immediate Attention').strip()
+        description = request.POST.get('description', '').strip()
+        category = 'Disaster/Emergency'  # Fixed category for emergency complaints
+        priority = 'urgent'  # Fixed priority for emergency complaints
+        location_description = request.POST.get('location', '').strip()
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip()
+        longitude = request.POST.get('longitude', '').strip()
+        user_id = request.session.get('resident_id')
+        user = User.objects.filter(id=user_id).first()
+        
+        # Validate required fields
+        if not all([title, description, location_description, address, latitude, longitude]):
+            sweetify.error(request, 'Please fill in all required fields and pin the location on the map.', persistent=True, timer=3000)
+            return render(request, 'emergency_complaint.html')
+        
+        # Convert coordinates to float
+        try:
+            lat_float = float(latitude)
+            lng_float = float(longitude)
+        except (ValueError, TypeError):
+            sweetify.error(request, 'Invalid coordinates. Please pin a location on the map.', persistent=True, timer=3000)
+            return render(request, 'emergency_complaint.html')
+
+        # Create the emergency complaint
+        complaint = Complaint.objects.create(
+            user=user,
+            title=title,
+            description=description,
+            category=category,
+            priority=priority,
+            location_description=location_description,
+            address=address,
+            latitude=lat_float,
+            longitude=lng_float
+        )
+
+        try:
+            notify_new_case_filed(complaint)  # Notifies all active admins
+        except Exception as e:
+            # Log the error but do not interrupt the user flow
+            print(f"Error notifying admins of new emergency complaint: {e}")
+
+        # Handle multiple file uploads
+        for f in request.FILES.getlist('attachments'):
+            ComplaintAttachment.objects.create(complaint=complaint, file=f)
+
+        sweetify.success(request, 'Emergency complaint filed successfully! Admins have been notified.', persistent=True, timer=3000)
+        return redirect('my_complaints')
+    
+    return render(request, 'emergency_complaint.html')
+
+
 # Complaint Views
 def file_complaint(request):
     if not request.session.get('resident_id'):
@@ -97,10 +157,32 @@ def my_complaints(request):
     
     user_id = request.session.get('resident_id')
     user = User.objects.filter(id=user_id).first()
+    
+    # Get all complaints for the user
     complaints = Complaint.objects.filter(user=user).order_by('-created_at')
+    
+    # Apply filters
+    status_filter = request.GET.get('status')
+    priority_filter = request.GET.get('priority')
+    search_query = request.GET.get('search')
+    
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+    
+    if priority_filter:
+        complaints = complaints.filter(priority=priority_filter)
+    
+    if search_query:
+        from django.db.models import Q
+        complaints = complaints.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
     
     context = {
         'complaints': complaints,
+        'status_filter': status_filter,
+        'priority_filter': priority_filter,
+        'search_query': search_query,
     }
 
     return render(request, 'my_complaints.html', context)

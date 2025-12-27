@@ -146,59 +146,149 @@ My Complaints
 {% block content %}
 <div class="container-fluid py-4">
     <h3 class="mb-4 text-success fs-2">My Complaints</h3>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover w-100 align-middle">
-            <thead class="table-success">
-                <tr class="fs-5">
-                    <th>Subject</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Urgency</th>
-                    {% comment %} <th>Location</th> {% endcomment %}
-                    <th>Date and Time</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for complaint in complaints %}
-                <tr class="fs-5">
-                  <td>{{ complaint.title }}</td>
-                  <td style="width: 21rem;">{{ complaint.description }}</td>
-                  <td>
-                      <span class="badge fs-6
-                          {% if complaint.status == 'pending' %}bg-warning
-                          {% elif complaint.status == 'in_progress' %}bg-info
-                          {% elif complaint.status == 'assigned' %}bg-primary
-                          {% elif complaint.status == 'resolved' %}bg-success
-                          {% else %}bg-secondary{% endif %}">
-                          {{ complaint.status|title }}
-                      </span>
-                  </td>
-                  <td>
-                    <span class="badge fs-6
-                          {% if complaint.priority == 'low' %}bg-success
-                          {% elif complaint.priority == 'medium' %}bg-warning
-                          {% elif complaint.priority == 'high' %}bg-orange
-                          {% elif complaint.priority == 'urgent' %}bg-danger
-                          {% else %}bg-secondary{% endif %}">
-                          {{ complaint.priority|default:"N/A" }}
-                      </span>
-                  </td>
-                  <td>{{ complaint.created_at|date:"M d, Y \a\t h:i A" }}</td>
-                  <td>
-                      <a href="{% url 'resident_complaint_details' complaint.id %}" role="button" class="btn btn-success btn-md">View</a>
-                      <button class="btn btn-primary btn-md" onclick="editComplaint({{ complaint.id }})">Update</button>
-                      {% comment %} <button class="btn btn-warning btn-sm" onclick="followUpComplaint({{ complaint.id }})">Follow-up</button> {% endcomment %}
-                      <button class="btn btn-danger btn-md"
-                        onclick="confirmDelete({{ complaint.id }})">Delete</button>
-                  </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="6" class="text-center text-muted fs-5">No complaints found.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm" class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <label for="status" class="form-label fw-bold">Status</label>
+                    <select class="form-select" name="status" id="status">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <label for="priority" class="form-label fw-bold">Priority</label>
+                    <select class="form-select" name="priority" id="priority">
+                        <option value="">All Priorities</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-12">
+                    <label for="search" class="form-label fw-bold">Search</label>
+                    <input type="text" class="form-control" name="search" id="search" placeholder="Search by subject or description...">
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-2">
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-search me-2"></i>Filter</button>
+                </div>
+            </form>
+        </div>
     </div>
+    
+    <!-- Desktop: Table View (hidden on mobile) -->
+    <div class="d-none d-lg-block">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover w-100 align-middle">
+                <thead class="table-success">
+                    <tr>
+                        <th style="width: 15%;">Subject</th>
+                        <th style="width: 30%;">Description</th>
+                        <th style="width: 10%;">Status</th>
+                        <th style="width: 10%;">Priority</th>
+                        <th style="width: 12%;">Date</th>
+                        <th style="width: 23%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for complaint in complaints %}
+                    <tr>
+                        <td>{{ complaint.title|truncatechars:30 }}</td>
+                        <td>{{ complaint.description|truncatechars:80 }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if complaint.status == 'pending' %}bg-warning
+                                {% elif complaint.status == 'in_progress' %}bg-info
+                                {% elif complaint.status == 'assigned' %}bg-primary
+                                {% elif complaint.status == 'resolved' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ complaint.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if complaint.priority == 'low' %}bg-success
+                                {% elif complaint.priority == 'medium' %}bg-warning
+                                {% elif complaint.priority == 'high' %}bg-orange
+                                {% elif complaint.priority == 'urgent' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ complaint.priority|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'resident_complaint_details' complaint.id %}" class="btn btn-success btn-sm">View</a>
+                            <button class="btn btn-primary btn-sm" onclick="editComplaint({{ complaint.id }})">Update</button>
+                            <button class="btn btn-danger btn-sm" onclick="confirmDelete({{ complaint.id }})">Delete</button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted">No complaints found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Mobile/Tablet: Card View -->
+    <div class="d-lg-none">
+        {% for complaint in complaints %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title mb-0 flex-grow-1">{{ complaint.title }}</h5>
+                    <span class="badge ms-2 
+                        {% if complaint.priority == 'low' %}bg-success
+                        {% elif complaint.priority == 'medium' %}bg-warning
+                        {% elif complaint.priority == 'high' %}bg-orange
+                        {% elif complaint.priority == 'urgent' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ complaint.priority|default:"N/A" }}
+                    </span>
+                </div>
+                <p class="card-text text-muted mb-2">{{ complaint.description|truncatechars:120 }}</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge 
+                        {% if complaint.status == 'pending' %}bg-warning
+                        {% elif complaint.status == 'in_progress' %}bg-info
+                        {% elif complaint.status == 'assigned' %}bg-primary
+                        {% elif complaint.status == 'resolved' %}bg-success
+                        {% else %}bg-secondary{% endif %}">
+                        {{ complaint.status|title }}
+                    </span>
+                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>{{ complaint.created_at|date:"M d, Y" }}</small>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'resident_complaint_details' complaint.id %}" class="btn btn-success btn-sm">View Details</a>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary btn-sm" onclick="editComplaint({{ complaint.id }})">Update</button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete({{ complaint.id }})">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">No complaints found.</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if complaints %}
+    <nav aria-label="Complaints pagination" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination will be generated by JavaScript -->
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
 <!-- Update Modal -->
@@ -883,6 +973,105 @@ My Complaints
                 }
             });
         }
+
+        // Client-side pagination
+        document.addEventListener('DOMContentLoaded', function() {
+            const itemsPerPage = 10;
+            let currentPage = 1;
+            
+            // Desktop table rows
+            const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
+            const desktopRows = desktopTable ? Array.from(desktopTable.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]')) : [];
+            
+            // Mobile cards
+            const mobileContainer = document.querySelector('.d-lg-none');
+            const mobileCards = mobileContainer ? Array.from(mobileContainer.querySelectorAll('.card')) : [];
+            
+            const totalItems = Math.max(desktopRows.length, mobileCards.length);
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // Preserve filter values
+            const urlParams = new URLSearchParams(window.location.search);
+            document.getElementById('status').value = urlParams.get('status') || '';
+            document.getElementById('priority').value = urlParams.get('priority') || '';
+            document.getElementById('search').value = urlParams.get('search') || '';
+            
+            function displayPage(page) {
+                currentPage = page;
+                const start = (page - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                
+                // Handle desktop table
+                if (desktopRows.length > 0) {
+                    desktopRows.forEach((row, index) => {
+                        row.style.display = (index >= start && index < end) ? '' : 'none';
+                    });
+                }
+                
+                // Handle mobile cards
+                if (mobileCards.length > 0) {
+                    mobileCards.forEach((card, index) => {
+                        card.style.display = (index >= start && index < end) ? '' : 'none';
+                    });
+                }
+                
+                updatePagination();
+            }
+            
+            function updatePagination() {
+                const pagination = document.getElementById('pagination');
+                if (!pagination || totalPages <= 1) {
+                    if (pagination) pagination.style.display = 'none';
+                    return;
+                }
+                
+                pagination.style.display = 'flex';
+                pagination.innerHTML = '';
+                
+                // Previous button
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `<a class=\"page-link\" href=\"#\" data-page=\"${currentPage - 1}\">Previous</a>`;
+                pagination.appendChild(prevLi);
+                
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                        li.innerHTML = `<a class=\"page-link\" href=\"#\" data-page=\"${i}\">${i}</a>`;
+                        pagination.appendChild(li);
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        const li = document.createElement('li');
+                        li.className = 'page-item disabled';
+                        li.innerHTML = '<span class=\"page-link\">...</span>';
+                        pagination.appendChild(li);
+                    }
+                }
+                
+                // Next button
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `<a class=\"page-link\" href=\"#\" data-page=\"${currentPage + 1}\">Next</a>`;
+                pagination.appendChild(nextLi);
+                
+                // Add click handlers
+                pagination.querySelectorAll('a.page-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const page = parseInt(this.dataset.page);
+                        if (page && page !== currentPage) {
+                            displayPage(page);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    });
+                });
+            }
+            
+            if (totalItems > 0) {
+                displayPage(1);
+            }
+        });
 
     </script>
 

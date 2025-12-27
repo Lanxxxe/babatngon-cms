@@ -8,6 +8,7 @@
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 1;
     }
     
     .leaflet-popup-content {
@@ -32,6 +33,13 @@
     .leaflet-marker-icon {
         filter: hue-rotate(120deg) brightness(1.1);
     }
+
+    /* Responsive map height */
+    @media (min-width: 768px) {
+        .assistance-map-responsive {
+            height: 350px !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -46,9 +54,14 @@ Request Assistance
         <div class="col-12 col-lg-12">
             <div class="card shadow-lg border-0">
                 <div class="card-header text-success text-center py-3">
-                    <h3 class="mb-0">
-                        Request Assistance
-                    </h3>
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                        <h3 class="mb-0 fw-bold">
+                            Request Assistance
+                        </h3>
+                        <a href="{% url 'file_emergency_assistance' %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-exclamation-triangle-fill me-1 me-sm-2"></i><span class="d-none d-sm-inline">Emergency </span>Assistance
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
@@ -133,7 +146,7 @@ Request Assistance
                                         Pin Your Location
                                     </label>
                                     <div class="map-container">
-                                        <div class="border rounded" style="height: 300px; border-radius: 8px; border: 2px solid #dee2e6;" id="map"></div>
+                                        <div class="border rounded assistance-map-responsive" style="height: 250px; border-radius: 8px; border: 2px solid #dee2e6;" id="map"></div>
                                     </div>
                                     <div class="form-text mt-2">
                                         <i class="bi bi-info-circle me-1"></i>

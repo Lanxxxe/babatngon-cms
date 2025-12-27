@@ -8,113 +8,154 @@
 {% endblock %}
 
 {% block content %}
-<div class="container ">
-    <div class="row justify-content-center ">
-        <div class="col-12 col-lg-10 mx-auto">
-            <div class="card shadow-sm w-100">
-                <div class="card-body">
-                    <h4 class="mb-3">My Profile</h4>
+<div class="container-fluid px-3 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-3 p-md-4">
+                    <!-- Profile Header -->
+                    <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                        <i class="bi bi-person-circle text-primary fs-3 me-2"></i>
+                        <h4 class="mb-0">My Profile</h4>
+                    </div>
 
-                    <!-- ✅ Personal Information Form -->
+                    <!-- Personal Information Form -->
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <div class="d-flex align-items-center mb-4">
-                            <div class="me-3">
-                                {% if user.profile_picture %}
-                                    <img src="{{ user.profile_picture.url }}" class="rounded-circle object-fit-cover" width="80" height="80" alt="Profile Picture">
-                                {% else %}
-                                    <img src="{% static 'images/community-placeholder.png' %}" class="rounded-circle" width="80" height="80" alt="Profile Picture">
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label for="profile_picture" class="form-label mb-0">Change Profile Picture</label>
-                                <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" name="first_name" value="{{ user.first_name|default:'' }}">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">Middle Name</label>
-                                <input type="text" class="form-control" name="middle_name" value="{{ user.middle_name|default:'' }}">
+                        
+                        <!-- Profile Picture Section -->
+                        <div class="bg-light rounded p-3 p-md-4 mb-4">
+                            <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
+                                <div class="text-center text-sm-start">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" class="rounded-circle object-fit-cover shadow-sm" width="100" height="100" alt="Profile Picture">
+                                    {% else %}
+                                        <img src="{% static 'images/community-placeholder.png' %}" class="rounded-circle shadow-sm" width="100" height="100" alt="Profile Picture">
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 w-100">
+                                    <label for="profile_picture" class="form-label fw-semibold">
+                                        <i class="bi bi-camera me-1"></i>Profile Picture
+                                    </label>
+                                    <input type="file" class="form-control form-control-sm" id="profile_picture" name="profile_picture" accept="image/*">
+                                    <small class="text-muted d-block mt-1">Recommended: Square image, max 2MB</small>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" name="last_name" value="{{ user.last_name|default:'' }}">
+                        <!-- Personal Details Section -->
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-person-badge me-2"></i>Personal Details
+                        </h6>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">First Name</label>
+                                <input type="text" class="form-control" name="first_name" value="{{ user.first_name|default:'' }}" placeholder="Enter first name">
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">Suffix</label>
-                                <input type="text" class="form-control" name="suffix" value="{{ user.suffix|default:'' }}">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">Middle Name</label>
+                                <input type="text" class="form-control" name="middle_name" value="{{ user.middle_name|default:'' }}" placeholder="Enter middle name">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">Last Name</label>
+                                <input type="text" class="form-control" name="last_name" value="{{ user.last_name|default:'' }}" placeholder="Enter last name">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">Suffix</label>
+                                <input type="text" class="form-control" name="suffix" value="{{ user.suffix|default:'' }}" placeholder="Jr., Sr., III, etc.">
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" value="{{ user.email|default:'' }}">
+                        <!-- Contact Information Section -->
+                        <h6 class="text-primary mb-3 mt-4">
+                            <i class="bi bi-envelope me-2"></i>Contact Information
+                        </h6>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" name="email" value="{{ user.email|default:'' }}" placeholder="your.email@example.com">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">Phone</label>
-                                <input type="text" class="form-control" name="phone_number" value="{{ user.phone|default:'' }}">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold">Phone Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control" name="phone_number" value="{{ user.phone|default:'' }}" placeholder="+63 912 345 6789">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-geo-alt me-1"></i>Address
+                                </label>
+                                <textarea class="form-control" name="address" rows="3" placeholder="Enter your complete address">{{ user.address|default:'' }}</textarea>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea class="form-control" name="address" rows="2">{{ user.address|default:'' }}</textarea>
-                        </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Update Information</button>
-                            <button type="button" class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                                Change Password
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary btn-sm btn-md-md">
+                                <i class="bi bi-check-circle me-1"></i>Update Information
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-md-md" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                <i class="bi bi-shield-lock me-1"></i>Change Password
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- ✅ Change Password Modal -->
-                <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form method="POST" action="{% url 'resident_change_password' %}">
-                                {% csrf_token %}
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Current Password</label>
-                                        <input type="password" class="form-control" name="current_password" autocomplete="off">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">New Password</label>
-                                        <input type="password" class="form-control" name="new_password" autocomplete="off">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Confirm New Password</label>
-                                        <input type="password" class="form-control" name="confirm_password" autocomplete="off">
-                                    </div>
-                                </div>
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'resident_change_password' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary bg-opacity-10">
+                    <h5 class="modal-title" id="changePasswordModalLabel">
+                        <i class="bi bi-shield-lock me-2"></i>Change Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Update Password</button>
-                                </div>
-                            </form>
-                        </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-lock me-1"></i>Current Password
+                        </label>
+                        <input type="password" class="form-control" name="current_password" required autocomplete="current-password" placeholder="Enter current password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-key me-1"></i>New Password
+                        </label>
+                        <input type="password" class="form-control" name="new_password" required autocomplete="new-password" placeholder="Enter new password">
+                        <small class="text-muted">Must be at least 8 characters</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i>Confirm New Password
+                        </label>
+                        <input type="password" class="form-control" name="confirm_password" required autocomplete="new-password" placeholder="Re-enter new password">
                     </div>
                 </div>
 
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-circle me-1"></i>Update Password
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

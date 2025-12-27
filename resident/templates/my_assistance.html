@@ -146,57 +146,149 @@ My Assistance Requests
 {% block content %}
 <div class="container-fluid py-4">
     <h3 class="mb-4 text-success fs-2">My Assistance Requests</h3>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover w-100 align-middle">
-            <thead class="table-success">
-                <tr class="fs-5">
-                    <th>Subject</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Urgency</th>
-                    <th>Date and Time</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for assistance in assistance_list %}
-                <tr class="fs-5">
-                    <td>{{ assistance.title }}</td>
-                    <td  style="width: 21rem;">{{ assistance.description }}</td>
-                    <td>
-                        <span class="badge fs-6
-                            {% if assistance.status == 'pending' %}bg-warning
-                          {% elif assistance.status == 'in_progress' %}bg-info
-                          {% elif assistance.status == 'assigned' %}bg-primary
-                          {% elif assistance.status == 'resolved' %}bg-success
-                          {% else %}bg-secondary{% endif %}">
-                            {{ assistance.status|title }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge fs-6
-                            {% if assistance.urgency == 'low' %}bg-success
-                            {% elif assistance.urgency == 'medium' %}bg-warning
-                            {% elif assistance.urgency == 'high' %}bg-orange
-                            {% elif assistance.urgency == 'urgent' %}bg-danger
-                            {% else %}bg-secondary{% endif %}">
-                            {{ assistance.urgency|default:"N/A" }}
-                        </span>
-                    </td>
-                    <td>{{ assistance.created_at|date:"M d, Y \a\t h:i A" }}</td>
-                    <td>
-                        <a href="{% url 'resident_assistance_detail' assistance.id %}" class="btn btn-md btn-success">View</a>
-                        <button class="btn btn-md btn-primary" onclick="editAssistance({{ assistance.id }})">Update</button>
-                        <a href="{% url 'delete_assistance' assistance.id %}" class="btn btn-md btn-danger"
-                        onclick="return confirm('Are you sure you want to delete this request?');">Delete</a>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="6" class="text-center text-muted">No assistance requests found.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm" class="row g-3 align-items-end">
+                <div class="col-md-3 col-sm-6">
+                    <label for="status" class="form-label fw-bold">Status</label>
+                    <select class="form-select" name="status" id="status">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label for="urgency" class="form-label fw-bold">Urgency</label>
+                    <select class="form-select" name="urgency" id="urgency">
+                        <option value="">All Urgency Levels</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="col-md-4 col-sm-12">
+                    <label for="search" class="form-label fw-bold">Search</label>
+                    <input type="text" class="form-control" name="search" id="search" placeholder="Search by subject or description...">
+                </div>
+                <div class="col-md-2 col-sm-12">
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-search me-2"></i>Filter</button>
+                </div>
+            </form>
+        </div>
     </div>
+    
+    <!-- Desktop: Table View (hidden on mobile) -->
+    <div class="d-none d-lg-block">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover w-100 align-middle">
+                <thead class="table-success">
+                    <tr>
+                        <th style="width: 15%;">Subject</th>
+                        <th style="width: 30%;">Description</th>
+                        <th style="width: 10%;">Status</th>
+                        <th style="width: 10%;">Urgency</th>
+                        <th style="width: 12%;">Date</th>
+                        <th style="width: 23%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for assistance in assistance_list %}
+                    <tr>
+                        <td>{{ assistance.title|truncatechars:30 }}</td>
+                        <td>{{ assistance.description|truncatechars:80 }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if assistance.status == 'pending' %}bg-warning
+                                {% elif assistance.status == 'in_progress' %}bg-info
+                                {% elif assistance.status == 'assigned' %}bg-primary
+                                {% elif assistance.status == 'resolved' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ assistance.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if assistance.urgency == 'low' %}bg-success
+                                {% elif assistance.urgency == 'medium' %}bg-warning
+                                {% elif assistance.urgency == 'high' %}bg-orange
+                                {% elif assistance.urgency == 'urgent' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ assistance.urgency|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>{{ assistance.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'resident_assistance_detail' assistance.id %}" class="btn btn-success btn-sm">View</a>
+                            <button class="btn btn-primary btn-sm" onclick="editAssistance({{ assistance.id }})">Update</button>
+                            <a href="{% url 'delete_assistance' assistance.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this request?');">Delete</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted">No assistance requests found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Mobile/Tablet: Card View -->
+    <div class="d-lg-none">
+        {% for assistance in assistance_list %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title mb-0 flex-grow-1">{{ assistance.title }}</h5>
+                    <span class="badge ms-2 
+                        {% if assistance.urgency == 'low' %}bg-success
+                        {% elif assistance.urgency == 'medium' %}bg-warning
+                        {% elif assistance.urgency == 'high' %}bg-orange
+                        {% elif assistance.urgency == 'urgent' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ assistance.urgency|default:"N/A" }}
+                    </span>
+                </div>
+                <p class="card-text text-muted mb-2">{{ assistance.description|truncatechars:120 }}</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge 
+                        {% if assistance.status == 'pending' %}bg-warning
+                        {% elif assistance.status == 'in_progress' %}bg-info
+                        {% elif assistance.status == 'assigned' %}bg-primary
+                        {% elif assistance.status == 'resolved' %}bg-success
+                        {% else %}bg-secondary{% endif %}">
+                        {{ assistance.status|title }}
+                    </span>
+                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>{{ assistance.created_at|date:"M d, Y" }}</small>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'resident_assistance_detail' assistance.id %}" class="btn btn-success btn-sm">View Details</a>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary btn-sm" onclick="editAssistance({{ assistance.id }})">Update</button>
+                        <a href="{% url 'delete_assistance' assistance.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this request?');">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">No assistance requests found.</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if assistance_list %}
+    <nav aria-label="Assistance pagination" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination will be generated by JavaScript -->
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
 <!-- Update Modal -->
@@ -746,5 +838,127 @@ My Assistance Requests
           editMarker = null;
       }
   });
+
+  // Pagination functionality
+  const itemsPerPage = 10;
+  let currentPage = 1;
+  
+  const desktopTable = document.querySelector('#desktop-assistance-list tbody');
+  const mobileContainer = document.getElementById('mobile-assistance-list');
+  const paginationContainer = document.getElementById('pagination-controls');
+  
+  // Get all assistance items (both desktop rows and mobile cards)
+  const desktopRows = Array.from(desktopTable.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
+  const mobileCards = Array.from(mobileContainer.querySelectorAll('.card'));
+  
+  const totalItems = desktopRows.length; // Should be same as mobileCards.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+  // Preserve filter values from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('status')) {
+      document.getElementById('status').value = urlParams.get('status');
+  }
+  if (urlParams.get('urgency')) {
+      document.getElementById('urgency').value = urlParams.get('urgency');
+  }
+  if (urlParams.get('search')) {
+      document.getElementById('search').value = urlParams.get('search');
+  }
+  
+  function displayPage(page) {
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      
+      // Hide all desktop rows
+      desktopRows.forEach((row, index) => {
+          if (index >= start && index < end) {
+              row.style.display = '';
+          } else {
+              row.style.display = 'none';
+          }
+      });
+      
+      // Hide all mobile cards
+      mobileCards.forEach((card, index) => {
+          if (index >= start && index < end) {
+              card.style.display = '';
+          } else {
+              card.style.display = 'none';
+          }
+      });
+      
+      updatePagination();
+  }
+  
+  function updatePagination() {
+      if (totalPages <= 1) {
+          paginationContainer.innerHTML = '';
+          return;
+      }
+      
+      let paginationHtml = '<nav aria-label="Assistance pagination"><ul class="pagination justify-content-center mb-0">';
+      
+      // Previous button
+      if (currentPage > 1) {
+          paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a></li>`;
+      } else {
+          paginationHtml += '<li class="page-item disabled"><span class="page-link">Previous</span></li>';
+      }
+      
+      // Page numbers
+      const maxPagesToShow = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+      
+      if (endPage - startPage < maxPagesToShow - 1) {
+          startPage = Math.max(1, endPage - maxPagesToShow + 1);
+      }
+      
+      if (startPage > 1) {
+          paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+          if (startPage > 2) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+          }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+          if (i === currentPage) {
+              paginationHtml += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+          } else {
+              paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+          }
+      }
+      
+      if (endPage < totalPages) {
+          if (endPage < totalPages - 1) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+          }
+          paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+      }
+      
+      // Next button
+      if (currentPage < totalPages) {
+          paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${currentPage + 1}">Next</a></li>`;
+      } else {
+          paginationHtml += '<li class="page-item disabled"><span class="page-link">Next</span></li>';
+      }
+      
+      paginationHtml += '</ul></nav>';
+      paginationContainer.innerHTML = paginationHtml;
+      
+      // Add click event listeners to pagination links
+      paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+          link.addEventListener('click', function(e) {
+              e.preventDefault();
+              currentPage = parseInt(this.dataset.page);
+              displayPage(currentPage);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+      });
+  }
+  
+  // Initialize pagination
+  displayPage(1);
 </script>
 {% endblock %}

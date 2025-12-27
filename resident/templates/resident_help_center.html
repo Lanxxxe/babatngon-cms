@@ -1,0 +1,348 @@
+{% extends 'base_resident.html' %}
+{% load static %}
+
+{% block title %}Help Center - Barangay CMS{% endblock %}
+
+{% block breadcrumb %}
+Help Center
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <!-- Header Section -->
+            <div class="text-center mb-5">
+                <div class="mb-3">
+                    <i class="bi bi-question-circle-fill text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h2 class="fw-bold mb-3">Help Center</h2>
+                <p class="text-muted lead">
+                    Welcome to the Barangay CMS Help Center. Here you'll find everything you need to know about filing complaints, 
+                    requesting assistance, and tracking your requests. If you need further help, don't hesitate to contact us.
+                </p>
+            </div>
+
+            <!-- Main Features Cards -->
+            <div class="row g-4 mb-5">
+                <!-- File a Complaint -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <h5 class="card-title fw-semibold mb-3">File a Complaint</h5>
+                            <p class="card-text text-muted small mb-3">
+                                Report issues in your community such as noise disturbances, illegal activities, or infrastructure problems.
+                            </p>
+                            <ul class="text-start small text-muted mb-3">
+                                <li>Navigate to "File Complaint"</li>
+                                <li>Fill in the required details</li>
+                                <li>Pin the location on map</li>
+                                <li>Attach photos (optional)</li>
+                                <li>Submit your complaint</li>
+                            </ul>
+                            <a href="{% url 'file_complaint' %}" class="btn btn-sm btn-outline-warning">File Complaint</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Assistance -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-hand-thumbs-up-fill text-success" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <h5 class="card-title fw-semibold mb-3">Request Assistance</h5>
+                            <p class="card-text text-muted small mb-3">
+                                Request help for medical needs, financial aid, disaster relief, or other support services.
+                            </p>
+                            <ul class="text-start small text-muted mb-3">
+                                <li>Go to "Request Assistance"</li>
+                                <li>Select assistance type</li>
+                                <li>Provide necessary information</li>
+                                <li>Upload supporting documents</li>
+                                <li>Wait for approval</li>
+                            </ul>
+                            <a href="{% url 'file_assistance' %}" class="btn btn-sm btn-outline-success">Request Assistance</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Track Requests -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-clipboard-check-fill text-info" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <h5 class="card-title fw-semibold mb-3">Track Requests</h5>
+                            <p class="card-text text-muted small mb-3">
+                                Monitor the status of your complaints and assistance requests in real-time.
+                            </p>
+                            <ul class="text-start small text-muted mb-3">
+                                <li>View all your submissions</li>
+                                <li>Check current status</li>
+                                <li>See assigned personnel</li>
+                                <li>Read updates and comments</li>
+                                <li>Track resolution progress</li>
+                            </ul>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{% url 'my_complaints' %}" class="btn btn-sm btn-outline-info">Complaints</a>
+                                <a href="{% url 'my_assistance' %}" class="btn btn-sm btn-outline-info">Assistance</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQs -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-question-square-fill text-primary" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <h5 class="card-title fw-semibold mb-3">FAQs</h5>
+                            <p class="card-text text-muted small mb-3">
+                                Find quick answers to common questions about using the Barangay CMS portal.
+                            </p>
+                            <ul class="text-start small text-muted mb-3">
+                                <li>Account management</li>
+                                <li>Filing procedures</li>
+                                <li>Status meanings</li>
+                                <li>Response times</li>
+                                <li>Privacy & security</li>
+                            </ul>
+                            <a href="#faq-section" class="btn btn-sm btn-outline-primary">View FAQs</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Notice -->
+            <div class="alert alert-danger border-0 shadow-sm mb-5" role="alert">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-exclamation-octagon-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading fw-bold mb-2">
+                            <i class="bi bi-megaphone me-2"></i>Emergency Situations
+                        </h5>
+                        <p class="mb-2">
+                            For immediate life-threatening emergencies such as fire, medical emergencies, or crimes in progress, 
+                            please contact emergency services directly:
+                        </p>
+                        <div class="row g-2 mb-3">
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <strong>Fire:</strong> 911 / (123) 456-7890
+                            </div>
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <strong>Police:</strong> 911 / (123) 456-7891
+                            </div>
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <strong>Medical:</strong> 911 / (123) 456-7892
+                            </div>
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <strong>Barangay:</strong> (123) 456-7893
+                            </div>
+                        </div>
+                        <p class="mb-2">
+                            For urgent but non-emergency situations, you can use our emergency filing options:
+                        </p>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <a href="{% url 'file_emergency_complaint' %}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-lightning-fill me-1"></i>Emergency Complaint
+                            </a>
+                            <a href="{% url 'file_emergency_assistance' %}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-lightning-fill me-1"></i>Emergency Assistance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQs Section -->
+            <div id="faq-section" class="mb-5">
+                <h3 class="fw-bold mb-4 text-center">
+                    <i class="bi bi-patch-question me-2 text-primary"></i>Frequently Asked Questions
+                </h3>
+                <div class="accordion" id="faqAccordion">
+                    <!-- FAQ 1 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                How do I create an account?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                To create an account, contact your Barangay administrator or visit the Barangay office. 
+                                They will verify your residency and create an account for you with initial login credentials.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 2 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                How long does it take to process my complaint?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Processing times vary depending on the type and urgency of the complaint. Normal complaints are typically 
+                                reviewed within 24-48 hours. High priority cases are addressed within 12 hours, and urgent cases are 
+                                handled immediately. You'll receive notifications about status updates.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 3 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                What do the different statuses mean?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Pending:</strong> Your request has been received and is awaiting review.<br>
+                                <strong>Processing:</strong> Your request is being actively worked on by assigned personnel.<br>
+                                <strong>Resolved:</strong> Your issue has been addressed and completed.<br>
+                                <strong>Cancelled:</strong> The request was cancelled (by you or administrator).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 4 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Can I edit or cancel my complaint after submission?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, you can edit your complaint while it's still in "Pending" status. Once it moves to "Processing", 
+                                you can no longer edit it but you can add comments. You can cancel any request at any time by contacting 
+                                the administrator or using the cancel button in your request details.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 5 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                Is my personal information secure?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, all personal information is encrypted and stored securely. Only authorized Barangay personnel can 
+                                access your information, and only for legitimate purposes related to your requests. We follow strict 
+                                data privacy protocols in compliance with the Data Privacy Act.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 6 -->
+                    <div class="accordion-item border-0 shadow-sm mb-2">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                What types of assistance are available?
+                            </button>
+                        </h2>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Available assistance includes: Medical Assistance, Financial Aid, Disaster Relief, Educational Support, 
+                                Livelihood Programs, Senior Citizen Support, PWD Support, and other social services. Requirements vary 
+                                by assistance type. Contact the Barangay office for specific eligibility criteria.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card shadow-sm border-0 mb-5">
+                <div class="card-body p-4 p-md-5">
+                    <h3 class="fw-bold mb-4 text-center">
+                        <i class="bi bi-telephone-fill me-2 text-success"></i>Contact Information
+                    </h3>
+                    <p class="text-center text-muted mb-4">
+                        Still need help? Contact us through any of the following channels:
+                    </p>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-geo-alt-fill text-danger mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="fw-semibold">Office Address</h6>
+                                <p class="small text-muted mb-0">
+                                    Barangay Hall, Babatngon<br>
+                                    Leyte, Philippines
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-telephone-fill text-success mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="fw-semibold">Phone</h6>
+                                <p class="small text-muted mb-0">
+                                    (123) 456-7890<br>
+                                    (123) 456-7891
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-envelope-fill text-primary mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="fw-semibold">Email</h6>
+                                <p class="small text-muted mb-0">
+                                    info@babatngon.gov.ph<br>
+                                    support@babatngon.gov.ph
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-clock-fill text-warning mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="fw-semibold">Office Hours</h6>
+                                <p class="small text-muted mb-0">
+                                    Monday - Friday<br>
+                                    8:00 AM - 5:00 PM
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+</style>
+{% endblock %}

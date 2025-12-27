@@ -18,7 +18,7 @@
                         Ready to make a difference today?
                     </p>
                 </div>
-                <div class="col-lg-4 text-center">
+                <div class="col-lg-4 text-center d-none d-lg-block">
                     <div class="position-relative">
                         <img src="{% static 'images/community-placeholder.png' %}" 
                              alt="Dashboard" class="img-fluid" style="max-height: 150px;">
@@ -106,9 +106,9 @@
     <div class="col-lg-8">
         <div class="card-modern">
             <div class="card-header-modern d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
+                <p class="mb-0 fs-5">
                     <i class="bi bi-clock-history me-2"></i>Recent Complaints
-                </h5>
+                </p>
                 <a href="{% url 'my_complaints' %}" class="btn btn-modern-secondary btn-sm">
                     View All
                 </a>
@@ -118,10 +118,10 @@
                     <div class="list-group list-group-flush">
                         {% for complaint in recent_complaints %}
                         <div class="list-group-item border-0 px-0 py-3">
-                            <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
                                 <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-3 fs-5">
+                                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-2 gap-2">
+                                        <h6 class="mb-0 me-sm-3 fs-6 fs-md-5">
                                             <strong>#{{ complaint.id }}</strong> -  {{ complaint.title }}
                                         </h6>
                                         {% if complaint.status == 'pending' %}
@@ -136,15 +136,15 @@
                                             <span class="badge bg-secondary">Unverified</span>
                                         {% endif %}
                                     </div>
-                                    <p class="text-muted mb-2">{{ complaint.description|truncatechars:100 }}</p>
-                                    <div class="d-flex align-items-center text-muted small">
+                                    <p class="text-muted mb-2 small">{{ complaint.description|truncatechars:80 }}</p>
+                                    <div class="d-flex flex-wrap align-items-center text-muted small gap-2">
                                         <i class="bi bi-calendar me-1"></i>
-                                        <span class="me-3">{{ complaint.created_at|date:"M d, Y" }}</span>
+                                        <span>{{ complaint.created_at|date:"M d, Y" }}</span>
                                         <i class="bi bi-tag me-1"></i>
                                         <span>{{ complaint.get_category_display }}</span>
                                     </div>
                                 </div>
-                                <div class="flex-shrink-0 ms-3">
+                                <div class="flex-shrink-0 ms-md-3 mt-2 mt-md-0">
                                     <a href="{% url 'resident_complaint_details' complaint.id %}" 
                                        class="btn btn-modern-secondary btn-sm">
                                         <i class="bi bi-eye"></i>
@@ -171,8 +171,8 @@
 
         <div class="card-modern">
             <div class="card-header-modern d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-clock-history me-2"></i>Recent Assistance Requests
+                <h5 class="mb-0 fs-5">
+                    <i class="bi bi-clock-history me-2"></i>Recent Requests
                 </h5>
                 <a href="{% url 'my_assistance'%}" class="btn btn-modern-secondary btn-sm">
                     View All
@@ -183,10 +183,10 @@
                     <div class="list-group list-group-flush">
                         {% for assistance in recent_assistance %}
                         <div class="list-group-item border-0 px-0 py-3">
-                            <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
                                 <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-3 fs-5">
+                                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-2 gap-2">
+                                        <h6 class="mb-0 me-sm-3 fs-6 fs-md-5">
                                             <strong>#{{ assistance.id }}</strong> - {{ assistance.title }}
                                         </h6>
                                         {% if assistance.status == 'pending' %}
@@ -201,15 +201,15 @@
                                             <span class="badge bg-secondary">Unverified</span>
                                         {% endif %}
                                     </div>
-                                    <p class="text-muted mb-2">{{ assistance.description|truncatechars:100 }}</p>
-                                    <div class="d-flex align-items-center text-muted small">
+                                    <p class="text-muted mb-2 small">{{ assistance.description|truncatechars:80 }}</p>
+                                    <div class="d-flex flex-wrap align-items-center text-muted small gap-2">
                                         <i class="bi bi-calendar me-1"></i>
-                                        <span class="me-3">{{ assistance.created_at|date:"M d, Y" }}</span>
+                                        <span>{{ assistance.created_at|date:"M d, Y" }}</span>
                                         <i class="bi bi-tag me-1"></i>
                                         <span>{{ assistance.type }}</span>
                                     </div>
                                 </div>
-                                <div class="flex-shrink-0 ms-3">
+                                <div class="flex-shrink-0 ms-md-3 mt-2 mt-md-0">
                                     <a href="{% url 'resident_assistance_detail' assistance.id %}" 
                                        class="btn btn-modern-secondary btn-sm">
                                         <i class="bi bi-eye"></i>

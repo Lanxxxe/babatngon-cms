@@ -6,13 +6,16 @@ from resident.views import (
     resident_notifications,
     resident_profile,
     resident_chatbot,
+    resident_help_center,
 )
 
 urlpatterns = [
     # Resident Dashboard
     path('home/', resident_dashboard.resident_dashboard, name='resident_dashboard'),
     path('file-complaint/', resident_complaints.file_complaint, name='file_complaint'),
+    path('file-emergency-complaint/', resident_complaints.file_emergency_complaint, name='file_emergency_complaint'),
     path('file-assistance/', resident_assistance.file_assistance, name='file_assistance'),
+    path('file-emergency-assistance/', resident_assistance.file_emergency_assistance, name='file_emergency_assistance'),
 
     # Complaints
     path('my-complaints/', resident_complaints.my_complaints, name='my_complaints'),
@@ -49,7 +52,10 @@ urlpatterns = [
     # Profile
     path('profile/', resident_profile.profile, name='profile'),
     path('change-password/', resident_profile.resident_change_password, name='resident_change_password'),
-    
+
     # Chatbot
     path('chatbot/response/', resident_chatbot.chatbot_response, name='chatbot_response'),
+
+    #Help Center
+    path  ('help-center/', resident_help_center.help_center, name='resident_help_center'),
 ]
