@@ -108,6 +108,14 @@
                         {% endif %}
                     </a>
                 </div>
+                <div class="nav-item-admin">
+                    <a href="{% url 'admin_feedback' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_feedback' %}active{% endif %}">
+                        <div class="nav-icon-admin">
+                            <i class="bi bi-chat-dots"></i>
+                        </div>
+                        <span class="nav-text-admin">Feedback</span>
+                    </a>
+                </div>
                 {% comment %} <div class="nav-item-admin">
                     <a href="#" class="nav-link-admin">
                         <div class="nav-icon-admin">
@@ -134,6 +142,14 @@
                             <i class="bi bi-people"></i>
                         </div>
                         <span class="nav-text-admin">Accounts</span>
+                    </a>
+                </div>
+                <div class="nav-item-admin">
+                    <a href="{% url 'admin_user_activity' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_user_activity' %}active{% endif %}">
+                        <div class="nav-icon-admin">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <span class="nav-text-admin">User Activity</span>
                     </a>
                 </div>
                 <!-- <div class="nav-item-admin">

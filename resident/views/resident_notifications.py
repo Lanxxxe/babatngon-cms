@@ -5,6 +5,7 @@ from django.shortcuts import redirect, get_object_or_404, render
 from django.core.paginator import Paginator
 from admins.models import Notification
 import sweetify
+from admins.user_activity_utils import log_activity
 
 
 # Notifications View
@@ -50,6 +51,24 @@ def notifications(request):
 
     notification_types = [types[0] for types in Notification.NOTIFICATION_TYPES]
 
+    # Log activity
+    filter_info = []
+    if notif_type:
+        filter_info.append(f"type: {notif_type}")
+    if notif_status:
+        filter_info.append(f"status: {notif_status}")
+    filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+    
+    log_activity(
+        user=user,
+        activity_type='notification_read',
+        activity_category='communication',
+        description=f'{user.get_full_name()} viewed notifications{filter_desc}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'total_notifications': notifications.count(), 'filters': {'type': notif_type, 'status': notif_status}}
+    )
+
     context = {
         'notifications': page_object,
         'notification_types': notification_types,
@@ -82,6 +101,17 @@ def resident_notification_details(request, notification_id):
         notification.is_read = True
         notification.save()
 
+    # Log activity
+    log_activity(
+        user=user,
+        activity_type='notification_read',
+        activity_category='communication',
+        description=f'{user.get_full_name()} viewed notification #{notification.id} details: {notification.title}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'notification_id': notification.id, 'notification_type': notification.notification_type, 'priority': notification.priority}
+    )
+
     context = {
         'notification': notification,
     }
@@ -107,6 +137,18 @@ def resident_mark_notification_read(request, notification_id):
 
     notification.is_read = True
     notification.save()
+    
+    # Log activity
+    log_activity(
+        user=user,
+        activity_type='notification_read',
+        activity_category='communication',
+        description=f'{user.get_full_name()} marked notification #{notification.id} as read: {notification.title}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'notification_id': notification.id, 'notification_type': notification.notification_type}
+    )
+    
     sweetify.success(request, 'Notification marked as read.', timer=2000, persistent=True)
     return redirect('notifications')
 
@@ -129,5 +171,17 @@ def resident_archive_notification(request, notification_id):
 
     notification.is_archived = True
     notification.save()
+    
+    # Log activity
+    log_activity(
+        user=user,
+        activity_type='notification_read',
+        activity_category='communication',
+        description=f'{user.get_full_name()} archived notification #{notification.id}: {notification.title}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'notification_id': notification.id, 'notification_type': notification.notification_type}
+    )
+    
     sweetify.success(request, 'Notification archived.', timer=2000, persistent=True)
     return redirect('notifications')

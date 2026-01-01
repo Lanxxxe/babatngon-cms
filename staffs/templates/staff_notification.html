@@ -8,7 +8,7 @@
 {% block content %}
 {% csrf_token %}
 <!-- Notification Stats -->
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
@@ -110,7 +110,7 @@
                 {% if notifications %}
                     <div class="list-group list-group-flush">
                         {% for notification in notifications %}
-                            <div class="list-group-item p-3 p-md-4 {% if not notification.is_read %}border-start border-primary border-3{% endif %}">
+                            <div class="list-group-item p-3 p-md-4">
                                 <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
                                     <div class="d-flex align-items-start flex-grow-1">
                                         <div class="flex-shrink-0 me-3">
@@ -197,9 +197,9 @@
             </div>
             {% if page_obj.has_other_pages %}
                 <div class="card-footer bg-light py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} notifications</small>
-                        <nav>
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                        <small class="text-muted order-2 order-md-1">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} notifications</small>
+                        <nav class="order-1 order-md-2">
                             <ul class="pagination pagination-sm mb-0">
                                 {% if page_obj.has_previous %}
                                     <li class="page-item">

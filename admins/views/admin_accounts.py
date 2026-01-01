@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from core.models import Admin
 import sweetify
+from admins.user_activity_utils import log_activity
 
 # Accounts management view
 def accounts(request):
@@ -18,11 +19,25 @@ def accounts(request):
     
     admins = Admin.objects.all().order_by('-role', 'username')
     admin_count = Admin.objects.filter(role='admin').count()
+    
+    # Log activity
+    admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+    if admin_user:
+        log_activity(
+            user=admin_user,
+            activity_type='user_viewed',
+            activity_category='administration',
+            description=f'{admin_user.get_full_name()} accessed accounts management page',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT')
+        )
+    
     context = {
         'admins': admins,
         'admin_count': admin_count,
     }
     return render(request, 'accounts.html', context)
+
 
 # Register new staff/admin
 @require_POST
@@ -79,7 +94,7 @@ def add_account(request):
             return redirect('accounts')
         
         # Create the account
-        Admin.objects.create(
+        new_admin = Admin.objects.create(
             username=username,
             email=email,
             role=role,
@@ -93,9 +108,36 @@ def add_account(request):
         )
         
         full_name = f"{first_name} {last_name}"
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='user_created',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} created new {role} account for {full_name} ({username})',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'new_user_id': new_admin.id, 'new_user_role': role, 'new_user_username': username}
+            )
+        
         sweetify.toast(request, f'Account for {full_name} registered successfully!', timer=2000)
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='user_created',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} failed to create new account',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Failed to register account. Please try again.', timer=3000)
     
     return redirect('accounts')
@@ -124,8 +166,35 @@ def change_account_password(request):
             return redirect('accounts')
         admin.password = make_password(new_password)
         admin.save()
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='password_change',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} changed password for account {admin.get_full_name()} ({admin.username})',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'target_user_id': admin.id, 'target_username': admin.username}
+            )
+        
         sweetify.toast(request, 'Password updated successfully.', timer=2000)
-    except Exception:
+    except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='password_change',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} failed to change password for account',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Failed to update password.', timer=3000)
     return redirect('accounts')
 
@@ -148,9 +217,42 @@ def delete_account(request):
             if admin_count <= 1:
                 sweetify.error(request, 'Cannot delete the only remaining admin.', timer=3000)
                 return redirect('accounts')
+        
+        # Store info before deletion
+        deleted_name = admin.get_full_name()
+        deleted_username = admin.username
+        deleted_role = admin.role
+        
         admin.delete()
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='user_deleted',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} deleted {deleted_role} account {deleted_name} ({deleted_username})',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'deleted_username': deleted_username, 'deleted_role': deleted_role}
+            )
+        
         sweetify.toast(request, 'Account deleted successfully.', timer=2000)
-    except Exception:
+    except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='user_deleted',
+                activity_category='administration',
+                description=f'{admin_user.get_full_name()} failed to delete account',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Failed to delete account.', timer=3000)
     return redirect('accounts')
 

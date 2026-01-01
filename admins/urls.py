@@ -7,7 +7,9 @@ from .views import (
     admin_assistance,
     admin_resident,
     admin_notifications,
-    admin_accounts
+    admin_accounts,
+    admin_user_activity,
+    admin_feedback
     )
 
 urlpatterns = [
@@ -48,6 +50,16 @@ urlpatterns = [
     path('accounts/add/', admin_accounts.add_account, name='add_account'),
     path('accounts/change-password/', admin_accounts.change_account_password, name='change_account_password'),
     path('accounts/delete/', admin_accounts.delete_account, name='delete_account'),
+
+    # User Activity Logs
+    path('user-activity/', admin_user_activity.admin_user_activity, name='admin_user_activity'),
+    path('user-activity/export/', admin_user_activity.export_user_activity, name='export_user_activity'),
+
+    # User Feedbacks
+    path('feedback/', admin_feedback.admin_feedback, name='admin_feedback'),
+    path('feedback/<int:feedback_id>/read/', admin_feedback.mark_feedback_read, name='mark_feedback_read'),
+    path('feedback/<int:feedback_id>/respond/', admin_feedback.respond_feedback, name='respond_feedback'),
+    path('feedback/<int:feedback_id>/delete/', admin_feedback.delete_feedback, name='delete_feedback'),
 
     # Admin Logout
     path('logout/', admin_helpers.admin_logout, name='admin_logout'),

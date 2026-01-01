@@ -7,6 +7,7 @@ from admins.models import AssistanceRequest
 from core.models import Admin
 from datetime import datetime
 import sweetify
+from admins.user_activity_utils import log_activity, log_case_activity
 
 # Admin Assistance Management
 def admin_assistance(request):
@@ -94,6 +95,33 @@ def admin_assistance(request):
     types = AssistanceRequest.objects.values_list('type', flat=True).distinct()
     urgencies = AssistanceRequest.objects.values_list('urgency', flat=True).distinct()
 
+    # Log activity
+    admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+    if admin_user:
+        filter_info = []
+        if search_query:
+            filter_info.append(f"search: '{search_query}'")
+        if status_filter:
+            filter_info.append(f"status: {status_filter}")
+        if type_filter:
+            filter_info.append(f"type: {type_filter}")
+        if urgency_filter:
+            filter_info.append(f"urgency: {urgency_filter}")
+        if designation_filter:
+            filter_info.append(f"designation: {designation_filter}")
+        
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=admin_user,
+            activity_type='assistance_viewed',
+            activity_category='case_management',
+            description=f'{admin_user.get_full_name()} accessed assistance management page{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'total_results': total_assistance_requests, 'filters': {'search': search_query, 'status': status_filter, 'type': type_filter, 'urgency': urgency_filter, 'designation': designation_filter}}
+        )
+
     data = {
         'assistance_requests': page_obj,  # This now contains the paginated results
         'page_obj': page_obj,
@@ -175,6 +203,19 @@ def assistance_details(request, assistance_id):
                     'size': f"{attachment.file.size // 1024} KB" if attachment.file and attachment.file.size else 'Unknown size'
                 })
         
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_case_activity(
+                user=admin_user,
+                case=assistance,
+                activity_type='assistance_viewed',
+                description=f'{admin_user.get_full_name()} viewed assistance request #{assistance.id} - {assistance.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'assistance_status': assistance.status, 'assistance_urgency': assistance.urgency}
+            )
+        
         context = {
             'assistance': assistance_data,
             'staffs': staff,
@@ -182,10 +223,36 @@ def assistance_details(request, assistance_id):
         return render(request, 'admin_cases/assistance_details.html', context)
 
     except AssistanceRequest.DoesNotExist:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='assistance_viewed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} attempted to view non-existent assistance request #{assistance_id}',
+                is_successful=False,
+                error_message='Assistance request not found',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Assistance request not found.', icon='error', timer=3000, persistent='Okay')
         return redirect('admin_assistance')
 
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='assistance_viewed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to view assistance request #{assistance_id}',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         print(e)
         sweetify.error(request, 'Failed to load assistance details. Please try again.', icon='error', timer=3000, persistent='Okay')
         return redirect('admin_assistance')
@@ -230,10 +297,43 @@ def assign_assistance(request):
              sweetify.toast(request, f'Assistance request #{assistance.id} unassigned', timer=2000)
 
         assistance.save()
+        
+        # Log activity
+        if current_admin:
+            action = 'assigned' if staff else 'unassigned'
+            staff_name = staff.get_full_name() if staff else 'No one'
+            
+            log_case_activity(
+                user=current_admin,
+                case=assistance,
+                activity_type='assistance_assigned' if staff else 'assistance_updated',
+                description=f'{current_admin.get_full_name()} {action} assistance request #{assistance.id} - {assistance.title}' + (f' to {staff_name}' if staff else ''),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={
+                    'assigned_to_id': staff.id if staff else None,
+                    'assigned_to_name': staff_name,
+                    'urgency': assistance.urgency,
+                    'admin_remarks': admin_remarks
+                }
+            )
 
         return redirect('assistance_details', assistance_id=assistance.id)
 
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='assistance_assigned',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to assign assistance request',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, f'Failed to assign assistance request. Please try again. {e}', persistent=True, timer=3000)
         return redirect('assistance_details', assistance_id=assistance_id)
 
@@ -254,6 +354,7 @@ def update_assistance_status(request):
         new_status = request.POST.get('status')
         
         assistance = AssistanceRequest.objects.get(id=assistance_id)
+        old_status = assistance.status
         assistance.status = new_status
         
         if new_status == 'completed':
@@ -262,10 +363,43 @@ def update_assistance_status(request):
             
         assistance.save()
         
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            activity_type_map = {
+                'resolved': 'assistance_resolved',
+                'closed': 'assistance_closed',
+                'completed': 'assistance_resolved'
+            }
+            activity_type = activity_type_map.get(new_status, 'assistance_status_changed')
+            
+            log_case_activity(
+                user=admin_user,
+                case=assistance,
+                activity_type=activity_type,
+                description=f'{admin_user.get_full_name()} updated assistance request #{assistance.id} - {assistance.title} status from {old_status} to {new_status}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'old_status': old_status, 'new_status': new_status}
+            )
+        
         sweetify.toast(request, f'Assistance request #{assistance.id} status updated to {new_status.title()}', timer=2000)
         return JsonResponse({'success': True})
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='assistance_status_changed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to update assistance request status',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Failed to update status. Please try again.', timer=3000)
         return JsonResponse({'success': False, 'error': str(e)})
 

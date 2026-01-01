@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from core.models import User, Admin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from core.models import User, Admin
+from admins.user_activity_utils import ACTIVITY_TYPES, ACTIVITY_CATEGORIES
 
 
 # Create your models here.
@@ -350,6 +352,87 @@ class Notification(models.Model):
             notifications.append(notification)
         
         return notifications
+
+
+# User Activity Tracking
+class UserActivity(models.Model):
+    """
+    Tracks all user activities across the system for audit trail and monitoring.
+    Supports Admin, Staff, and Resident (User) activities.
+    
+    Note: Activity types, categories, and logging utilities are defined in user_activity_utils.py
+    """
+    
+    # Generic user field - can be Admin, User (Resident), or Staff
+    user_content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, related_name='user_activities'
+    )
+    user_object_id = models.PositiveIntegerField()
+    user = GenericForeignKey('user_content_type', 'user_object_id')
+    
+    # Activity details
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
+    activity_category = models.CharField(max_length=30, choices=ACTIVITY_CATEGORIES, default='system')
+    description = models.TextField(help_text="Detailed description of the activity")
+    
+    # User information (denormalized for historical record)
+    user_name = models.CharField(max_length=200, help_text="User's full name at time of activity")
+    user_type = models.CharField(max_length=20, help_text="Type of user: admin, staff, or resident")
+    user_email = models.EmailField(blank=True, null=True)
+    
+    # Related cases (optional)
+    related_complaint = models.ForeignKey(
+        Complaint, on_delete=models.SET_NULL, null=True, blank=True, related_name='activities'
+    )
+    related_assistance = models.ForeignKey(
+        AssistanceRequest, on_delete=models.SET_NULL, null=True, blank=True, related_name='activities'
+    )
+    
+    # Additional context
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="IP address of the user")
+    user_agent = models.TextField(blank=True, null=True, help_text="Browser/device information")
+    
+    # Status and metadata
+    is_successful = models.BooleanField(default=True, help_text="Whether the activity was successful")
+    error_message = models.TextField(blank=True, null=True, help_text="Error message if activity failed")
+    metadata = models.JSONField(blank=True, null=True, help_text="Additional data in JSON format")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'user_activities'
+        verbose_name = 'User Activity'
+        verbose_name_plural = 'User Activities'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user_content_type', 'user_object_id']),
+            models.Index(fields=['activity_type']),
+            models.Index(fields=['activity_category']),
+            models.Index(fields=['user_type']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['is_successful']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user_name} ({self.user_type}) - {self.get_activity_type_display()} at {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    def get_related_case(self):
+        """Get the related case (complaint or assistance request)"""
+        if self.related_complaint:
+            return self.related_complaint
+        elif self.related_assistance:
+            return self.related_assistance
+        return None
+    
+    def get_case_type(self):
+        """Get the type of related case"""
+        if self.related_complaint:
+            return 'complaint'
+        elif self.related_assistance:
+            return 'assistance'
+        return None
+
 
 
 

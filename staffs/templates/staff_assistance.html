@@ -9,7 +9,7 @@
 <div class="card-admin mb-3">
     <div class="card-body-admin py-3">
         <div class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <label for="searchAssistance" class="form-label">Search</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text">
@@ -19,7 +19,7 @@
                            placeholder="Search by ID, resident, or title...">
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label for="statusFilter" class="form-label">Status</label>
                 <select class="form-select form-select-sm" id="statusFilter" onchange="applyFilters()">
                     <option value="">All Status</option>
@@ -30,7 +30,7 @@
                     <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label for="typeFilter" class="form-label">Type</label>
                 <select class="form-select form-select-sm" id="typeFilter" onchange="applyFilters()">
                     <option value="">All Types</option>
@@ -42,13 +42,13 @@
                     <option value="other" {% if type_filter == 'other' %}selected{% endif %}>Other</option>
                 </select>
             </div>
-            <div class="col-md-5">
+            <div class="col-12 col-md-5">
                 <div class="d-flex gap-1">
-                    <button class="btn btn-admin-primary btn-sm" onclick="applyFilters()">
-                        <i class="bi bi-funnel me-1"></i>Filter
+                    <button class="btn btn-admin-primary btn-sm flex-fill" onclick="applyFilters()">
+                        <i class="bi bi-funnel me-1"></i><span class="d-none d-sm-inline">Filter</span>
                     </button>
-                    <button class="btn btn-admin-secondary btn-sm" onclick="clearFilters()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                    <button class="btn btn-admin-secondary btn-sm flex-fill" onclick="clearFilters()">
+                        <i class="bi bi-arrow-clockwise me-1"></i><span class="d-none d-sm-inline">Reset</span>
                     </button>
                 </div>
             </div>
@@ -58,20 +58,20 @@
 
 <!-- Assistance Requests Table -->
 <div class="card-admin">
-    <div class="card-header-admin d-flex justify-content-between align-items-center">
+    <div class="card-header-admin d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
         <div>
             <span class="fw-semibold">Assigned Assistance Requests</span>
-            <small class="text-muted ms-2">{{ assistance_requests|length }} request{{ assistance_requests|length|pluralize }} assigned to you</small>
+            <small class="text-muted ms-2 d-block d-sm-inline">{{ assistance_requests|length }} request{{ assistance_requests|length|pluralize }} assigned to you</small>
         </div>
         <div class="d-flex gap-1">
             <button class="btn btn-admin-primary btn-sm" disabled>
-                <i class="bi bi-list-ul me-1"></i>Table View
+                <i class="bi bi-list-ul me-1"></i><span class="d-none d-md-inline">Table View</span>
             </button>
         </div>
     </div>
     <div class="card-body-admin p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-hover mb-0" style="min-width: 900px;">
                 <thead>
                     <tr>
                         <th>ID</th>

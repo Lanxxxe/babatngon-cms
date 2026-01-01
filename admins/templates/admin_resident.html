@@ -6,8 +6,8 @@
 
 {% block content %}
 <!-- Stats Row -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-3 col-md-6">
+<div class="row g-2 g-md-3 mb-4">
+    <div class="col-6 col-lg-3">
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -69,7 +69,7 @@
     <div class="card-body-admin py-3">
         <div class="row g-2 align-items-end">
             <form method="get" class="row g-2 align-items-end">
-                <div class="col-md-4">
+                <div class="col-12 col-md-4">
                     <label for="searchResidents" class="form-label">Search Residents</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">
@@ -79,7 +79,7 @@
                             placeholder="Search by name, email, or phone..." value="{{ current_query|default:'' }}">
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <label for="barangayFilter" class="form-label">Barangay</label>
                     <select class="form-select form-select-sm" name="barangay" id="barangayFilter">
                         <option value="">All Barangays</option>
@@ -110,7 +110,7 @@
                         <option value="Villa Magsaysay" {% if current_barangay == 'Villa Magsaysay' %}selected{% endif %}>Villa Magsaysay</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select class="form-select form-select-sm" name="status" id="statusFilter">
                         <option value="">All Status</option>
@@ -119,13 +119,13 @@
                         <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-12 col-md-2">
                     <div class="d-flex gap-1">
-                        <button type="submit" class="btn btn-admin-primary btn-sm p-2">
-                            <i class="bi bi-funnel me-1"></i>Filter
+                        <button type="submit" class="btn btn-admin-primary btn-sm p-2 flex-fill">
+                            <i class="bi bi-funnel me-1"></i><span class="d-none d-sm-inline">Filter</span>
                         </button>
-                        <button type="button" class="btn btn-admin-secondary btn-sm" onclick="resetFilters()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        <button type="button" class="btn btn-admin-secondary btn-sm flex-fill" onclick="resetFilters()">
+                            <i class="bi bi-arrow-clockwise me-1"></i><span class="d-none d-sm-inline">Reset</span>
                         </button>
                     </div>
                 </div>
@@ -137,10 +137,10 @@
 </div>
 
 <div class="card-admin">
-    <div class="card-header-admin d-flex justify-content-between align-items-center">
+    <div class="card-header-admin d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
         <div>
             <span class="fw-semibold">All Residents</span>
-            <small class="text-muted ms-2">
+            <small class="text-muted ms-2 d-block d-sm-inline">
                 {% if paginator %}
                     Showing {{ start_index }}-{{ end_index }} of {{ paginator.count }} residents
                 {% else %}
@@ -150,13 +150,13 @@
         </div>
         <div class="d-flex gap-1">
             <button class="btn btn-admin-primary btn-sm" disabled>
-                <i class="bi bi-list-ul me-1"></i>Table View
+                <i class="bi bi-list-ul me-1"></i><span class="d-none d-md-inline">Table View</span>
             </button>
         </div>
     </div>
     <div class="card-body-admin p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-hover mb-0" style="min-width: 900px;">
                 <thead>
                     <tr class="text-start table-light">
                         <th>Resident</th>
@@ -225,13 +225,13 @@
                             <div class="text-muted" style="font-size: 11px;">{{ resident.created_at|timesince }} ago</div>
                         </td>
                         <td>
-                            <div class="btn-group btn-group-sm">
+                            <div class="btn-group btn-group-sm" role="group">
                                 {% if not resident.is_verified %}
-                                <a href="{% url 'approve_resident' resident.id %}" role="button" title="Approve Resident" class="btn btn-admin-secondary btn-sm">
+                                <a href="{% url 'approve_resident' resident.id %}" role="button" title="Approve Resident" class="btn btn-admin-secondary btn-sm px-2">
                                     <i class="bi bi-check"></i>
                                 </a>
                                 {% endif %}
-                                <button class="btn btn-admin-primary btn-sm" title="View Details" onclick="viewResident({{ resident.id }})"
+                                <button class="btn btn-admin-primary btn-sm px-2" title="View Details" onclick="viewResident({{ resident.id }})"
                                 data-bs-resident="
                                     {
                                         'id': '{{ resident.id }}',
@@ -250,12 +250,12 @@
                                     <i class="bi bi-eye"></i>
                                 </button>
                                 {% if not resident.is_archived %}
-                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Archive Resident" class="btn btn-warning btn-sm">
+                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Archive Resident" class="btn btn-warning btn-sm px-2">
                                     <i class="bi bi-archive"></i>
                                 </a>
                                 {% endif %}
                                 {% if resident.is_archived %}
-                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Unarchive Resident" class="btn btn-warning btn-sm">
+                                <a href="{% url 'archive_resident' resident.id %}" role="button" title="Unarchive Resident" class="btn btn-warning btn-sm px-2">
                                     <i class="bi bi-arrow-counterclockwise"></i>
                                 </a>
                                 {% endif %}
@@ -279,16 +279,16 @@
     </div>
     {% if paginator and paginator.num_pages > 1 %}
     <div class="card-footer bg-light py-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <select class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div class="w-100 w-md-auto">
+                <select class="form-select form-select-sm" style="width: 100%;" onchange="changePerPage(this.value)">
                     <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 per page</option>
                     <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 per page</option>
                     <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 per page</option>
                     <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100 per page</option>
                 </select>
             </div>
-            <nav>
+            <nav class="w-100 w-md-auto d-flex justify-content-center">
                 <ul class="pagination pagination-sm mb-0">
                     {% if page_obj.has_previous %}
                         <li class="page-item">

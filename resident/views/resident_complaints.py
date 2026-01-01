@@ -6,6 +6,7 @@ from admins.models import Complaint, ComplaintAttachment, Notification
 from resident.automate_priority import generate_priority, prompt_details
 import os
 import sweetify
+from admins.user_activity_utils import log_case_activity, log_activity
 
 # Emergency Complaint View
 def file_emergency_complaint(request):
@@ -60,6 +61,17 @@ def file_emergency_complaint(request):
         # Handle multiple file uploads
         for f in request.FILES.getlist('attachments'):
             ComplaintAttachment.objects.create(complaint=complaint, file=f)
+
+        # Log activity
+        log_case_activity(
+            user=user,
+            case=complaint,
+            activity_type='complaint_filed',
+            description=f'{user.get_full_name()} filed emergency complaint #{complaint.id}: {complaint.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'category': complaint.category, 'priority': complaint.priority, 'type': 'emergency'}
+        )
 
         sweetify.success(request, 'Emergency complaint filed successfully! Admins have been notified.', persistent=True, timer=3000)
         return redirect('my_complaints')
@@ -144,6 +156,17 @@ def file_complaint(request):
         for f in request.FILES.getlist('attachments'):
             ComplaintAttachment.objects.create(complaint=complaint, file=f)
 
+        # Log activity
+        log_case_activity(
+            user=user,
+            case=complaint,
+            activity_type='complaint_filed',
+            description=f'{user.get_full_name()} filed complaint #{complaint.id}: {complaint.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'category': complaint.category, 'priority': complaint.priority}
+        )
+
         sweetify.success(request, 'Complaint filed successfully!', persistent=True, timer=3000)
         return redirect('file_complaint')
     
@@ -178,6 +201,26 @@ def my_complaints(request):
             Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
     
+    # Log activity
+    filter_info = []
+    if status_filter:
+        filter_info.append(f"status: {status_filter}")
+    if priority_filter:
+        filter_info.append(f"priority: {priority_filter}")
+    if search_query:
+        filter_info.append(f"search: '{search_query}'")
+    filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+    
+    log_activity(
+        user=user,
+        activity_type='complaint_viewed',
+        activity_category='case_management',
+        description=f'{user.get_full_name()} viewed their complaints{filter_desc}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'total_complaints': complaints.count(), 'filters': {'status': status_filter, 'priority': priority_filter, 'search': search_query}}
+    )
+    
     context = {
         'complaints': complaints,
         'status_filter': status_filter,
@@ -199,6 +242,17 @@ def complaint_details(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk, user=user)
     attachments = ComplaintAttachment.objects.filter(complaint=complaint)
 
+    # Log activity
+    log_case_activity(
+        user=user,
+        case=complaint,
+        activity_type='complaint_viewed',
+        description=f'{user.get_full_name()} viewed complaint #{complaint.id} details: {complaint.title}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'status': complaint.status, 'priority': complaint.priority}
+    )
+
     context = {
         'complaint': complaint,
         'attachments': attachments,
@@ -216,11 +270,41 @@ def delete_complaint(request, pk):
 
     try:
         complaint = get_object_or_404(Complaint, pk=pk, user_id=user_id)
+        user = User.objects.filter(id=user_id).first()
+        
+        # Store info before deletion
+        complaint_title = complaint.title
+        complaint_id = complaint.id
+        
         ComplaintAttachment.objects.filter(complaint=complaint).delete()
         complaint.delete()
+        
+        # Log activity
+        log_activity(
+            user=user,
+            activity_type='complaint_deleted',
+            activity_category='case_management',
+            description=f'{user.get_full_name()} deleted complaint #{complaint_id}: {complaint_title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'complaint_id': complaint_id, 'complaint_title': complaint_title}
+        )
+        
         sweetify.success(request, 'Complaint deleted.', persistent=True, timer=2000)
 
     except Exception as e:
+        user = User.objects.filter(id=user_id).first()
+        if user:
+            log_activity(
+                user=user,
+                activity_type='complaint_deleted',
+                activity_category='case_management',
+                description=f'{user.get_full_name()} failed to delete complaint',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Error deleting complaint.', persistent=True, timer=3000)
 
     return redirect('my_complaints')
@@ -293,11 +377,35 @@ def update_complaint(request, pk):
             for file in new_files:
                 ComplaintAttachment.objects.create(complaint=complaint, file=file)
             
+            # Log activity
+            user = User.objects.filter(id=user_id).first()
+            log_case_activity(
+                user=user,
+                case=complaint,
+                activity_type='complaint_updated',
+                description=f'{user.get_full_name()} updated complaint #{complaint.id}: {complaint.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'category': complaint.category, 'priority': complaint.priority}
+            )
+            
             sweetify.success(request, 'Complaint updated successfully.', persistent=True, timer=2000)
             redirect('my_complaints')
 
         
         except Exception as e:
+            user = User.objects.filter(id=user_id).first()
+            if user:
+                log_activity(
+                    user=user,
+                    activity_type='complaint_updated',
+                    activity_category='case_management',
+                    description=f'{user.get_full_name()} failed to update complaint',
+                    is_successful=False,
+                    error_message=str(e),
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
             sweetify.error(request, 'Error updating complaint details.', persistent=True, timer=3000)
             return redirect('my_complaints')
 
@@ -383,6 +491,17 @@ def follow_up_complaint(request, complaint_id):
 
             complaint.priority = priority
             complaint.save()
+            
+            # Log activity
+            log_case_activity(
+                user=user,
+                case=complaint,
+                activity_type='followup_request',
+                description=f'{user.get_full_name()} sent follow-up for complaint #{complaint.id}: {complaint.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'notifications_sent': notifications_created, 'message_length': len(message), 'priority': priority}
+            )
             
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({

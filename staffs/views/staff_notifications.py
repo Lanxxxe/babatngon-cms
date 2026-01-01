@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from admins.models import Notification
 from core.models import Admin
 import sweetify, json
+from admins.user_activity_utils import log_activity
 
 
 # Staff Notification Management
@@ -83,6 +84,29 @@ def staff_notifications(request):
         
         resolved_notifications = total_notifications - unread_notifications
         
+        # Log activity
+        filter_info = []
+        if current_type:
+            filter_info.append(f"type: {current_type}")
+        if current_status:
+            filter_info.append(f"status: {current_status}")
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=current_staff,
+            activity_type='notification_viewed',
+            activity_category='communication',
+            description=f'{current_staff.get_full_name()} accessed notifications{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={
+                'total_notifications': total_notifications,
+                'unread_count': unread_notifications,
+                'urgent_count': urgent_notifications,
+                'filters': {'type': current_type, 'status': current_status}
+            }
+        )
+        
         context = {
             'current_staff': current_staff,
             'notifications': page_obj,
@@ -133,6 +157,18 @@ def staff_mark_notification_read(request):
         )
         
         notification.mark_as_read()
+        
+        # Log activity
+        log_activity(
+            user=current_staff,
+            activity_type='notification_read',
+            activity_category='communication',
+            description=f'{current_staff.get_full_name()} marked notification #{notification_id} as read',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'notification_id': notification_id, 'notification_type': notification.notification_type}
+        )
+        
         return JsonResponse({'success': True})
         
     except Admin.DoesNotExist:
@@ -160,11 +196,28 @@ def staff_mark_all_notifications_read(request):
         staff_content_type = ContentType.objects.get_for_model(Admin)
         
         # Mark all unread notifications for this staff member as read
+        unread_count = Notification.objects.filter(
+            recipient_content_type=staff_content_type,
+            recipient_object_id=current_staff.id,
+            is_read=False
+        ).count()
+        
         Notification.objects.filter(
             recipient_content_type=staff_content_type,
             recipient_object_id=current_staff.id,
             is_read=False
         ).update(is_read=True)
+        
+        # Log activity
+        log_activity(
+            user=current_staff,
+            activity_type='notification_read',
+            activity_category='communication',
+            description=f'{current_staff.get_full_name()} marked all notifications as read',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'notifications_marked': unread_count}
+        )
         
         return JsonResponse({'success': True})
         
@@ -200,6 +253,18 @@ def staff_archive_notification(request):
         )
         
         notification.archive()
+        
+        # Log activity
+        log_activity(
+            user=current_staff,
+            activity_type='notification_archived',
+            activity_category='communication',
+            description=f'{current_staff.get_full_name()} archived notification #{notification_id}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'notification_id': notification_id, 'notification_type': notification.notification_type}
+        )
+        
         return JsonResponse({'success': True})
         
     except Admin.DoesNotExist:
@@ -236,12 +301,27 @@ def staff_notification_details(request, notification_id):
         if not notification.is_read:
             notification.mark_as_read()
         
+        # Log activity
+        log_activity(
+            user=current_staff,
+            activity_type='notification_viewed',
+            activity_category='communication',
+            description=f'{current_staff.get_full_name()} viewed notification #{notification_id} details',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={
+                'notification_id': notification_id,
+                'notification_type': notification.notification_type,
+                'priority': notification.priority
+            }
+        )
+        
         context = {
             'notification': notification,
             'current_staff': current_staff,
         }
         
-        return render(request, 'notification_details.html', context)
+        return render(request, 'staff_notification_details.html', context)
         
     except Admin.DoesNotExist:
         return redirect('staff_login')

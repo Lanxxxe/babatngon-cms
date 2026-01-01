@@ -4,6 +4,7 @@ from django.contrib.auth import logout
 from django.shortcuts import redirect
 from admins.models import Complaint, AssistanceRequest
 import sweetify
+from admins.user_activity_utils import log_activity, log_logout
 
 
 def resident_dashboard(request):
@@ -27,6 +28,22 @@ def resident_dashboard(request):
     completed_assistance = AssistanceRequest.objects.filter(user=user, status='completed').count()
     recent_assistance = AssistanceRequest.objects.filter(user=user).order_by('-created_at')[:5]
 
+    # Log activity
+    log_activity(
+        user=user,
+        activity_type='other',
+        activity_category='system',
+        description=f'{user.get_full_name()} accessed resident dashboard',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={
+            'total_complaints': total_complaints,
+            'pending_complaints': pending_complaints,
+            'total_assistance': total_assistance,
+            'pending_assistance': pending_assistance
+        }
+    )
+
     context = {
         'total_complaints': total_complaints,
         'pending_complaints': pending_complaints,
@@ -44,6 +61,22 @@ def resident_dashboard(request):
 
 # Logout View
 def resident_logout(request):
+    # Get user info before clearing session
+    user_id = request.session.get('resident_id')
+    
+    # Log logout
+    if user_id:
+        try:
+            user = User.objects.filter(id=user_id).first()
+            if user:
+                log_logout(
+                    user=user,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
+        except Exception:
+            pass  # If logging fails, continue with logout
+    
     logout(request)
     sweetify.toast(request, 'You have been logged out successfully.', timer=3000)
     return redirect('homepage')

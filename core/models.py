@@ -103,3 +103,66 @@ class StaffAdmin(models.Model):
 
 # Backward compatibility alias
 Admin = StaffAdmin
+
+
+class Feedback(models.Model):
+    """User feedback about the system"""
+    RATING_CHOICES = [
+        (1, 'Very Poor'),
+        (2, 'Poor'),
+        (3, 'Average'),
+        (4, 'Good'),
+        (5, 'Excellent'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('general', 'General Feedback'),
+        ('complaint', 'Complaint System'),
+        ('assistance', 'Assistance Request'),
+        ('interface', 'User Interface'),
+        ('performance', 'System Performance'),
+        ('suggestion', 'Suggestion'),
+        ('bug', 'Bug Report'),
+        ('other', 'Other'),
+    ]
+    
+    # User Information
+    name = models.CharField(max_length=200, help_text="Your full name")
+    email = models.EmailField(help_text="Your email address")
+    
+    # Feedback Details
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='general')
+    rating = models.IntegerField(choices=RATING_CHOICES, help_text="Rate your overall experience")
+    subject = models.CharField(max_length=200, help_text="Brief subject of your feedback")
+    message = models.TextField(help_text="Detailed feedback message")
+    
+    # Optional user reference (if logged in)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='feedbacks')
+    
+    # Metadata
+    is_read = models.BooleanField(default=False)
+    is_responded = models.BooleanField(default=False)
+    admin_response = models.TextField(blank=True, null=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'feedback'
+        verbose_name = 'Feedback'
+        verbose_name_plural = 'Feedbacks'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} - {self.subject} ({self.get_rating_display()})"
+    
+    def get_rating_stars(self):
+        """Return a string of star emojis based on rating"""
+        return '⭐' * self.rating
+
+
+
+
+
+
+
+

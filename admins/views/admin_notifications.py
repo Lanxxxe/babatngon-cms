@@ -7,8 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from admins.models import Notification
 from core.models import Admin
 import sweetify, json
-
-
+from admins.user_activity_utils import log_activity
 
 
 def admin_notification(request):
@@ -70,6 +69,32 @@ def admin_notification(request):
     # Get notification types from model choices
     notification_types = [choice[0] for choice in Notification.NOTIFICATION_TYPES]
     
+    # Log activity
+    admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+    if admin_user:
+        filter_info = []
+        if type_filter:
+            filter_info.append(f"type: {type_filter}")
+        if status_filter:
+            filter_info.append(f"status: {status_filter}")
+        
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=admin_user,
+            activity_type='notification_read',
+            activity_category='communication',
+            description=f'{admin_user.get_full_name()} accessed notifications page{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={
+                'total_notifications': total_notifications,
+                'pending_cases': pending_cases,
+                'urgent_notifications': urgent_notifications,
+                'filters': {'type': type_filter, 'status': status_filter}
+            }
+        )
+    
     context = {
         'admin_notifications': page_obj,
         'admin_page_obj': page_obj,
@@ -108,9 +133,36 @@ def mark_notification_read(request):
         
         notification = Notification.objects.get(id=notification_id)
         notification.mark_as_read()
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} marked notification #{notification_id} as read: {notification.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'notification_id': notification_id, 'notification_type': notification.notification_type}
+            )
+        
         return JsonResponse({'success': True})
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} failed to mark notification as read',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         return JsonResponse({'success': False, 'error': str(e)})
 
 
@@ -130,13 +182,40 @@ def mark_all_notifications_read(request):
         from django.contrib.contenttypes.models import ContentType
         admin_content_type = ContentType.objects.get_for_model(Admin)
         
-        Notification.objects.filter(
+        updated_count = Notification.objects.filter(
             is_read=False,
             recipient_content_type=admin_content_type
         ).update(is_read=True)
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} marked all {updated_count} notifications as read',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'notifications_marked': updated_count}
+            )
+        
         return JsonResponse({'success': True})
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} failed to mark all notifications as read',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         return JsonResponse({'success': False, 'error': str(e)})
 
 
@@ -158,9 +237,36 @@ def archive_notification(request):
         
         notification = Notification.objects.get(id=notification_id)
         notification.archive()
+        
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} archived notification #{notification_id}: {notification.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'notification_id': notification_id, 'notification_type': notification.notification_type}
+            )
+        
         return JsonResponse({'success': True})
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} failed to archive notification',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         return JsonResponse({'success': False, 'error': str(e)})
 
 
@@ -181,6 +287,23 @@ def notification_details(request, notification_id):
         if not notification.is_read:
             notification.mark_as_read()
         
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} viewed notification #{notification_id} details: {notification.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={
+                    'notification_id': notification_id,
+                    'notification_type': notification.notification_type,
+                    'priority': notification.priority
+                }
+            )
+        
         context = {
             'notification': notification,
         }
@@ -188,10 +311,35 @@ def notification_details(request, notification_id):
         return render(request, 'notification_details.html', context)
         
     except Notification.DoesNotExist:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} attempted to view non-existent notification #{notification_id}',
+                is_successful=False,
+                error_message='Notification not found',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Notification not found', timer=3000)
         return redirect('admin_notifications')
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='notification_read',
+                activity_category='communication',
+                description=f'{admin_user.get_full_name()} failed to view notification #{notification_id} details',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, f'Error loading notification: {str(e)}', timer=3000)
-        return redirect('admin_notifications')
         return redirect('admin_notifications')
 

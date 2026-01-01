@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from admins.models import AssistanceRequest
 from core.models import Admin
+from admins.user_activity_utils import log_activity
 
 
 # Staff Assistance
@@ -30,6 +31,24 @@ def staff_assistance(request):
         
         if type_filter:
             assistance_requests = assistance_requests.filter(type=type_filter)
+        
+        # Log activity
+        filter_info = []
+        if status_filter:
+            filter_info.append(f"status: {status_filter}")
+        if type_filter:
+            filter_info.append(f"type: {type_filter}")
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=current_staff,
+            activity_type='assistance_viewed',
+            activity_category='case_management',
+            description=f'{current_staff.get_full_name()} accessed assigned assistance requests{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'total_assistance': assistance_requests.count(), 'filters': {'status': status_filter, 'type': type_filter}}
+        )
         
         context = {
             'assistance_requests': assistance_requests,

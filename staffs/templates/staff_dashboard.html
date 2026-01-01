@@ -14,7 +14,8 @@
                     <div class="stat-number">{{ total_complaints|default:0 }}</div>
                     <div class="stat-label">Assigned Complaints</div>
                     <div class="stat-change">
-                        <i class="bi bi-arrow-up me-1"></i>+12% from last month
+                        <i class="bi bi-arrow-{% if complaint_change_pct >= 0 %}up{% else %}down{% endif %} me-1"></i>
+                        {{ complaint_change_pct|floatformat:1|default:0 }}% vs last month
                     </div>
                 </div>
                 <i class="bi bi-clipboard-data text-primary" style="font-size: 20px; opacity: 0.6;"></i>
@@ -26,13 +27,14 @@
         <div class="stat-card success">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">{{ assistance_requests|default:0 }}</div>
-                    <div class="stat-label">Assistance Request</div>
+                    <div class="stat-number">{{ total_assistance|default:0 }}</div>
+                    <div class="stat-label">Assistance Requests</div>
                     <div class="stat-change">
-                        <i class="bi bi-arrow-up me-1"></i>+3% this month
+                        <i class="bi bi-arrow-{% if assistance_change_pct >= 0 %}up{% else %}down{% endif %} me-1"></i>
+                        {{ assistance_change_pct|floatformat:1|default:0 }}% this month
                     </div>
                 </div>
-                <i class="bi bi-check-circle text-success" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-hand-thumbs-up text-success" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
         </div>
     </div>
@@ -43,7 +45,7 @@
                 <div>
                     <div class="stat-number">{{ pending_complaints|default:0 }}</div>
                     <div class="stat-label">Pending Review</div>
-                    <div class="stat-change">Requires attention</div>
+                    <div class="stat-change">{{ pending_assistance|default:0 }} Assistance Pending</div>
                 </div>
                 <i class="bi bi-exclamation-triangle text-warning" style="font-size: 20px; opacity: 0.6;"></i>
             </div>
@@ -54,16 +56,122 @@
         <div class="stat-card info">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-number">{{ in_progress_complaints|default:0 }}</div>
-                    <div class="stat-label">In Progress</div>
-                    <div class="stat-change">Being resolved</div>
+                    <div class="stat-number">{{ resolution_rate|floatformat:0|default:0 }}%</div>
+                    <div class="stat-label">Resolution Rate</div>
+                    <div class="stat-change">{{ avg_resolution_days|floatformat:1 }} days avg</div>
                 </div>
-                <i class="bi bi-gear text-info" style="font-size: 20px; opacity: 0.6;"></i>
+                <i class="bi bi-check-circle text-info" style="font-size: 20px; opacity: 0.6;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Metrics -->
+<div class="row g-3 mb-4">
+    <!-- Assigned Complaints Summary -->
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-clipboard-check me-2"></i>My Assigned Complaints
+            </div>
+            <div class="card-body-admin">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-primary">{{ total_complaints|default:0 }}</div>
+                            <div class="small text-muted">Total Assigned</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-success">{{ resolved_complaints|default:0 }}</div>
+                            <div class="small text-muted">Resolved</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-warning">{{ pending_complaints|default:0 }}</div>
+                            <div class="small text-muted">Pending</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-info">{{ in_progress_complaints|default:0 }}</div>
+                            <div class="small text-muted">In Progress</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">Resolution Rate</span>
+                        <span class="fw-semibold text-success">{{ resolution_rate|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ resolution_rate }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span class="small text-muted">Assigned This Month: {{ complaints_this_month }}</span>
+                        <span class="small text-success">
+                            <i class="bi bi-check-circle"></i> Resolved: {{ resolved_this_month }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    
+    <!-- Assigned Assistance Summary -->
+    <div class="col-lg-6">
+        <div class="card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-hand-thumbs-up me-2"></i>My Assigned Assistance
+            </div>
+            <div class="card-body-admin">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-primary">{{ total_assistance|default:0 }}</div>
+                            <div class="small text-muted">Total Assigned</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-success">{{ resolved_assistance|default:0 }}</div>
+                            <div class="small text-muted">Completed</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-warning">{{ pending_assistance|default:0 }}</div>
+                            <div class="small text-muted">Pending</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="h3 mb-1 text-info">{{ in_progress_assistance|default:0 }}</div>
+                            <div class="small text-muted">In Progress</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">Completion Rate</span>
+                        <span class="fw-semibold text-success">{{ assistance_completion_rate|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ assistance_completion_rate }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span class="small text-muted">This Month: {{ assistance_this_month }}</span>
+                        <span class="small {% if assistance_change_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            <i class="bi bi-arrow-{% if assistance_change_pct >= 0 %}up{% else %}down{% endif %}"></i>
+                            {{ assistance_change_pct|floatformat:1 }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -226,40 +334,21 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Get category data from assigned complaints
-        const complaints = {{ assigned_complaints|length }};
-        
-        // Calculate category distribution from assigned complaints
-        let categoryData = {
-            'Infrastructure': 0,
-            'Public Safety': 0,
-            'Environment': 0,
-            'Health': 0,
-            'Others': 0
-        };
-        
-        {% for complaint in assigned_complaints %}
-            {% if complaint.category == 'infrastructure' %}
-                categoryData['Infrastructure']++;
-            {% elif complaint.category == 'safety' or complaint.category == 'public_safety' %}
-                categoryData['Public Safety']++;
-            {% elif complaint.category == 'environment' %}
-                categoryData['Environment']++;
-            {% elif complaint.category == 'health' %}
-                categoryData['Health']++;
-            {% else %}
-                categoryData['Others']++;
-            {% endif %}
-        {% endfor %}
+        // Parse data from Django
+        const categoryLabels = {{ category_labels|safe }};
+        const categoryData = {{ category_data|safe }};
+        const monthlyLabels = {{ monthly_labels|safe }};
+        const monthlyComplaintCounts = {{ monthly_complaint_counts|safe }};
+        const monthlyResolvedCounts = {{ monthly_resolved_counts|safe }};
 
-        // Category Chart
+        // Category Chart (using real data from assigned complaints)
         const categoryCtx = document.getElementById('categoryChart').getContext('2d');
         new Chart(categoryCtx, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(categoryData),
+                labels: categoryLabels.length > 0 ? categoryLabels : ['No Data'],
                 datasets: [{
-                    data: Object.values(categoryData),
+                    data: categoryData.length > 0 ? categoryData : [1],
                     backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
                 }]
             },
@@ -269,32 +358,34 @@
                 plugins: { 
                     legend: { 
                         position: 'bottom',
-                        labels: { font: { size: 12 } }
+                        labels: { font: { size: 11 } }
                     }
                 }
             }
         });
 
-        // Trend Chart - Monthly resolution data
+        // Trend Chart - Monthly assigned vs resolved
         const trendCtx = document.getElementById('trendChart').getContext('2d');
         new Chart(trendCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: monthlyLabels,
                 datasets: [{
                     label: 'Resolved',
-                    data: [{{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}, {{ resolved_complaints|default:0 }}],
+                    data: monthlyResolvedCounts,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    fill: true
                 }, {
                     label: 'Assigned',
-                    data: [{{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}, {{ total_complaints|default:0 }}],
+                    data: monthlyComplaintCounts,
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     tension: 0.4,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    fill: true
                 }]
             },
             options: {
@@ -303,16 +394,19 @@
                 plugins: { 
                     legend: { 
                         position: 'bottom',
-                        labels: { font: { size: 12 } }
+                        labels: { font: { size: 11 } }
                     }
                 },
                 scales: { 
                     y: { 
                         beginAtZero: true,
-                        ticks: { font: { size: 11 } }
+                        ticks: { 
+                            font: { size: 10 },
+                            stepSize: 1
+                        }
                     },
                     x: {
-                        ticks: { font: { size: 11 } }
+                        ticks: { font: { size: 10 } }
                     }
                 }
             }

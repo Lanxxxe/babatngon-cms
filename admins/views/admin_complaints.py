@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from admins.models import Complaint
 from core.models import Admin
 from datetime import datetime
+from admins.user_activity_utils import log_activity, log_case_activity
 
 
 # Admin Complaint Management
@@ -96,6 +97,33 @@ def admin_complaints(request):
     categories = Complaint.objects.values_list('category', flat=True).distinct()
     priorities = Complaint.objects.values_list('priority', flat=True).distinct()
 
+    # Log activity
+    admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+    if admin_user:
+        filter_info = []
+        if search_query:
+            filter_info.append(f"search: '{search_query}'")
+        if status_filter:
+            filter_info.append(f"status: {status_filter}")
+        if category_filter:
+            filter_info.append(f"category: {category_filter}")
+        if priority_filter:
+            filter_info.append(f"priority: {priority_filter}")
+        if designation_filter:
+            filter_info.append(f"designation: {designation_filter}")
+        
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=admin_user,
+            activity_type='complaint_viewed',
+            activity_category='case_management',
+            description=f'{admin_user.get_full_name()} accessed complaint management page{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'total_results': total_complaints, 'filters': {'search': search_query, 'status': status_filter, 'category': category_filter, 'priority': priority_filter, 'designation': designation_filter}}
+        )
+
     data = {
         'complaints': page_obj,  # This now contains the paginated results
         'page_obj': page_obj,
@@ -154,6 +182,27 @@ def assign_complaint(request):
         complaint.status = 'assigned'
 
         complaint.save()
+        
+        # Log activity
+        if current_admin:
+            action = 'assigned' if staff else 'unassigned'
+            staff_name = staff.get_full_name() if staff else 'No one'
+            
+            log_case_activity(
+                user=current_admin,
+                case=complaint,
+                activity_type='complaint_assigned' if staff else 'complaint_updated',
+                description=f'{current_admin.get_full_name()} {action} complaint #{complaint.id} - {complaint.title}' + (f' to {staff_name}' if staff else ''),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={
+                    'assigned_to_id': staff.id if staff else None,
+                    'assigned_to_name': staff_name,
+                    'priority': complaint.priority,
+                    'admin_remarks': admin_remarks
+                }
+            )
+        
         if staff:
             sweetify.toast(request, f'Complaint #{complaint.id} assigned to {staff.full_name}', timer=2000)
 
@@ -163,6 +212,19 @@ def assign_complaint(request):
         return redirect('admin_complaints')
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='complaint_assigned',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to assign complaint',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, f'Failed to assign complaint. Please try again. {e}', persistent=True, timer=3000)
         return redirect('complaint_details', complaint_id=complaint.id)
 
@@ -182,6 +244,7 @@ def update_complaint_status(request):
         new_status = request.POST.get('status')
         
         complaint = Complaint.objects.get(id=complaint_id)
+        old_status = complaint.status
         complaint.status = new_status
         
         if new_status == 'resolved':
@@ -190,10 +253,43 @@ def update_complaint_status(request):
             
         complaint.save()
         
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            activity_type_map = {
+                'resolved': 'complaint_resolved',
+                'closed': 'complaint_closed',
+                'in_progress': 'complaint_status_changed'
+            }
+            activity_type = activity_type_map.get(new_status, 'complaint_status_changed')
+            
+            log_case_activity(
+                user=admin_user,
+                case=complaint,
+                activity_type=activity_type,
+                description=f'{admin_user.get_full_name()} updated complaint #{complaint.id} - {complaint.title} status from {old_status} to {new_status}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'old_status': old_status, 'new_status': new_status}
+            )
+        
         sweetify.toast(request, f'Complaint #{complaint.id} status updated to {new_status.title()}', timer=2000)
         return JsonResponse({'success': True})
         
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='complaint_status_changed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to update complaint status',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Failed to update status. Please try again.', timer=3000)
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -259,6 +355,19 @@ def complaint_details(request, complaint_id):
         except Exception:
             pass  # No attachments or error accessing them
         
+        # Log activity
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_case_activity(
+                user=admin_user,
+                case=complaint,
+                activity_type='complaint_viewed',
+                description=f'{admin_user.get_full_name()} viewed complaint #{complaint.id} - {complaint.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'complaint_status': complaint.status, 'complaint_priority': complaint.priority, 'complaint_category': complaint.category}
+            )
+        
         context = {
             'complaint': complaint_data,
             'staffs' : staff
@@ -266,10 +375,36 @@ def complaint_details(request, complaint_id):
         return render(request, 'admin_cases/complaint_details.html', context)
         
     except Complaint.DoesNotExist:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='complaint_viewed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} attempted to view non-existent complaint #{complaint_id}',
+                is_successful=False,
+                error_message='Complaint not found',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'Complaint not found.', icon='error', timer=3000, persistent='Okay')
         return redirect('admin_complaints')
     
     except Exception as e:
+        # Log failed attempt
+        admin_user = Admin.objects.filter(id=request.session.get('admin_id')).first()
+        if admin_user:
+            log_activity(
+                user=admin_user,
+                activity_type='complaint_viewed',
+                activity_category='case_management',
+                description=f'{admin_user.get_full_name()} failed to view complaint #{complaint_id}',
+                is_successful=False,
+                error_message=str(e),
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
         sweetify.error(request, 'An error occurred.', icon='error', timer=3000, persistent='Okay')
         return redirect('admin_complaints')
 

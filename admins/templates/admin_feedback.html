@@ -1,0 +1,348 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}User Feedbacks - Admin Portal{% endblock %}
+{% block page_title %}User Feedbacks{% endblock %}
+{% block page_subtitle %}Manage and respond to user feedback submissions{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Feedbacks</h6>
+                            <h3 class="mb-0">{{ total_feedbacks|default:0 }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-chat-dots text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Unread</h6>
+                            <h3 class="mb-0 text-warning">{{ unread_feedbacks|default:0 }}</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-envelope text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Pending Response</h6>
+                            <h3 class="mb-0 text-danger">{{ pending_response|default:0 }}</h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-clock text-danger fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Average Rating</h6>
+                            <h3 class="mb-0 text-success">{{ average_rating|floatformat:1 }}/5.0</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-star-fill text-success fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- Search -->
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label small text-muted">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="Name, email, subject..." value="{{ search_query }}">
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            <option value="general" {% if category_filter == 'general' %}selected{% endif %}>General</option>
+                            <option value="complaint" {% if category_filter == 'complaint' %}selected{% endif %}>Complaint System</option>
+                            <option value="assistance" {% if category_filter == 'assistance' %}selected{% endif %}>Assistance</option>
+                            <option value="interface" {% if category_filter == 'interface' %}selected{% endif %}>Interface</option>
+                            <option value="performance" {% if category_filter == 'performance' %}selected{% endif %}>Performance</option>
+                            <option value="suggestion" {% if category_filter == 'suggestion' %}selected{% endif %}>Suggestion</option>
+                            <option value="bug" {% if category_filter == 'bug' %}selected{% endif %}>Bug Report</option>
+                            <option value="other" {% if category_filter == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Rating Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">Rating</label>
+                        <select name="rating" class="form-select">
+                            <option value="">All Ratings</option>
+                            <option value="5" {% if rating_filter == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐ Excellent</option>
+                            <option value="4" {% if rating_filter == '4' %}selected{% endif %}>⭐⭐⭐⭐ Good</option>
+                            <option value="3" {% if rating_filter == '3' %}selected{% endif %}>⭐⭐⭐ Average</option>
+                            <option value="2" {% if rating_filter == '2' %}selected{% endif %}>⭐⭐ Poor</option>
+                            <option value="1" {% if rating_filter == '1' %}selected{% endif %}>⭐ Very Poor</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Unread</option>
+                            <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Response</option>
+                            <option value="responded" {% if status_filter == 'responded' %}selected{% endif %}>Responded</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="col-lg-2 col-md-12 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-funnel me-2"></i>Filter
+                        </button>
+                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feedbacks List -->
+    <div class="row">
+        {% for feedback in feedbacks %}
+        <div class="col-12 mb-3">
+            <div class="card border-0 shadow-sm {% if not feedback.is_read %}border-start border-warning border-4{% endif %}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Feedback Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">{{ feedback.subject }}</h5>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-person me-1"></i>{{ feedback.name }}
+                                        </span>
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-envelope me-1"></i>{{ feedback.email }}
+                                        </span>
+                                        <span class="badge 
+                                            {% if feedback.category == 'bug' %}bg-danger
+                                            {% elif feedback.category == 'suggestion' %}bg-success
+                                            {% elif feedback.category == 'complaint' %}bg-warning
+                                            {% else %}bg-primary
+                                            {% endif %}">
+                                            {{ feedback.get_category_display }}
+                                        </span>
+                                        {% if not feedback.is_read %}
+                                            <span class="badge bg-warning">Unread</span>
+                                        {% endif %}
+                                        {% if feedback.is_responded %}
+                                            <span class="badge bg-success">Responded</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-warning mb-1">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= feedback.rating %}
+                                                <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                                <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">{{ feedback.created_at|date:"M d, Y h:i A" }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Feedback Message -->
+                            <div class="mb-3">
+                                <p class="mb-0 text-muted">{{ feedback.message }}</p>
+                            </div>
+                            
+                            <!-- Admin Response -->
+                            {% if feedback.is_responded %}
+                            <div class="alert alert-success mb-0">
+                                <strong><i class="bi bi-reply-fill me-2"></i>Admin Response:</strong>
+                                <p class="mb-1 mt-2">{{ feedback.admin_response }}</p>
+                                <small class="text-muted">Responded on {{ feedback.responded_at|date:"M d, Y h:i A" }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="col-md-4">
+                            <div class="d-grid gap-2">
+                                {% if not feedback.is_read %}
+                                <a href="{% url 'mark_feedback_read' feedback.id %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-check2 me-2"></i>Mark as Read
+                                </a>
+                                {% endif %}
+                                
+                                {% if not feedback.is_responded %}
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#responseModal{{ feedback.id }}">
+                                    <i class="bi bi-reply me-2"></i>Respond
+                                </button>
+                                {% endif %}
+                                
+                                <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ feedback.id }})">
+                                    <i class="bi bi-trash me-2"></i>Delete
+                                </button>
+                            </div>
+                            
+                            {% if feedback.user %}
+                            <div class="mt-3 p-2 bg-light rounded">
+                                <small class="text-muted">
+                                    <i class="bi bi-person-check me-1"></i>
+                                    Registered User
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Response Modal -->
+        <div class="modal fade" id="responseModal{{ feedback.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Respond to Feedback</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{% url 'respond_feedback' feedback.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Feedback Subject:</label>
+                                <p class="text-muted">{{ feedback.subject }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">From:</label>
+                                <p class="text-muted">{{ feedback.name }} ({{ feedback.email }})</p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="response{{ feedback.id }}" class="form-label fw-semibold">Your Response:</label>
+                                <textarea class="form-control" id="response{{ feedback.id }}" name="response" rows="5" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Send Response</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">No feedbacks found matching your filters.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form on filter change
+    document.querySelectorAll('select[name="category"], select[name="rating"], select[name="status"]').forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+    
+    // Confirm delete
+    function confirmDelete(feedbackId) {
+        Swal.fire({
+            title: 'Delete Feedback?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/feedback/${feedbackId}/delete/`;
+            }
+        });
+    }
+</script>
+{% endblock %}

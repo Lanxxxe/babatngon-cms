@@ -1,0 +1,323 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}User Activity Logs - Admin Portal{% endblock %}
+{% block page_title %}User Activity Logs{% endblock %}
+{% block page_subtitle %}Monitor and track all user activities in the system{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Activities</h6>
+                            <h3 class="mb-0">{{ total_activities|default:0 }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-activity text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Successful</h6>
+                            <h3 class="mb-0 text-success">{{ successful_activities|default:0 }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-check-circle text-success fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Failed</h6>
+                            <h3 class="mb-0 text-danger">{{ failed_activities|default:0 }}</h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-x-circle text-danger fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Last 24 Hours</h6>
+                            <h3 class="mb-0 text-info">{{ recent_activities_count|default:0 }}</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-clock-history text-info fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- Search -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="User, email, description..." value="{{ search_query }}">
+                    </div>
+                    
+                    <!-- User Type Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">User Type</label>
+                        <select name="user_type" class="form-select">
+                            <option value="">All Types</option>
+                            {% for user_type in user_types %}
+                                <option value="{{ user_type }}" {% if user_type_filter == user_type %}selected{% endif %}>
+                                    {{ user_type|title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Activity Type Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">Activity Type</label>
+                        <select name="activity_type" class="form-select">
+                            <option value="">All Activities</option>
+                            {% for value, label in activity_types %}
+                                <option value="{{ value }}" {% if activity_type_filter == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted">Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for value, label in activity_categories %}
+                                <option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="successful" {% if status_filter == 'successful' %}selected{% endif %}>Successful</option>
+                            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-3 mt-2">
+                    <!-- Date From -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    
+                    <!-- Date To -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small text-muted">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="col-lg-6 col-md-12 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel me-2"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'admin_user_activity' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Clear
+                        </a>
+                        {% comment %} <a href="{% url 'export_user_activity' %}?{{ request.GET.urlencode }}" class="btn btn-success ms-auto">
+                            <i class="bi bi-download me-2"></i>Export CSV
+                        </a> {% endcomment %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activities Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Activity Records</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4">Timestamp</th>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Activity</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
+                        {% for activity in activities %}
+                        <tr>
+                            <td class="px-4">
+                                <small class="text-muted">
+                                    {{ activity.created_at|date:"M d, Y" }}<br>
+                                    {{ activity.created_at|time:"h:i A" }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-medium">{{ activity.user_name }}</span>
+                                    <small class="text-muted">{{ activity.user_email|default:"N/A" }}</small>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary mt-1" style="width: fit-content; font-size: 0.7rem;">
+                                        {{ activity.user_type|title }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if activity.activity_category == 'authentication' %}bg-primary
+                                    {% elif activity.activity_category == 'case_management' %}bg-info
+                                    {% elif activity.activity_category == 'communication' %}bg-warning
+                                    {% elif activity.activity_category == 'administration' %}bg-secondary
+                                    {% elif activity.activity_category == 'file_management' %}bg-success
+                                    {% elif activity.activity_category == 'reporting' %}bg-dark
+                                    {% else %}bg-light text-dark
+                                    {% endif %}">
+                                    {{ activity.get_activity_category_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ activity.get_activity_type_display }}</small>
+                            </td>
+                            <td>
+                                <div style="max-width: 300px;">
+                                    <small class="text-muted">{{ activity.description|truncatewords:15 }}</small>
+                                    {% if activity.error_message %}
+                                        <div class="mt-1">
+                                            <small class="text-danger">
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                                {{ activity.error_message|truncatewords:10 }}
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if activity.is_successful %}
+                                    <span class="badge bg-success bg-opacity-10 text-success">
+                                        <i class="bi bi-check-circle"></i> Success
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">
+                                        <i class="bi bi-x-circle"></i> Failed
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted font-monospace">{{ activity.ip_address|default:"N/A" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-inbox fs-1 text-muted"></i>
+                                <p class="text-muted mt-3">No activities found matching your filters.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if activity_type_filter %}&activity_type={{ activity_type_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if activity_type_filter %}&activity_type={{ activity_type_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if activity_type_filter %}&activity_type={{ activity_type_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if activity_type_filter %}&activity_type={{ activity_type_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}{% if activity_type_filter %}&activity_type={{ activity_type_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form on filter change
+    document.querySelectorAll('select[name="user_type"], select[name="activity_type"], select[name="category"], select[name="status"]').forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

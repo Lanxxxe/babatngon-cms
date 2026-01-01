@@ -6,6 +6,7 @@ from admins.models import Notification
 from resident.automate_priority import generate_priority, prompt_details
 from core.models import User
 import os, sweetify
+from admins.user_activity_utils import log_case_activity, log_activity
 
 
 # Emergency Assistance View
@@ -59,6 +60,17 @@ def file_emergency_assistance(request):
         # Handle multiple file uploads
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
+
+        # Log activity
+        log_case_activity(
+            user=user,
+            case=assistance,
+            activity_type='assistance_filed',
+            description=f'{user.get_full_name()} filed emergency assistance request #{assistance.id}: {assistance.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'type': assistance.type, 'urgency': assistance.urgency, 'request_type': 'emergency'}
+        )
 
         sweetify.success(request, 'Emergency assistance request filed successfully! Admins have been notified.', persistent=True, timer=3000)
         return redirect('my_assistance')
@@ -134,6 +146,18 @@ def file_assistance(request):
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
+        
+        # Log activity
+        log_case_activity(
+            user=user,
+            case=assistance,
+            activity_type='assistance_filed',
+            description=f'{user.get_full_name()} filed assistance request #{assistance.id}: {assistance.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'type': assistance.type, 'urgency': assistance.urgency}
+        )
+        
         sweetify.success(request, 'Assistance request submitted!', persistent=True, timer=3000)
         return redirect('file_assistance')
     return render(request, 'file_assistance.html')
@@ -167,6 +191,26 @@ def my_assistance(request):
             Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
 
+    # Log activity
+    filter_info = []
+    if status_filter:
+        filter_info.append(f"status: {status_filter}")
+    if urgency_filter:
+        filter_info.append(f"urgency: {urgency_filter}")
+    if search_query:
+        filter_info.append(f"search: '{search_query}'")
+    filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+    
+    log_activity(
+        user=user,
+        activity_type='assistance_viewed',
+        activity_category='case_management',
+        description=f'{user.get_full_name()} viewed their assistance requests{filter_desc}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'total_assistance': assistance_list.count(), 'filters': {'status': status_filter, 'urgency': urgency_filter, 'search': search_query}}
+    )
+
     context = {
         'assistance_list': assistance_list,
         'status_filter': status_filter,
@@ -186,6 +230,18 @@ def assistance_detail(request, pk):
     user = User.objects.filter(id=user_id).first()
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user=user)
     attachments = AssistanceAttachment.objects.filter(assistance=assistance)
+    
+    # Log activity
+    log_case_activity(
+        user=user,
+        case=assistance,
+        activity_type='assistance_viewed',
+        description=f'{user.get_full_name()} viewed assistance request #{assistance.id} details: {assistance.title}',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT'),
+        metadata={'status': assistance.status, 'urgency': assistance.urgency}
+    )
+    
     context = {
         'assistance': assistance,
         'attachments': attachments,
@@ -256,11 +312,35 @@ def update_assistance(request, pk):
 
             assistance.save()
 
+            # Log activity
+            user = User.objects.filter(id=user_id).first()
+            log_case_activity(
+                user=user,
+                case=assistance,
+                activity_type='assistance_updated',
+                description=f'{user.get_full_name()} updated assistance request #{assistance.id}: {assistance.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'type': assistance.type, 'urgency': assistance.urgency}
+            )
+
             sweetify.success(request, 'Assistance updated.', persistent="Okay", timer=2000)
             return redirect('my_assistance')
 
 
-        except Exception:
+        except Exception as e:
+            user = User.objects.filter(id=user_id).first()
+            if user:
+                log_activity(
+                    user=user,
+                    activity_type='assistance_updated',
+                    activity_category='case_management',
+                    description=f'{user.get_full_name()} failed to update assistance request',
+                    is_successful=False,
+                    error_message=str(e),
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
             sweetify.error(request, 'Error updating assistance details.', persistent="Okay", timer=3000)
             return redirect('my_assistance')
 
@@ -300,8 +380,28 @@ def delete_assistance(request, pk):
     if not user_id:
         sweetify.error(request, 'Action not allowed', persistent="Okay", timer=3000)
         return redirect('homepage')
+    
     assistance = get_object_or_404(AssistanceRequest, pk=pk, user_id=user_id)
+    user = User.objects.filter(id=user_id).first()
+    
+    # Store info before deletion
+    assistance_title = assistance.title
+    assistance_id = assistance.id
+    
     assistance.delete()
+    
+    # Log activity
+    if user:
+        log_activity(
+            user=user,
+            activity_type='assistance_deleted',
+            activity_category='case_management',
+            description=f'{user.get_full_name()} deleted assistance request #{assistance_id}: {assistance_title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'assistance_id': assistance_id, 'assistance_title': assistance_title}
+        )
+    
     sweetify.success(request, 'Assistance request deleted.', persistent=True, timer=2000)
     return redirect('my_assistance')
 
@@ -355,6 +455,17 @@ def follow_up_assistance(request, assistance_id):
             assistance.urgency = priority
             assistance.save()    
 
+
+            # Log activity
+            log_case_activity(
+                user=user,
+                case=assistance,
+                activity_type='followup_request',
+                description=f'{user.get_full_name()} sent follow-up for assistance request #{assistance.id}: {assistance.title}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'notifications_sent': notifications_created, 'message_length': len(message), 'priority': priority}
+            )
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({

@@ -4,6 +4,7 @@ from admins.models import Complaint, AssistanceRequest
 from core.models import Admin
 from staffs.notification_views import create_notes_notification, create_status_update_notification
 import sweetify
+from admins.user_activity_utils import log_activity, log_case_activity
 
 # Staff Complaints
 def staff_complaints(request):
@@ -32,6 +33,24 @@ def staff_complaints(request):
         if priority_filter:
             complaints = complaints.filter(priority=priority_filter)
         
+
+        # Log activity
+        filter_info = []
+        if status_filter:
+            filter_info.append(f"status: {status_filter}")
+        if priority_filter:
+            filter_info.append(f"priority: {priority_filter}")
+        filter_desc = f" with filters ({', '.join(filter_info)})" if filter_info else ""
+        
+        log_activity(
+            user=current_staff,
+            activity_type='complaint_viewed',
+            activity_category='case_management',
+            description=f'{current_staff.get_full_name()} accessed assigned complaints{filter_desc}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'total_complaints': complaints.count(), 'filters': {'status': status_filter, 'priority': priority_filter}}
+        )
 
         context = {
             'complaints': complaints,
@@ -74,6 +93,18 @@ def staff_view_case(request, case_type, case_id):
             )
         else:
             sweetify.error(request, 'Invalid case type.', persistent=True, timer=3000)
+
+        # Log activity
+        activity_type = 'complaint_viewed' if case_type == 'complaint' else 'assistance_viewed'
+        log_case_activity(
+            user=current_staff,
+            case=case,
+            activity_type=activity_type,
+            description=f'{current_staff.get_full_name()} viewed {case_type} #{case.id} details: {case.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'status': case.status, 'priority': getattr(case, 'priority', None) or getattr(case, 'urgency', None)}
+        )
 
         context = {
             'case': case,
@@ -156,12 +187,46 @@ def staff_update_case_status(request, case_type, case_id):
             if old_status != new_status:
                 create_status_update_notification(case, case_type, old_status, new_status, new_remark, current_staff)
             
+            # Log activity
+            activity_type_map = {
+                'resolved': 'complaint_resolved' if case_type == 'complaint' else 'assistance_resolved',
+                'closed': 'complaint_closed' if case_type == 'complaint' else 'assistance_closed',
+                'completed': 'assistance_resolved'
+            }
+            activity_type = activity_type_map.get(new_status, f"{case_type}_status_changed")
+            
+            log_case_activity(
+                user=current_staff,
+                case=case,
+                activity_type=activity_type,
+                description=f'{current_staff.get_full_name()} updated {case_type} #{case.id} - {case.title} status from {old_status} to {new_status}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                metadata={'old_status': old_status, 'new_status': new_status, 'remarks_added': bool(remarks)}
+            )
+            
             sweetify.success(request, f'{case_type.title()} status updated to {new_status.replace("_", " ").title()} successfully.', icon='success', timer=3000, persistent="Okay")
             return redirect('staff_view_case', case_type=case_type, case_id=case_id)
             
         except Admin.DoesNotExist:
             return redirect('staff_login')
         except Exception as e:
+            # Log failed attempt
+            if staff_id:
+                try:
+                    staff = Admin.objects.get(id=staff_id)
+                    log_activity(
+                        user=staff,
+                        activity_type=f"{case_type}_status_changed",
+                        activity_category='case_management',
+                        description=f'{staff.get_full_name()} failed to update {case_type} status',
+                        is_successful=False,
+                        error_message=str(e),
+                        ip_address=request.META.get('REMOTE_ADDR'),
+                        user_agent=request.META.get('HTTP_USER_AGENT')
+                    )
+                except:
+                    pass
             sweetify.error(request, f'Error updating status: {str(e)}')
             return redirect('staff_view_case', case_type=case_type, case_id=case_id)
     
@@ -208,12 +273,40 @@ def staff_add_notes(request, case_type, case_id):
         # Create notification for the complainant about resolution/completion notes
         create_notes_notification(case, case_type, notes, current_staff)
         
+        # Log activity
+        activity_type = f"{case_type}_updated"
+        log_case_activity(
+            user=current_staff,
+            case=case,
+            activity_type=activity_type,
+            description=f'{current_staff.get_full_name()} added {note_type.lower()} to {case_type} #{case.id} - {case.title}',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            metadata={'note_type': note_type, 'notes_length': len(notes)}
+        )
+        
         sweetify.success(request, f'{note_type} updated successfully.')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
         
     except Admin.DoesNotExist:
         return redirect('staff_login')
     except Exception as e:
+        # Log failed attempt
+        if staff_id:
+            try:
+                staff = Admin.objects.get(id=staff_id)
+                log_activity(
+                    user=staff,
+                    activity_type=f"{case_type}_updated",
+                    activity_category='case_management',
+                    description=f'{staff.get_full_name()} failed to add notes to {case_type}',
+                    is_successful=False,
+                    error_message=str(e),
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
+            except:
+                pass
         sweetify.error(request, f'Error updating notes: {str(e)}')
         return redirect('staff_view_case', case_type=case_type, case_id=case_id)
 

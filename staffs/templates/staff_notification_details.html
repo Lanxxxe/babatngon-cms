@@ -1,6 +1,6 @@
-{% extends 'base_admin.html' %}
+{% extends 'base_staff.html' %}
 
-{% block title %}Notification Details - Admin Portal{% endblock %}
+{% block title %}Notification Details - Staff Portal{% endblock %}
 {% block page_title %}Notification Details{% endblock %}
 {% block page_subtitle %}View notification information{% endblock %}
 
@@ -20,9 +20,9 @@
                             {{ notification.get_priority_display|title }}
                         </span>
                         {% if notification.is_read %}
-                            <span class="badge bg-success ms-1">Read</span>
+                            <span class="badge bg-success">Read</span>
                         {% else %}
-                            <span class="badge bg-primary ms-1">Unread</span>
+                            <span class="badge bg-primary">Unread</span>
                         {% endif %}
                     </div>
                 </div>
@@ -36,13 +36,7 @@
                 <div class="row g-3 mb-3">
                     <div class="col-12 col-md-6">
                         <label class="fw-semibold">Recipient:</label>
-                        <p class="mt-1">
-                            {% if notification_type == 'admin' %}
-                                {{ notification.recipient.get_full_name }} ({{ notification.recipient.role|title }})
-                            {% else %}
-                                {{ notification.recipient.get_full_name|default:notification.recipient.email }}
-                            {% endif %}
-                        </p>
+                        <p class="mt-1">{{ notification.recipient.get_full_name }} ({{ notification.recipient.position|title }})</p>
                     </div>
                     {% if notification.sender %}
                         <div class="col-12 col-md-6">
@@ -57,13 +51,13 @@
                         <label class="fw-semibold">Related Case:</label>
                         {% if notification.related_complaint %}
                             <p class="mt-1">
-                                <a href="{% url 'complaint_details' notification.related_complaint.id %}" class="text-decoration-none">
+                                <a href="{% url 'staff_view_case' 'complaint' notification.related_complaint.id %}" class="text-decoration-none">
                                     Complaint #{{ notification.related_complaint.id }} - {{ notification.related_complaint.title }}
                                 </a>
                             </p>
                         {% elif notification.related_assistance %}
                             <p class="mt-1">
-                                <a href="{% url 'assistance_details' notification.related_assistance.id %}" class="text-decoration-none">
+                                <a href="{% url 'staff_view_case' 'assistance' notification.related_assistance.id %}" class="text-decoration-none">
                                     Assistance #{{ notification.related_assistance.id }} - {{ notification.related_assistance.title }}
                                 </a>
                             </p>
@@ -83,17 +77,17 @@
                 </div>
             </div>
             <div class="card-footer p-3">
-                <div class="d-flex flex-column flex-sm-row flex-column flex-sm-row gap-2">
-                    <a href="{% url 'admin_notifications' %}" class="btn btn-admin-secondary btn-sm">
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <a href="{% url 'staff_notifications' %}" class="btn btn-admin-secondary btn-sm">
                         <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Back to </span>Notifications
                     </a>
                     {% if not notification.is_read %}
-                        <button class="btn btn-admin-primary btn-sm" onclick="markAsRead('{{ notification_type }}', {{ notification.id }})">
+                        <button class="btn btn-admin-primary btn-sm" onclick="markAsRead({{ notification.id }})">
                             <i class="bi bi-check me-1"></i><span class="d-none d-sm-inline">Mark as </span>Read
                         </button>
                     {% endif %}
                     {% if not notification.is_archived %}
-                        <button class="btn btn-admin-warning btn-sm" onclick="archiveNotification('{{ notification_type }}', {{ notification.id }})">
+                        <button class="btn btn-admin-warning btn-sm" onclick="archiveNotification({{ notification.id }})">
                             <i class="bi bi-archive me-1"></i>Archive
                         </button>
                     {% endif %}
@@ -148,50 +142,134 @@
 </div>
 
 <script>
-    function markAsRead(notificationType, id) {
-        fetch(`/admin/notifications/mark-read/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                'notification_type': notificationType,
-                'notification_id': id
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Failed to mark notification as read');
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function markAsRead(id) {
+        Swal.fire({
+            title: 'Mark as Read?',
+            text: 'Are you sure you want to mark this notification as read?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, mark as read',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/staff/notifications/mark-read/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        'notification_id': id
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Notification marked as read',
+                            confirmButtonColor: '#28a745',
+                            timer: 1500,
+                            timerProgressBar: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Failed to mark notification as read',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while marking notification as read',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
             }
         });
     }
 
-    function archiveNotification(notificationType, id) {
-        if (confirm('Archive this notification?')) {
-            fetch(`/admin/notifications/archive/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({
-                    'notification_type': notificationType,
-                    'notification_id': id
+    function archiveNotification(id) {
+        Swal.fire({
+            title: 'Archive Notification?',
+            text: 'Are you sure you want to archive this notification?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/staff/notifications/archive/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        'notification_id': id
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = '/admin/notifications/';
-                } else {
-                    alert('Failed to archive notification');
-                }
-            });
-        }
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Archived!',
+                            text: 'Notification has been archived',
+                            confirmButtonColor: '#28a745',
+                            timer: 1500,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = '/staff/notifications/';
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Failed to archive notification',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while archiving notification',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
     }
 </script>
 {% endblock %}
