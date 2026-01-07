@@ -25,11 +25,22 @@ ENV=config('ENV', default='production')
 SECRET_KEY = config('DJANGO_SECRET_KEY')
 ENCRYPTION_KEY = config('ENCRYPTION_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-CSRF_COOKIE_SECURE=True
-SESSION_COOKIE_SECURE=True
 
+# Security settings - only enable for HTTPS (PythonAnywhere provides HTTPS)
+CSRF_COOKIE_SECURE = not DEBUG  # True in production
+SESSION_COOKIE_SECURE = not DEBUG  # True in production
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+# Only redirect to HTTPS in production (PythonAnywhere handles this)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+
+ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default='').split(',') if host.strip()]
 
 
 # Application definition
@@ -50,6 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -135,10 +147,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/assets/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'assets'),
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 MEDIA_URL = '/media/'
@@ -161,6 +174,11 @@ DEFUALT_FROM_EMAIL = config('EMAIL')
 
 LOGIN_REDIRECT_URL = "/"
 
+# Ensure logs directory exists
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -182,19 +200,19 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'filename': os.path.join(LOGS_DIR, 'django.log'),
             'formatter': 'verbose',
         },
         'sms_file': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'sms.log'),
+            'filename': os.path.join(LOGS_DIR, 'sms.log'),
             'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'level': 'WARNING' if not DEBUG else 'INFO',  # Less verbose in production
             'propagate': True,
         },
         'core.sms_util': {
@@ -209,6 +227,9 @@ LOGGING = {
         },
     },
 }
+
+# Sweetify Configuration
+SWEETIFY_SWEETALERT_LIBRARY = 'sweetalert2'
 
 
 
