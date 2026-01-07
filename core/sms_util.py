@@ -1,14 +1,15 @@
 import os
 import requests
 from django.conf import settings
+from decouple import config
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Semaphore SMS API Configuration
 API_ENDPOINT = "https://api.semaphore.co/api/v4/messages"
-API_KEY = os.getenv('SEMAPHORE_API_KEY', '')
-SENDER_NAME = os.getenv('SEMAPHORE_SENDER_NAME', 'BARANGAY')
+API_KEY = config('SEMAPHORE_API_KEY', default='')
+SENDER_NAME = config('SEMAPHORE_SENDER_NAME', default='BARANGAY')
 
 
 def is_sms_configured():
@@ -114,9 +115,13 @@ def send_sms(recipient, message, sender_name=None):
     payload = {
         'apikey': API_KEY,
         'number': recipient,
-        'message': message,
-        'sendername': sender_name or SENDER_NAME
+        'message': message
     }
+    
+    # Only include sendername if explicitly provided
+    # Omitting it allows Semaphore to use the account default
+    if sender_name:
+        payload['sendername'] = sender_name
     
     try:
         # Send request to Semaphore API
@@ -129,20 +134,40 @@ def send_sms(recipient, message, sender_name=None):
         # Parse response
         response_data = response.json()
         
+        # Handle case where API returns a list instead of dict
+        if isinstance(response_data, list):
+            # If it's a list, take the first element or convert to dict
+            if len(response_data) > 0:
+                response_data = response_data[0]
+            else:
+                response_data = {}
+        
         if response.status_code == 200:
             logger.info(f"SMS sent successfully to {recipient}")
+            logger.info(f"API Response: {response_data}")
             return {
                 'success': True,
                 'message': 'SMS sent successfully',
                 'data': {
-                    'message_id': response_data.get('message_id'),
-                    'status': response_data.get('status'),
-                    'recipient': recipient
+                    'message_id': response_data.get('message_id') if isinstance(response_data, dict) else None,
+                    'status': response_data.get('status') if isinstance(response_data, dict) else 'Sent',
+                    'recipient': recipient,
+                    'raw_response': str(response_data)
                 }
             }
         else:
-            error_msg = response_data.get('message', 'Unknown error')
-            logger.error(f"SMS send failed: {error_msg}")
+            # Handle different error types
+            if isinstance(response_data, dict):
+                # Check for sender name error
+                if 'senderName' in response_data:
+                    error_msg = f"Invalid Sender Name: {response_data['senderName']}. Please use only registered sender names in your Semaphore account, or omit the sender_name parameter to use the default."
+                else:
+                    error_msg = response_data.get('message', str(response_data))
+            else:
+                error_msg = str(response_data)
+            
+            logger.error(f"SMS send failed (HTTP {response.status_code}): {error_msg}")
+            logger.error(f"Full response: {response_data}")
             return {
                 'success': False,
                 'message': f'Failed to send SMS: {error_msg}',

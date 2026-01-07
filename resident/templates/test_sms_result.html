@@ -1,0 +1,175 @@
+{% extends 'base_resident.html' %}
+{% load static %}
+
+{% block title %}SMS Test Result - Barangay CMS{% endblock %}
+
+{% block breadcrumb %}SMS Test Result{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Result Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header {% if result.success %}bg-success{% else %}bg-danger{% endif %} text-white">
+                    <h5 class="mb-0">
+                        <i class="bi {% if result.success %}bi-check-circle{% else %}bi-x-circle{% endif %} me-2"></i>
+                        SMS Test Result: {% if result.success %}SUCCESS{% else %}FAILED{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Status Alert -->
+                    <div class="alert {% if result.success %}alert-success{% else %}alert-danger{% endif %}">
+                        <h6 class="alert-heading">
+                            <i class="bi {% if result.success %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+                            Status: {{ result.message }}
+                        </h6>
+                        {% if result.success %}
+                            <p class="mb-0">✓ The SMS was sent successfully! Check your phone for the message.</p>
+                        {% else %}
+                            <p class="mb-0">✗ The SMS failed to send. Check the details below for troubleshooting.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Test Details -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-muted mb-2"><i class="bi bi-phone me-2"></i>Phone Number</h6>
+                                <p class="mb-0 fw-bold">{{ phone_number }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-muted mb-2"><i class="bi bi-person-badge me-2"></i>Sender Name</h6>
+                                <p class="mb-0 fw-bold">{{ sender_name }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-muted mb-2"><i class="bi bi-envelope me-2"></i>Message Type</h6>
+                                <p class="mb-0 fw-bold text-capitalize">{{ test_type }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="text-muted mb-2"><i class="bi bi-clock me-2"></i>Timestamp</h6>
+                                <p class="mb-0 fw-bold">{{ "now"|date:"Y-m-d H:i:s" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Details -->
+                    {% if result.success and result.data %}
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Response Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th class="text-muted" style="width: 40%;">Message ID:</th>
+                                        <td class="fw-bold">{{ result.data.message_id|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Status:</th>
+                                        <td class="fw-bold">{{ result.data.status|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Recipient:</th>
+                                        <td class="fw-bold">{{ result.data.recipient|default:"N/A" }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Message Preview -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="bi bi-chat-text me-2"></i>Message Sent</h6>
+                        </div>
+                        <div class="card-body">
+                            <pre class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace;">{{ test_message }}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Error Details (if failed) -->
+                    {% if not result.success %}
+                    <div class="card border-danger mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Error Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2"><strong>Error Message:</strong></p>
+                            <div class="alert alert-danger mb-3">
+                                {{ result.message }}
+                            </div>
+                            
+                            {% if result.data %}
+                            <p class="mb-2"><strong>Additional Details:</strong></p>
+                            <pre class="bg-dark text-light p-3 rounded"><code>{{ result.data|safe }}</code></pre>
+                            {% endif %}
+
+                            <div class="mt-3">
+                                <p class="mb-2"><strong>Troubleshooting Steps:</strong></p>
+                                <ol>
+                                    <li>Check your .env file for SEMAPHORE_API_KEY</li>
+                                    <li>Verify API key is correct at <a href="https://semaphore.co/" target="_blank">semaphore.co</a></li>
+                                    <li>Check Semaphore account balance/credits</li>
+                                    <li>Verify phone number format (09XXXXXXXXX or +639XXXXXXXXX)</li>
+                                    <li>Check internet connection</li>
+                                    <li>Review logs: <code>cat logs/sms.log</code></li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'test_sms' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-repeat me-2"></i>Send Another Test
+                        </a>
+                        <a href="{% url 'resident_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-house me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Check Instructions -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-terminal me-2"></i>Check Detailed Logs
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p>For more detailed information about this SMS attempt, check the logs:</p>
+                    <pre class="bg-dark text-light p-3 rounded mb-0"><code># View SMS logs
+cat logs/sms.log
+
+# View last 20 entries
+tail -20 logs/sms.log
+
+# Monitor in real-time
+tail -f logs/sms.log
+
+# Search for errors
+grep -i "error\|failed" logs/sms.log</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    pre {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}

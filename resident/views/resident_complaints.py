@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from admins.notification_utils import notify_new_case_filed
 from admins.models import Complaint, ComplaintAttachment, Notification
 from resident.automate_priority import generate_priority, prompt_details
+from core.sms_util import send_sms, format_complaint_notification, format_emergency_alert
 import os
 import sweetify
 from admins.user_activity_utils import log_case_activity, log_activity
@@ -57,6 +58,20 @@ def file_emergency_complaint(request):
         except Exception as e:
             # Log the error but do not interrupt the user flow
             print(f"Error notifying admins of new emergency complaint: {e}")
+
+        # Send SMS to admins
+        try:
+            # admin_users = User.objects.filter(role='admin', is_active=True).exclude(contact_number__isnull=True).exclude(contact_number='')
+            sms_message = format_emergency_alert(
+                f"Emergency Complaint #{complaint.id} filed by {user.get_full_name()}\n"
+                f"Title: {complaint.title}\n"
+                f"Location: {complaint.address}\n"
+                f"Priority: {complaint.priority.upper()}"
+            )
+            # for admin in admin_users:
+            send_sms("09484119128", sms_message)
+        except Exception as e:
+            print(f"Error sending SMS to admins: {e}")
 
         # Handle multiple file uploads
         for f in request.FILES.getlist('attachments'):
@@ -151,6 +166,19 @@ def file_complaint(request):
             # Log the error but do not interrupt the user flow
             print(f"Error notifying admins of new complaint: {e}")
             sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
+
+        # Send SMS to admins
+        try:
+            # admin_users = User.objects.filter(role='admin', is_active=True).exclude(contact_number__isnull=True).exclude(contact_number='')
+            sms_message = format_complaint_notification(
+                complaint.id,
+                complaint.title,
+                'New Complaint'
+            ) + f"\nCategory: {complaint.category}\nPriority: {complaint.priority.upper()}"
+            # for admin in admin_users:
+            send_sms("09484119128", sms_message)
+        except Exception as e:
+            print(f"Error sending SMS to admins: {e}")
 
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):

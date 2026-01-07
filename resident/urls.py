@@ -7,8 +7,9 @@ from resident.views import (
     resident_profile,
     resident_chatbot,
     resident_help_center,
+    resident_sms,
 )
-
+# Nc8Kfh6y94Vn5?+
 urlpatterns = [
     # Resident Dashboard
     path('home/', resident_dashboard.resident_dashboard, name='resident_dashboard'),
@@ -58,4 +59,8 @@ urlpatterns = [
 
     #Help Center
     path  ('help-center/', resident_help_center.help_center, name='resident_help_center'),
+
+
+    # Test SMS
+    path('test-sms/', resident_sms.test_sms, name='test_sms'), 
 ]
