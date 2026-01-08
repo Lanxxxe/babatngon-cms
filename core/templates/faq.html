@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQ - Babatngon CMS{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">Frequently Asked Questions</h1>
+            <p class="lead text-muted">Find quick answers to common questions about the Babatngon CMS</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- General Questions -->
+                <h3 class="mb-4">
+                    <i class="bi bi-question-circle text-primary me-2"></i>General Questions
+                </h3>
+                
+                <div class="accordion mb-5" id="generalAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#general1">
+                                What is the Babatngon Complaint Management System?
+                            </button>
+                        </h2>
+                        <div id="general1" class="accordion-collapse collapse show" data-bs-parent="#generalAccordion">
+                            <div class="accordion-body">
+                                The Babatngon CMS is a digital platform that allows residents to file complaints, request assistance, and communicate with barangay officials efficiently. It streamlines the process of reporting issues and tracking their resolution.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general2">
+                                Who can use this system?
+                            </button>
+                        </h2>
+                        <div id="general2" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+                            <div class="accordion-body">
+                                All residents of Barangay Babatngon can register and use the system. You need to provide valid identification and contact information during registration.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general3">
+                                Is the system free to use?
+                            </button>
+                        </h2>
+                        <div id="general3" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+                            <div class="accordion-body">
+                                Yes, the Babatngon CMS is completely free for all residents. There are no fees for registering, filing complaints, or requesting assistance.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Questions -->
+                <h3 class="mb-4">
+                    <i class="bi bi-person-circle text-success me-2"></i>Account & Registration
+                </h3>
+                
+                <div class="accordion mb-5" id="accountAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account1">
+                                How do I create an account?
+                            </button>
+                        </h2>
+                        <div id="account1" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+                            <div class="accordion-body">
+                                Click "Get Started" on the homepage, fill in your personal information (name, email, phone number, address), create a password, and submit the registration form. You'll receive a confirmation once your account is created.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account2">
+                                I forgot my password. What should I do?
+                            </button>
+                        </h2>
+                        <div id="account2" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+                            <div class="accordion-body">
+                                Contact the barangay office at 832-3343 or email lgu.babatngonleyte@gmail.com for password reset assistance. For security reasons, password resets require identity verification.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#account3">
+                                Can I update my profile information?
+                            </button>
+                        </h2>
+                        <div id="account3" class="accordion-collapse collapse" data-bs-parent="#accountAccordion">
+                            <div class="accordion-body">
+                                Yes! After logging in, go to your Profile page where you can update your contact information, address, and other personal details. Keep your information current to ensure you receive notifications properly.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complaint Questions -->
+                <h3 class="mb-4">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Filing Complaints
+                </h3>
+                
+                <div class="accordion mb-5" id="complaintAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complaint1">
+                                What types of complaints can I file?
+                            </button>
+                        </h2>
+                        <div id="complaint1" class="accordion-collapse collapse" data-bs-parent="#complaintAccordion">
+                            <div class="accordion-body">
+                                You can file complaints about infrastructure issues, public safety concerns, environmental problems, noise disturbances, disputes, and other community matters that require barangay attention.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complaint2">
+                                What's the difference between regular and emergency complaints?
+                            </button>
+                        </h2>
+                        <div id="complaint2" class="accordion-collapse collapse" data-bs-parent="#complaintAccordion">
+                            <div class="accordion-body">
+                                Emergency complaints are for urgent situations requiring immediate attention (fires, floods, serious accidents, etc.). They are prioritized and processed faster. Regular complaints are for non-urgent issues.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complaint3">
+                                How long does it take to process a complaint?
+                            </button>
+                        </h2>
+                        <div id="complaint3" class="accordion-collapse collapse" data-bs-parent="#complaintAccordion">
+                            <div class="accordion-body">
+                                Processing time varies depending on the nature and complexity of the complaint. Emergency complaints receive immediate attention. Regular complaints are typically reviewed within 1-3 business days. You'll receive status updates throughout the process.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complaint4">
+                                Can I track my complaint status?
+                            </button>
+                        </h2>
+                        <div id="complaint4" class="accordion-collapse collapse" data-bs-parent="#complaintAccordion">
+                            <div class="accordion-body">
+                                Yes! Go to "My Complaints" in your dashboard to view all your complaints and their current status (pending, in progress, resolved, or rejected).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complaint5">
+                                Can I add photos or documents to my complaint?
+                            </button>
+                        </h2>
+                        <div id="complaint5" class="accordion-collapse collapse" data-bs-parent="#complaintAccordion">
+                            <div class="accordion-body">
+                                Yes, you can attach photos and documents as supporting evidence when filing a complaint. This helps barangay officials better understand and address the issue.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assistance Questions -->
+                <h3 class="mb-4">
+                    <i class="bi bi-hand-thumbs-up text-info me-2"></i>Assistance Requests
+                </h3>
+                
+                <div class="accordion mb-5" id="assistanceAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#assistance1">
+                                What types of assistance can I request?
+                            </button>
+                        </h2>
+                        <div id="assistance1" class="accordion-collapse collapse" data-bs-parent="#assistanceAccordion">
+                            <div class="accordion-body">
+                                You can request medical assistance, financial aid, educational support, disaster relief, burial assistance, and other community services provided by the barangay.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#assistance2">
+                                How do I know if my assistance request is approved?
+                            </button>
+                        </h2>
+                        <div id="assistance2" class="accordion-collapse collapse" data-bs-parent="#assistanceAccordion">
+                            <div class="accordion-body">
+                                You'll receive notifications via SMS and in-app when your request status changes. Check "My Assistance" to view detailed information and admin responses.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Questions -->
+                <h3 class="mb-4">
+                    <i class="bi bi-gear text-secondary me-2"></i>Technical Support
+                </h3>
+                
+                <div class="accordion mb-5" id="technicalAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technical1">
+                                I'm not receiving SMS notifications. What should I do?
+                            </button>
+                        </h2>
+                        <div id="technical1" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                            <div class="accordion-body">
+                                Make sure your phone number is correctly entered in your profile. Check that your phone can receive SMS messages and has not blocked the sender. Contact the barangay office if the problem persists.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technical2">
+                                The system is not loading properly. What can I do?
+                            </button>
+                        </h2>
+                        <div id="technical2" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                            <div class="accordion-body">
+                                Try clearing your browser cache, using a different browser, or refreshing the page. Ensure you have a stable internet connection. If problems persist, contact technical support.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technical3">
+                                Can I use the system on my mobile phone?
+                            </button>
+                        </h2>
+                        <div id="technical3" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                            <div class="accordion-body">
+                                Yes! The system is fully responsive and works on smartphones, tablets, and desktop computers. Use any modern web browser to access the platform.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Section -->
+                <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
+                    <div class="card-body p-5 text-center">
+                        <h3 class="mb-3">Still Have Questions?</h3>
+                        <p class="lead mb-4">We're here to help! Contact us for additional support.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+                            <div>
+                                <i class="bi bi-telephone-fill text-primary me-2"></i>
+                                <strong>832-3343</strong>
+                            </div>
+                            <div>
+                                <i class="bi bi-envelope-fill text-primary me-2"></i>
+                                <strong>lgu.babatngonleyte@gmail.com</strong>
+                            </div>
+                        </div>
+                        <a href="{% url 'contact' %}" class="btn btn-primary">
+                            <i class="bi bi-chat-dots me-2"></i>Contact Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

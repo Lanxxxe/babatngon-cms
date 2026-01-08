@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Terms of Service - Babatngon CMS{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h1 class="display-4 fw-bold mb-3">Terms of Service</h1>
+                <p class="text-muted mb-5">Last Updated: January 8, 2026</p>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Agreement to Terms</h4>
+                        <p>By accessing and using the Barangay Babatngon Complaint Management System ("CMS"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Use of Service</h4>
+                        
+                        <h6 class="fw-bold mt-3">Eligibility</h6>
+                        <p>You must be a resident of Barangay Babatngon or have legitimate business with the barangay to use this service. You must provide accurate and complete information during registration.</p>
+
+                        <h6 class="fw-bold mt-3">Account Responsibilities</h6>
+                        <ul>
+                            <li>You are responsible for maintaining the confidentiality of your account credentials</li>
+                            <li>You must notify us immediately of any unauthorized access</li>
+                            <li>You are responsible for all activities that occur under your account</li>
+                            <li>One account per person - do not create duplicate accounts</li>
+                        </ul>
+
+                        <h6 class="fw-bold mt-3">Acceptable Use</h6>
+                        <p>You agree to use the system only for its intended purpose: filing legitimate complaints and requesting assistance from the barangay. You must not:</p>
+                        <ul>
+                            <li>Submit false, misleading, or fraudulent complaints</li>
+                            <li>Abuse, harass, or threaten barangay staff or other users</li>
+                            <li>Upload malicious content or viruses</li>
+                            <li>Attempt to gain unauthorized access to the system</li>
+                            <li>Use the system for any illegal purpose</li>
+                            <li>Share your account with others</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Complaints and Assistance Requests</h4>
+                        
+                        <h6 class="fw-bold mt-3">Truthfulness</h6>
+                        <p>All complaints and assistance requests must be truthful and accurate. Deliberately false or misleading submissions may result in account suspension and potential legal action.</p>
+
+                        <h6 class="fw-bold mt-3">Evidence and Documentation</h6>
+                        <p>When submitting complaints, provide accurate information and legitimate supporting documents. Do not upload:</p>
+                        <ul>
+                            <li>Copyrighted material without permission</li>
+                            <li>Inappropriate or offensive content</li>
+                            <li>Personal information of others without consent</li>
+                            <li>Fabricated or manipulated evidence</li>
+                        </ul>
+
+                        <h6 class="fw-bold mt-3">Processing Time</h6>
+                        <p>The barangay will make reasonable efforts to address complaints and requests in a timely manner. However, processing times may vary depending on the nature and complexity of each case.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Content and Intellectual Property</h4>
+                        
+                        <h6 class="fw-bold mt-3">Your Content</h6>
+                        <p>You retain ownership of the content you submit. However, by submitting content, you grant the barangay a license to use, store, and process this information for the purpose of addressing your complaints and requests.</p>
+
+                        <h6 class="fw-bold mt-3">System Content</h6>
+                        <p>All system features, design, text, graphics, and other materials are owned by or licensed to Barangay Babatngon. You may not copy, reproduce, or redistribute any part of the system without permission.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Privacy and Data Protection</h4>
+                        <p>Your privacy is important to us. Please review our <a href="{% url 'privacy_policy' %}">Privacy Policy</a> to understand how we collect, use, and protect your information.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Notifications</h4>
+                        <p>By using this service, you consent to receive:</p>
+                        <ul>
+                            <li>SMS notifications about your complaints and requests</li>
+                            <li>In-app notifications regarding system updates</li>
+                            <li>Important announcements from the barangay</li>
+                        </ul>
+                        <p>Standard message and data rates may apply for SMS notifications.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Service Availability</h4>
+                        <p>We strive to maintain continuous service availability. However:</p>
+                        <ul>
+                            <li>The system may be temporarily unavailable due to maintenance</li>
+                            <li>We do not guarantee uninterrupted access</li>
+                            <li>Features may be modified or discontinued with notice</li>
+                            <li>Technical issues may occasionally affect functionality</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Disclaimer of Warranties</h4>
+                        <p>The service is provided "as is" and "as available" without warranties of any kind. We do not guarantee:</p>
+                        <ul>
+                            <li>That the service will meet all your requirements</li>
+                            <li>That the service will be error-free or secure</li>
+                            <li>The accuracy or completeness of information</li>
+                            <li>That defects will be corrected immediately</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Limitation of Liability</h4>
+                        <p>To the fullest extent permitted by law, Barangay Babatngon shall not be liable for:</p>
+                        <ul>
+                            <li>Indirect, incidental, or consequential damages</li>
+                            <li>Loss of data or information</li>
+                            <li>System interruptions or delays</li>
+                            <li>Actions or inactions of third parties</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Account Termination</h4>
+                        <p>We reserve the right to suspend or terminate your account if you:</p>
+                        <ul>
+                            <li>Violate these Terms of Service</li>
+                            <li>Submit fraudulent or abusive complaints</li>
+                            <li>Engage in illegal activities</li>
+                            <li>Misuse the system or interfere with its operation</li>
+                        </ul>
+                        <p>You may also request to delete your account at any time by contacting the barangay office.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Changes to Terms</h4>
+                        <p>We may modify these Terms of Service at any time. Significant changes will be communicated through:</p>
+                        <ul>
+                            <li>Posting updates on this page</li>
+                            <li>In-app notifications</li>
+                            <li>Email or SMS for major changes</li>
+                        </ul>
+                        <p>Continued use of the service after changes constitutes acceptance of the new terms.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Governing Law</h4>
+                        <p>These Terms of Service are governed by the laws of the Republic of the Philippines. Any disputes shall be resolved in accordance with Philippine law.</p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Contact Information</h4>
+                        <p>For questions about these Terms of Service, please contact:</p>
+                        <div class="mt-3">
+                            <p class="mb-2"><strong>Barangay Babatngon Local Government Unit</strong></p>
+                            <p class="mb-2"><i class="bi bi-geo-alt me-2"></i>Babatngon, Leyte</p>
+                            <p class="mb-2"><i class="bi bi-telephone me-2"></i>832-3343</p>
+                            <p class="mb-0"><i class="bi bi-envelope me-2"></i>lgu.babatngonleyte@gmail.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

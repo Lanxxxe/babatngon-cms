@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Help Center - Babatngon CMS{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">Help Center</h1>
+            <p class="lead text-muted">Find answers and get assistance with the Babatngon CMS</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Getting Started -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-rocket-takeoff text-primary fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Getting Started</h4>
+                        </div>
+                        <h6 class="fw-bold">Creating an Account</h6>
+                        <p>Register as a resident by clicking "Get Started" and filling out the registration form with your valid information.</p>
+                        
+                        <h6 class="fw-bold mt-3">Logging In</h6>
+                        <p>Use your registered email and password to sign in to your account.</p>
+                        
+                        <h6 class="fw-bold mt-3">First Steps</h6>
+                        <p>After logging in, complete your profile and familiarize yourself with the dashboard.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filing Complaints -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-danger bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-exclamation-triangle text-danger fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Filing Complaints</h4>
+                        </div>
+                        <h6 class="fw-bold">How to File a Complaint</h6>
+                        <ol>
+                            <li>Navigate to "File Complaint" in the dashboard</li>
+                            <li>Fill in the complaint details (title, description, category)</li>
+                            <li>Add location information</li>
+                            <li>Attach supporting documents or photos if needed</li>
+                            <li>Submit your complaint</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mt-3">Emergency Complaints</h6>
+                        <p>For urgent situations requiring immediate attention, use the "Emergency Complaint" option for faster response.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requesting Assistance -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-hand-thumbs-up text-success fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Requesting Assistance</h4>
+                        </div>
+                        <h6 class="fw-bold">Types of Assistance</h6>
+                        <ul>
+                            <li>Medical assistance</li>
+                            <li>Financial aid</li>
+                            <li>Educational support</li>
+                            <li>Disaster relief</li>
+                            <li>Other community services</li>
+                        </ul>
+                        
+                        <h6 class="fw-bold mt-3">Processing Time</h6>
+                        <p>Assistance requests are reviewed by barangay officials. Processing time varies depending on the type and urgency of the request.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracking Status -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-bar-chart text-info fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Tracking Status</h4>
+                        </div>
+                        <h6 class="fw-bold">Status Updates</h6>
+                        <p>Track your complaints and assistance requests through "My Complaints" and "My Assistance" sections.</p>
+                        
+                        <h6 class="fw-bold mt-3">Notifications</h6>
+                        <p>Receive real-time notifications about status changes and admin responses via SMS and in-app notifications.</p>
+                        
+                        <h6 class="fw-bold mt-3">Follow-ups</h6>
+                        <p>You can send follow-up messages to admins regarding your pending cases directly through the system.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-bell text-warning fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Notifications</h4>
+                        </div>
+                        <h6 class="fw-bold">SMS Notifications</h6>
+                        <p>Receive SMS alerts when your complaints or assistance requests are updated by admins.</p>
+                        
+                        <h6 class="fw-bold mt-3">In-App Notifications</h6>
+                        <p>Check your notification center for detailed updates and messages from barangay staff.</p>
+                        
+                        <h6 class="fw-bold mt-3">Notification Settings</h6>
+                        <p>Ensure your contact number is up-to-date in your profile to receive SMS notifications.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Management -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-secondary bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="bi bi-person-gear text-secondary fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Account Management</h4>
+                        </div>
+                        <h6 class="fw-bold">Profile Updates</h6>
+                        <p>Keep your profile information current to ensure proper communication and service delivery.</p>
+                        
+                        <h6 class="fw-bold mt-3">Password Security</h6>
+                        <p>Change your password regularly and use strong passwords to protect your account.</p>
+                        
+                        <h6 class="fw-bold mt-3">Account Verification</h6>
+                        <p>Verified accounts have full access to system features. Contact barangay officials for verification assistance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Support -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
+                    <div class="card-body p-5 text-center">
+                        <h3 class="mb-3">Still Need Help?</h3>
+                        <p class="lead mb-4">Contact the barangay office for additional support and assistance.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <div>
+                                <i class="bi bi-telephone-fill text-primary me-2"></i>
+                                <strong>832-3343</strong>
+                            </div>
+                            <div>
+                                <i class="bi bi-envelope-fill text-primary me-2"></i>
+                                <strong>lgu.babatngonleyte@gmail.com</strong>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="{% url 'contact' %}" class="btn btn-primary">
+                                <i class="bi bi-chat-dots me-2"></i>Contact Us
+                            </a>
+                            <a href="{% url 'feedback' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-star me-2"></i>Send Feedback
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
