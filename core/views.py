@@ -204,7 +204,17 @@ def login(request):
 
 
 def index(request):
-    return render(request, 'index.html')
+    # Calculate real statistics from database
+    issues_resolved = Complaint.objects.filter(status='resolved').count() + \
+                     AssistanceRequest.objects.filter(status='resolved').count()
+    active_citizens = User.objects.filter(is_verified=True, is_archived=False).count()
+    
+    context = {
+        'issues_resolved': issues_resolved,
+        'active_citizens': active_citizens,
+    }
+    
+    return render(request, 'index.html', context)
 
 
 def about(request):
