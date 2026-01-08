@@ -116,22 +116,14 @@
                         <span class="nav-text-admin">Feedback</span>
                     </a>
                 </div>
-                {% comment %} <div class="nav-item-admin">
-                    <a href="#" class="nav-link-admin">
+                <div class="nav-item-admin">
+                    <a href="{% url 'admin_sms_logs' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_sms_logs' %}active{% endif %}">
                         <div class="nav-icon-admin">
-                            <i class="bi bi-chat-dots"></i>
+                            <i class="bi bi-chat-right"></i>
                         </div>
-                        <span class="nav-text-admin">Messages</span>
+                        <span class="nav-text-admin">SMS Logs</span>
                     </a>
                 </div>
-                <div class="nav-item-admin">
-                    <a href="#" class="nav-link-admin">
-                        <div class="nav-icon-admin">
-                            <i class="bi bi-megaphone"></i>
-                        </div>
-                        <span class="nav-text-admin">Announcements</span>
-                    </a>
-                </div> {% endcomment %}
             </div>
 
             <div class="nav-section-admin">
@@ -152,22 +144,18 @@
                         <span class="nav-text-admin">User Activity</span>
                     </a>
                 </div>
-                <!-- <div class="nav-item-admin">
-                    <a href="#" class="nav-link-admin">
+            </div>
+            
+            <div class="nav-section-admin">
+                <div class="nav-section-title-admin">Profile</div>
+                <div class="nav-item-admin">
+                    <a href="{% url 'admin_profile' %}" class="nav-link-admin {% if request.resolver_match.url_name == 'admin_profile' %}active{% endif %}">
                         <div class="nav-icon-admin">
-                            <i class="bi bi-file-earmark-text"></i>
+                            <i class="bi bi-person-circle"></i>
                         </div>
-                        <span class="nav-text-admin">Reports</span>
+                        <span class="nav-text-admin">My Profile</span>
                     </a>
                 </div>
-                <div class="nav-item-admin">
-                    <a href="#" class="nav-link-admin">
-                        <div class="nav-icon-admin">
-                            <i class="bi bi-shield-lock"></i>
-                        </div>
-                        <span class="nav-text-admin">Security</span>
-                    </a>
-                </div> -->
                 <div class="nav-item-admin">
                     <a href="{% url 'admin_logout' %}" class="nav-link-admin">
                         <div class="nav-icon-admin">
@@ -176,7 +164,6 @@
                         <span class="nav-text-admin">Sign Out</span>
                     </a>
                 </div>
-            </div>
         </div>
     </nav>
 

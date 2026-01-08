@@ -1,6 +1,7 @@
 from django.urls import include, path
 from .views import (
     admin_helpers,
+    admin_profile,
     admin_dashboard,
     admin_analytics,
     admin_complaints,
@@ -9,7 +10,8 @@ from .views import (
     admin_notifications,
     admin_accounts,
     admin_user_activity,
-    admin_feedback
+    admin_feedback,
+    admin_sms_logs,
     )
 
 urlpatterns = [
@@ -60,6 +62,12 @@ urlpatterns = [
     path('feedback/<int:feedback_id>/read/', admin_feedback.mark_feedback_read, name='mark_feedback_read'),
     path('feedback/<int:feedback_id>/respond/', admin_feedback.respond_feedback, name='respond_feedback'),
     path('feedback/<int:feedback_id>/delete/', admin_feedback.delete_feedback, name='delete_feedback'),
+
+    # SMS Logs
+    path('sms-logs/', admin_sms_logs.admin_sms_logs, name='admin_sms_logs'),
+
+    # Profile
+    path('profile/', admin_profile.admin_profile, name='admin_profile'),
 
     # Admin Logout
     path('logout/', admin_helpers.admin_logout, name='admin_logout'),

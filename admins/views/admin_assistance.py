@@ -253,7 +253,6 @@ def assistance_details(request, assistance_id):
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT')
             )
-        print(e)
         sweetify.error(request, 'Failed to load assistance details. Please try again.', icon='error', timer=3000, persistent='Okay')
         return redirect('admin_assistance')
 

@@ -25,8 +25,7 @@ def chatbot_response(request):
         
         # Get response from chatbot AI
         bot_response = get_smart_response(user_message)
-        
-        print(bot_response)
+
         return JsonResponse({
             'success': True,
             'response': bot_response,

@@ -53,7 +53,9 @@ class StaffAdmin(models.Model):
     
     department = models.CharField(max_length=100)
     position = models.CharField(max_length=100)
-    
+    phone_number = models.CharField(max_length=20, blank=False, null=False, default="")
+
+
     # Personal Information
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True, null=True)
@@ -160,6 +162,24 @@ class Feedback(models.Model):
         return '⭐' * self.rating
 
 
+class SMSLogs(models.Model):
+    """Log of SMS messages sent via Semaphore"""
+    recipient = models.CharField(max_length=20, help_text="Recipient phone number")
+    message = models.TextField(help_text="Content of the SMS message")
+    sender_name = models.CharField(max_length=50, blank=True, null=True, help_text="Sender name used")
+    status = models.CharField(max_length=20, help_text="Status of the SMS (e.g., sent, failed)")
+    network = models.CharField(max_length=50, blank=True, null=True, help_text="Network provider of the recipient")
+    response_data = models.JSONField(blank=True, null=True, help_text="Response data from Semaphore API")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'sms_logs'
+        verbose_name = 'SMS Log'
+        verbose_name_plural = 'SMS Logs'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"SMS to {self.recipient} - {self.status} at {self.created_at}"
 
 
 

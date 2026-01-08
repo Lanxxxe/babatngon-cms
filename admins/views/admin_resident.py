@@ -112,7 +112,6 @@ def admin_resident(request):
             )
 
     except Exception as e:
-        print(f"Error fetching residents: {e}")
         sweetify.error(request, 'An error occurred while fetching residents.', icon='error', timer=3000, persistent='Okay')
         residents = []
         total_residents = 0

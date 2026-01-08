@@ -20,6 +20,7 @@
                             <th>#</th>
                             <th>Username</th>
                             <th>Full Name</th>
+                            <th>Phone Number
                             <th>Email</th>
                             <th>Role</th>
                             <th>Department</th>
@@ -33,6 +34,7 @@
                             <td>{{ forloop.counter }}</td>
                             <td>{{ admin.username }}</td>
                             <td>{{ admin.get_full_name|default:admin.full_name }}</td>
+                            <td>{{ admin.phone_number|default:'-' }}</td>
                             <td>{{ admin.email }}</td>
                             <td>{{ admin.role|title }}</td>
                             <td>{{ admin.department|default:'-' }}</td>
@@ -102,8 +104,11 @@
                                     <label class="form-label small">Position <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control form-control-sm" name="position" placeholder="e.g., Barangay Captain, Secretary, Treasurer" required>
                                 </div>
-
-
+                                
+                                <div class="col-12 col-md-6 mb-3">
+                                    <label class="form-label small">Phone Number </label>
+                                    <input type="text" class="form-control form-control-sm" name="phone_number" placeholder="e.g., 09171234567 or +639171234567">
+                                </div>
                             </div>
 
                             <!-- Personal Information Section -->

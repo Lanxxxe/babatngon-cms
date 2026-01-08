@@ -394,7 +394,6 @@ def admin_analytics(request):
             })
         
     except Exception as e:
-        print(e)
         # Fallback to zero data if any error occurs
         context = {
             'total_complaints': 0,

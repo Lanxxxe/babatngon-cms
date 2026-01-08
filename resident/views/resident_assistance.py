@@ -1,12 +1,14 @@
 from django.shortcuts import redirect, get_object_or_404, render
-from django.http import JsonResponse
-from admins.notification_utils import notify_new_case_filed
-from admins.models import AssistanceRequest, AssistanceAttachment
-from admins.models import Notification
-from resident.automate_priority import generate_priority, prompt_details
 from core.models import User
-import os, sweetify
+from django.http import JsonResponse
+from admins.models import Notification
+from admins.models import AssistanceRequest, AssistanceAttachment
+from admins.notification_utils import notify_new_case_filed
+from resident.automate_priority import generate_priority, prompt_details
 from admins.user_activity_utils import log_case_activity, log_activity
+from core.sms_util import send_sms, format_emergency_alert, format_assistance_notification, follow_up_request
+from core.models import StaffAdmin
+import sweetify
 
 
 # Emergency Assistance View
@@ -18,7 +20,7 @@ def file_emergency_assistance(request):
     if request.method == 'POST':
         title = request.POST.get('title', 'Emergency Assistance Required - Immediate Help Needed').strip()
         description = request.POST.get('description', '').strip()
-        type_ = 'Disaster/Emergency'  # Fixed type for emergency assistance
+        type_ = 'Emergency'  # Fixed type for emergency assistance
         urgency = 'urgent'  # Fixed urgency for emergency assistance
         address = request.POST.get('address', '').strip()
         latitude = request.POST.get('latitude', '').strip()
@@ -51,15 +53,42 @@ def file_emergency_assistance(request):
             longitude=lng_float
         )
 
+        emergency_formatted_message = format_emergency_alert(
+            f"Emergency Message Received:\n\n"
+            f"Emergency Assistance Request #{assistance.id} filed by {user.get_full_name()}\n"
+            f"Subject: {assistance.title}\n"
+            f"Description: {assistance.description}\n"
+            f"Location: {assistance.address}\n"
+            f"Priority: URGENT"
+        )
+
+
+        if user.phone is not None or user.phone != '':
+            send_sms(user.phone, emergency_formatted_message)
+
+        admins = StaffAdmin.objects.filter(is_active=True, role="admin")
+
+        for admin in admins:
+            admin_message = format_emergency_alert(
+                f"New Emergency Assistance Request #{assistance.id} filed by {user.get_full_name()}\n"
+                f"Subject: {assistance.title}\n"
+                f"Description: {assistance.description}\n"
+                f"Location: {assistance.address}\n"
+                f"Priority: URGENT"
+            )
+            
+            if admin.phone_number is not None or admin.phone_number != '':
+                send_sms(admin.phone_number, admin_message)
+
         try:
             notify_new_case_filed(assistance)  # Notifies all active admins
         except Exception as e:
             # Log the error but do not interrupt the user flow
-            print(f"Error notifying admins of new emergency assistance request: {e}")
-
+            pass
         # Handle multiple file uploads
         for f in request.FILES.getlist('attachments'):
             AssistanceAttachment.objects.create(assistance=assistance, file=f)
+
 
         # Log activity
         log_case_activity(
@@ -137,10 +166,22 @@ def file_assistance(request):
             longitude=lng_float
         )
 
+        assistance_details = format_assistance_notification(
+            assistance_id=assistance.id,
+            title=assistance.title,
+            status=assistance.status.replace('_', ' ')
+        )
+
+        if user.phone is not None or user.phone != '':
+            send_sms(user.phone, assistance_details)
+
+        for admin in StaffAdmin.objects.filter(is_active=True, role="admin"):
+            if admin.phone_number is not None or admin.phone_number != '':
+                send_sms(admin.phone_number, assistance_details)
+
         try:
             notify_new_case_filed(assistance)  # Notifies all active admins
         except Exception as e:
-            print(f"Error notifying admins of new assistance request: {e}")
             sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
 
         # Handle multiple file uploads - let Django handle the file saving
@@ -455,7 +496,15 @@ def follow_up_assistance(request, assistance_id):
             assistance.urgency = priority
             assistance.save()    
 
+            message_format = follow_up_request(
+                case_id=assistance.id,
+                subject=assistance.title,
+                status=assistance.status.replace('_', ' ').title()
+            )
 
+            for admin in StaffAdmin.objects.filter(is_active=True, role="admin"):
+                if admin.phone_number is not None or admin.phone_number != '':
+                    send_sms(admin.phone_number, message_format)
             # Log activity
             log_case_activity(
                 user=user,
@@ -477,7 +526,6 @@ def follow_up_assistance(request, assistance_id):
             return redirect('my_assistance')
             
         except Exception as e:
-            print(f"Error creating assistance follow-up notification: {e}")
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
             sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)

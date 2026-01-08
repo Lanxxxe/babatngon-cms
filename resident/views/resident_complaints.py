@@ -1,13 +1,12 @@
-from core.models import User
-from django.shortcuts import redirect, get_object_or_404, render
+from core.models import User, StaffAdmin
 from django.http import JsonResponse
-from admins.notification_utils import notify_new_case_filed
 from admins.models import Complaint, ComplaintAttachment, Notification
+from admins.notification_utils import notify_new_case_filed
+from django.shortcuts import redirect, get_object_or_404, render
 from resident.automate_priority import generate_priority, prompt_details
-from core.sms_util import send_sms, format_complaint_notification, format_emergency_alert
-import os
-import sweetify
+from core.sms_util import send_sms, format_complaint_notification, format_emergency_alert, follow_up_request
 from admins.user_activity_utils import log_case_activity, log_activity
+import os, sweetify
 
 # Emergency Complaint View
 def file_emergency_complaint(request):
@@ -57,21 +56,30 @@ def file_emergency_complaint(request):
             notify_new_case_filed(complaint)  # Notifies all active admins
         except Exception as e:
             # Log the error but do not interrupt the user flow
-            print(f"Error notifying admins of new emergency complaint: {e}")
-
+            pass
         # Send SMS to admins
         try:
-            # admin_users = User.objects.filter(role='admin', is_active=True).exclude(contact_number__isnull=True).exclude(contact_number='')
-            sms_message = format_emergency_alert(
+            
+            formatted_message = format_emergency_alert(
+                f"Emergency Message Received:\n"
                 f"Emergency Complaint #{complaint.id} filed by {user.get_full_name()}\n"
-                f"Title: {complaint.title}\n"
+                f"Subject: {complaint.title}\n"
+                f"Description: {complaint.description}\n"
                 f"Location: {complaint.address}\n"
                 f"Priority: {complaint.priority.upper()}"
             )
-            # for admin in admin_users:
-            send_sms("09484119128", sms_message)
+
+            if user.phone is not None or user.phone != '':
+                send_sms(user.phone, formatted_message)
+
+            admins = StaffAdmin.objects.filter(is_active=True, role="admin")
+
+            for admin in admins:
+                if admin.phone_number is not None or admin.phone_number != '':
+                    send_sms(admin.phone_number, formatted_message)
+
         except Exception as e:
-            print(f"Error sending SMS to admins: {e}")
+            pass
 
         # Handle multiple file uploads
         for f in request.FILES.getlist('attachments'):
@@ -159,26 +167,27 @@ def file_complaint(request):
             longitude=lng_float
         )
 
+        try: 
+            complaint_details = format_complaint_notification(
+                complaint.id, complaint.title, complaint.status.replace('_', ' ')
+            )
+
+            if user.phone is not None or user.phone != '':
+                send_sms(user.phone, complaint_details)
+
+            for admin in StaffAdmin.objects.filter(is_active=True, role="admin"):
+                if admin.phone_number is not None or admin.phone_number != '':
+                    send_sms(admin.phone_number, complaint_details)
+        except Exception as e:
+            pass
+
         try:
             notify_new_case_filed(complaint)  # Notifies all active admins
         
         except Exception as e:
             # Log the error but do not interrupt the user flow
-            print(f"Error notifying admins of new complaint: {e}")
             sweetify.error(request, 'There was an error notifying admins. Please try again later.', persistent=True, timer=3000)
 
-        # Send SMS to admins
-        try:
-            # admin_users = User.objects.filter(role='admin', is_active=True).exclude(contact_number__isnull=True).exclude(contact_number='')
-            sms_message = format_complaint_notification(
-                complaint.id,
-                complaint.title,
-                'New Complaint'
-            ) + f"\nCategory: {complaint.category}\nPriority: {complaint.priority.upper()}"
-            # for admin in admin_users:
-            send_sms("09484119128", sms_message)
-        except Exception as e:
-            print(f"Error sending SMS to admins: {e}")
 
         # Handle multiple file uploads - let Django handle the file saving
         for f in request.FILES.getlist('attachments'):
@@ -520,6 +529,22 @@ def follow_up_complaint(request, complaint_id):
             complaint.priority = priority
             complaint.save()
             
+            try:
+                follow_up_message = follow_up_request(
+                    complaint.id,
+                    complaint.title,
+                    complaint.status.replace('_', ' ')
+                )
+
+                if user.phone is not None or user.phone != '':
+                    send_sms(user.phone, follow_up_message)
+
+                for admin in StaffAdmin.objects.filter(is_active=True, role="admin"):
+                    if admin.phone_number is not None or admin.phone_number != '':
+                        send_sms(admin.phone_number, follow_up_message)
+            except Exception as e:
+                pass
+
             # Log activity
             log_case_activity(
                 user=user,
@@ -541,7 +566,6 @@ def follow_up_complaint(request, complaint_id):
             return redirect('my_complaints')
             
         except Exception as e:
-            print(f"Error creating follow-up notification: {e}")
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Error sending follow-up. Please try again.'})
             sweetify.error(request, 'Error sending follow-up. Please try again.', timer=3000)

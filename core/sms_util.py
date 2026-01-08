@@ -1,8 +1,7 @@
-import os
-import requests
 from django.conf import settings
+from core.models import SMSLogs
 from decouple import config
-import logging
+import requests, logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,6 @@ def is_sms_configured():
 
 
 # SMS Message Formatting Functions
-
 def format_complaint_notification(complaint_id, title, status):
     """Format message for complaint status update"""
     return (
@@ -44,6 +42,24 @@ def format_general_notification(title, message):
     return f"Barangay CMS:\n{title}\n{message}"
 
 
+def format_resolved_case(case_id, subject):
+    """Format resolved case notification message"""
+    return (
+        f"Case Resolved:\n"
+        f"Case #{case_id} - {subject}\n"
+        f"Your case has been marked as resolved. Login to your account for more details. Thank you!"
+    )
+
+def follow_up_request(case_id, subject, status):
+    """Format follow-up request message for assistance"""
+    return (
+        f"Follow-Up Request:\n"
+        f"File #{case_id} - {subject}\n"
+        f"Current Status: {status.upper()}\n"
+        f"Please provide an update."
+    )
+
+
 def format_otp(otp_code):
     """Format OTP verification message"""
     return (
@@ -51,6 +67,22 @@ def format_otp(otp_code):
         f"Valid for 10 minutes. Do not share this code."
     )
 
+
+def sms_logs(response):
+    """Log SMS response details"""
+    log_entry, created = SMSLogs.objects.get_or_create(
+        recipient=response['recipient'],
+        message=response['message'],
+        sender_name=response['sender_name'],
+        status=response['status'],
+        network=response['network'],
+        response_data=response
+    )
+
+    if created:
+        return True
+    else:
+        return False
 
 def format_emergency_alert(message):
     """Format emergency alert message"""
@@ -142,9 +174,17 @@ def send_sms(recipient, message, sender_name=None):
             else:
                 response_data = {}
         
+        save_log = sms_logs(response_data)
+
+        if save_log:
+            logger.info("SMS log saved successfully.")
+        else:
+            logger.warning("Failed to save SMS log.")
+
         if response.status_code == 200:
             logger.info(f"SMS sent successfully to {recipient}")
             logger.info(f"API Response: {response_data}")
+
             return {
                 'success': True,
                 'message': 'SMS sent successfully',
@@ -195,46 +235,3 @@ def send_sms(recipient, message, sender_name=None):
             'message': f'Unexpected error: {str(e)}',
             'data': None
         }
-
-
-def send_bulk_sms(recipients, message, sender_name=None):
-    """
-    Send SMS to multiple recipients
-    
-    Args:
-        recipients (list): List of phone numbers
-        message (str): Message content to send
-        sender_name (str, optional): Sender name to display
-    
-    Returns:
-        dict: Response with 'success_count', 'failed_count', and 'results' list
-    
-    Example:
-        >>> recipients = ['09171234567', '09187654321']
-        >>> result = send_bulk_sms(recipients, 'Bulk message')
-        >>> print(f"Sent: {result['success_count']}, Failed: {result['failed_count']}")
-    """
-    
-    results = []
-    success_count = 0
-    failed_count = 0
-    
-    for recipient in recipients:
-        result = send_sms(recipient, message, sender_name)
-        results.append({
-            'recipient': recipient,
-            'success': result['success'],
-            'message': result['message']
-        })
-        
-        if result['success']:
-            success_count += 1
-        else:
-            failed_count += 1
-    
-    return {
-        'success_count': success_count,
-        'failed_count': failed_count,
-        'total': len(recipients),
-        'results': results
-    }

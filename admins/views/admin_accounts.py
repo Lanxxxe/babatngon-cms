@@ -54,6 +54,7 @@ def add_account(request):
         # Account Information
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
+        phone_number = request.POST.get('phone_number', '').strip()
         role = request.POST.get('role', 'staff').strip()
         department = request.POST.get('department', '').strip()
         position = request.POST.get('position', '').strip()
@@ -97,6 +98,7 @@ def add_account(request):
         new_admin = Admin.objects.create(
             username=username,
             email=email,
+            phone_number=phone_number,
             role=role,
             department=department,
             position=position,

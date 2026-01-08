@@ -3,6 +3,7 @@ from django.utils import timezone
 from admins.models import Complaint, AssistanceRequest
 from core.models import Admin
 from staffs.notification_views import create_notes_notification, create_status_update_notification
+from core.sms_util import send_sms, format_resolved_case
 import sweetify
 from admins.user_activity_utils import log_activity, log_case_activity
 
@@ -159,6 +160,10 @@ def staff_update_case_status(request, case_type, case_id):
                 # Set resolved_at timestamp if status is resolved
                 if new_status == 'resolved':
                     case.resolved_at = timezone.now()
+
+                    message = format_resolved_case(case.id, case.title)
+                    if case.user.phone:
+                        send_sms(case.user.phone, message)
                 
             elif case_type == 'assistance':
                 case = get_object_or_404(AssistanceRequest, id=case_id, assigned_to=current_staff)
@@ -174,7 +179,11 @@ def staff_update_case_status(request, case_type, case_id):
                 # Set completed_at timestamp if status is completed
                 if new_status == 'completed':
                     case.completed_at = timezone.now()
-            
+
+                    message = format_resolved_case(case.id, case.title)
+                    if case.user.phone:
+                        send_sms(case.user.phone, message)
+                        
             timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
             new_remark = f"[{timestamp}] {current_staff.first_name}: {remarks}"
             if case.admin_remarks:

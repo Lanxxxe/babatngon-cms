@@ -1,6 +1,3 @@
-
-
-
 from django.shortcuts import render
 from django.http import JsonResponse
 from core.sms_util import send_sms, format_complaint_notification, format_emergency_alert

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from admins.models import AssistanceRequest
 from core.models import Admin
 from admins.user_activity_utils import log_activity
+from core.sms_util import send_sms, format_resolved_case
 
 
 # Staff Assistance
